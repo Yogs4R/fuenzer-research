@@ -1,5 +1,5 @@
 import type { LoadingPhase } from '../../types/research';
-import { BookOpen, Filter, Sparkles, Loader2 } from 'lucide-react';
+import { BookOpen, Filter, Sparkles } from 'lucide-react';
 
 interface NarrativeSkeletonLoaderProps {
   phase: LoadingPhase;
@@ -10,19 +10,19 @@ const phaseConfig: Record<
   { icon: React.ReactNode; message: string; subtext: string }
 > = {
   searching: {
-    icon: <BookOpen className="w-6 h-6 text-cyan-500 animate-pulse" />,
-    message: 'Mencari di Semantic Scholar...',
-    subtext: 'Mengambil referensi akademis terbaru untuk topik Anda',
+    icon: <BookOpen className="w-5 h-5 text-fuenzer-cyan-dark" />,
+    message: 'Searching Semantic Scholar...',
+    subtext: 'Retrieving the latest academic references',
   },
   filtering: {
-    icon: <Filter className="w-6 h-6 text-blue-500 animate-pulse" />,
-    message: 'Memfilter dataset jurnal lokal...',
-    subtext: 'Memeriksa indeksasi SINTA dan Garuda',
+    icon: <Filter className="w-5 h-5 text-fuenzer-cyan-dark" />,
+    message: 'Filtering localized indices...',
+    subtext: 'Verifying SINTA and Garuda accreditation',
   },
   synthesizing: {
-    icon: <Sparkles className="w-6 h-6 text-purple-500 animate-pulse" />,
-    message: 'Menganalisis abstrak dengan AI...',
-    subtext: 'Fuenzer Synthesis Engine sedang merangkum temuan',
+    icon: <Sparkles className="w-5 h-5 text-fuenzer-cyan-dark" />,
+    message: 'Synthesizing via AI...',
+    subtext: 'Extracting and summarizing core findings',
   },
 };
 
@@ -32,28 +32,25 @@ export function NarrativeSkeletonLoader({ phase }: NarrativeSkeletonLoaderProps)
   if (!config) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 space-y-4 animate-in fade-in duration-500">
-      {/* Animated icon */}
-      <div className="relative">
-        <div className="absolute inset-0 rounded-full bg-linear-to-r from-cyan-400/20 to-blue-500/20 animate-ping" />
-        <div className="relative flex items-center justify-center w-14 h-14 rounded-full bg-white shadow-md border border-slate-100">
-          {config.icon}
-        </div>
+    <div className="flex flex-col items-center justify-center p-8 space-y-6 animate-in fade-in duration-700">
+      {/* Elegant spinning icon */}
+      <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-cream-bg shadow-inner">
+        <div className="absolute inset-0 rounded-full border-2 border-fuenzer-cyan/20 border-t-fuenzer-cyan animate-spin" />
+        {config.icon}
       </div>
 
       {/* Narrative text */}
-      <div className="text-center space-y-1">
-        <p className="text-[#0F172A] font-medium text-base flex items-center gap-2 justify-center">
-          <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+      <div className="text-center space-y-2">
+        <p className="font-serif font-bold text-ink-black text-lg flex items-center gap-2 justify-center">
           {config.message}
         </p>
-        <p className="text-[#64748B] text-sm">{config.subtext}</p>
+        <p className="text-slate-gray text-xs tracking-wide uppercase font-semibold">{config.subtext}</p>
       </div>
 
       {/* Progress bar */}
-      <div className="w-48 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+      <div className="w-48 h-1 bg-cream-bg overflow-hidden mt-4">
         <div
-          className="h-full rounded-full bg-linear-to-r from-cyan-400 to-blue-600 animate-progress"
+          className="h-full bg-fuenzer-cyan animate-progress"
           style={{
             width: phase === 'searching' ? '33%' : phase === 'filtering' ? '66%' : '90%',
             transition: 'width 1.5s ease-in-out',
@@ -62,10 +59,10 @@ export function NarrativeSkeletonLoader({ phase }: NarrativeSkeletonLoaderProps)
       </div>
 
       {/* Skeleton lines */}
-      <div className="w-full max-w-sm space-y-3 pt-4">
-        <div className="h-3 bg-slate-100 rounded-full w-full animate-pulse" />
-        <div className="h-3 bg-slate-100 rounded-full w-4/5 animate-pulse delay-75" />
-        <div className="h-3 bg-slate-100 rounded-full w-3/5 animate-pulse delay-150" />
+      <div className="w-full max-w-sm space-y-4 pt-8 opacity-50">
+        <div className="h-2.5 bg-cream-bg w-full" />
+        <div className="h-2.5 bg-cream-bg w-4/5 animate-pulse delay-75" />
+        <div className="h-2.5 bg-cream-bg w-3/5 animate-pulse delay-150" />
       </div>
     </div>
   );
