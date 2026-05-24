@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+frontend/dist/
+backend/api
+backend/tmp/
+
+# Environment
+backend/.env
+.env
+.env.test
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# BMad internal
+_bmad-output/
+_bmad/
+
+# Go
+backend/vendor/
+
+# Logs
+*.log
+
+# Test & Coverage
+coverage/
+*.out
+
+# Python
+__pycache__/
+*.pyc
+
+# Local Environment Variables
+.env.local
+.env.*.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
