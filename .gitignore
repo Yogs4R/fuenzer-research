@@ -25,6 +25,7 @@ Thumbs.db
 # BMad internal
 _bmad-output/
 _bmad/
+.agent/
 
 # Go
 backend/vendor/
