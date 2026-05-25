@@ -47,4 +47,4 @@ DATA ABSTRAK JURNAL:
 - **Temperature Setting**: In the Gen AI SDK initialization, hardcode the `Temperature` to `0.3`. We want factual synthesis, not creative hallucinations.
 
 ### For Winston (System Architect)
-- **Resilience**: The prompt assumes valid JSON input. Ensure the Golang gateway validates the Semantic Scholar response before passing it to the Gemini module. If the Semantic Scholar API fails, short-circuit the flow; do not call Gemini with an empty array unless explicitly building an "Empty State" synthesis.
+- **Resilience**: The prompt assumes valid JSON input. Ensure the Golang gateway validates the OpenAlex response before passing it to the Gemini module. If the OpenAlex API fails, short-circuit the flow; do not call Gemini with an empty array unless explicitly building an "Empty State" synthesis.

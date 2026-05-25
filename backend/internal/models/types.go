@@ -31,38 +31,46 @@ type ResearchResponse struct {
 	LatencyMs  int64            `json:"latency_ms"`
 }
 
-// ScholarPaper represents a paper returned from the Semantic Scholar API.
-type ScholarPaper struct {
-	PaperId       string `json:"paperId"`
-	Title         string `json:"title"`
-	Abstract      string `json:"abstract"`
-	Year          int    `json:"year"`
-	URL           string `json:"url"`
-	Venue         string `json:"venue"`
-	Journal       *ScholarJournal `json:"journal"`
-	Authors       []ScholarAuthor `json:"authors"`
-	ExternalIds   map[string]interface{} `json:"externalIds"`
+// OpenAlexWork represents a paper returned from the OpenAlex API.
+type OpenAlexWork struct {
+	ID                    string               `json:"id"`
+	Title                 string               `json:"title"`
+	PublicationYear       int                  `json:"publication_year"`
+	PrimaryLocation       *OpenAlexLocation    `json:"primary_location"`
+	Authorships           []OpenAlexAuthorship `json:"authorships"`
+	AbstractInvertedIndex map[string][]int     `json:"abstract_inverted_index"`
 }
 
-// ScholarJournal represents journal info from Semantic Scholar.
-type ScholarJournal struct {
-	Name   string `json:"name"`
-	Volume string `json:"volume"`
-	Pages  string `json:"pages"`
+// OpenAlexLocation represents the primary location of the work.
+type OpenAlexLocation struct {
+	Source         *OpenAlexSource `json:"source"`
+	LandingPageURL string          `json:"landing_page_url"`
 }
 
-// ScholarAuthor represents an author from Semantic Scholar.
-type ScholarAuthor struct {
-	AuthorId string `json:"authorId"`
-	Name     string `json:"name"`
+// OpenAlexSource represents the source (journal/publisher) of the work.
+type OpenAlexSource struct {
+	DisplayName string `json:"display_name"`
 }
 
-// ScholarSearchResponse is the top-level response from Semantic Scholar search.
-type ScholarSearchResponse struct {
-	Total  int            `json:"total"`
-	Offset int            `json:"offset"`
-	Next   int            `json:"next"`
-	Data   []ScholarPaper `json:"data"`
+// OpenAlexAuthorship represents an authorship entry.
+type OpenAlexAuthorship struct {
+	Author OpenAlexAuthor `json:"author"`
+}
+
+// OpenAlexAuthor represents the author's details.
+type OpenAlexAuthor struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"display_name"`
+}
+
+// OpenAlexSearchResponse is the top-level response from OpenAlex search.
+type OpenAlexSearchResponse struct {
+	Meta struct {
+		Count   int `json:"count"`
+		PerPage int `json:"per_page"`
+		Page    int `json:"page"`
+	} `json:"meta"`
+	Results []OpenAlexWork `json:"results"`
 }
 
 // SintaJournal represents a single entry in our local SINTA dictionary.

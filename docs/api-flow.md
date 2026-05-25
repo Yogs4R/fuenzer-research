@@ -1,7 +1,7 @@
 # API & Data Flow Rules
 
 ## 1. Separation of Concerns
-The Frontend React application **NEVER** communicates directly with Google AI Studio (Gemini) or Semantic Scholar API. This exposes API keys and violates security. The Golang backend acts as the sole API Gateway and Orchestrator.
+The Frontend React application **NEVER** communicates directly with Google AI Studio (Gemini) or OpenAlex API. This exposes API keys and violates security. The Golang backend acts as the sole API Gateway and Orchestrator.
 
 ## 2. End-to-End Search Orchestration Diagram
 
@@ -11,7 +11,7 @@ sequenceDiagram
     actor User
     participant Frontend as React Frontend
     participant Gateway as Golang Gateway
-    participant Scholar as Semantic Scholar API
+    participant Scholar as OpenAlex API
     participant Dictionary as SINTA Dictionary (Local)
     participant AI as Gemini 2.5 Flash
 
@@ -51,7 +51,7 @@ sequenceDiagram
 
 **CRITICAL**: Do NOT ask Gemini to filter SINTA 1 vs SINTA 2. AI is unreliable for discrete database filtering.
 
-- **Data Source**: Since SINTA does not have a public API, all retrieval uses the **Semantic Scholar API**.
+- **Data Source**: Since SINTA does not have a public API, all retrieval uses the **OpenAlex API**.
 - **Query Modification**: When a user selects the "Indonesia/SINTA" tab, the Golang backend automatically appends keywords like `AND (Indonesia OR Universitas)` to the query to force local results.
 - **Dictionary Mapping**: In the backend (`/data/sinta_data.json`), we maintain a hardcoded map containing 30-50 popular IT/Health journals in Indonesia and their SINTA tiers.
 - **Evaluation**: 
@@ -61,5 +61,5 @@ sequenceDiagram
 
 ## 4. Error States & Handling
 
-- **Timeout**: If Semantic Scholar API takes > 8 seconds, abort and return a 504 status. Frontend displays: "Database timeout. Please try again."
+- **Timeout**: If OpenAlex API takes > 8 seconds, abort and return a 504 status. Frontend displays: "Database timeout. Please try again."
 - **Empty Results**: If 0 journals are found, do NOT call Gemini. Immediately return 200 OK with synthesis: "No relevant papers found." and empty references.

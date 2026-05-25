@@ -11,7 +11,7 @@ const phaseConfig: Record<
 > = {
   searching: {
     icon: <BookOpen className="w-5 h-5 text-fuenzer-cyan-dark" />,
-    message: 'Searching Semantic Scholar...',
+    message: 'Searching OpenAlex...',
     subtext: 'Retrieving the latest academic references',
   },
   filtering: {

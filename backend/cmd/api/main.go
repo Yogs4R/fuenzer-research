@@ -8,7 +8,7 @@ import (
 	"fuenzer-research/backend/internal/config"
 	"fuenzer-research/backend/internal/handlers"
 	"fuenzer-research/backend/internal/services/gemini"
-	"fuenzer-research/backend/internal/services/scholar"
+	"fuenzer-research/backend/internal/services/openalex"
 	"fuenzer-research/backend/internal/services/sinta"
 
 	"github.com/gofiber/fiber/v2"
@@ -22,7 +22,7 @@ func main() {
 	cfg := config.Load()
 
 	// Initialize services
-	scholarClient := scholar.NewClient()
+	openalexClient := openalex.NewClient()
 	geminiClient := gemini.NewClient(cfg.GeminiAPIKey)
 
 	// Resolve sinta_data.json path — check multiple locations
@@ -33,7 +33,7 @@ func main() {
 	}
 
 	// Initialize handler
-	researchHandler := handlers.NewResearchHandler(scholarClient, geminiClient, sintaMapper)
+	researchHandler := handlers.NewResearchHandler(openalexClient, geminiClient, sintaMapper)
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{

@@ -13,7 +13,7 @@ This document tracks the execution of Epics and User Stories for the MVP.
 | **E1: Core Architecture** | Setup Monorepo (Frontend Vite + Backend Fiber) | `[x]` Done | Amelia / Dev | Strict folder structure enforced |
 | **E1: Core Architecture** | Setup Dockerfile for Cloud Run | `[x]` Done | Amelia / Dev | Multi-stage build (Node 20 + Go 1.22 + Alpine) |
 | **E1: Core Architecture** | Configure Tailwind v4 with Fuenzer design tokens | `[x]` Done | Amelia / Dev | @theme block, Playfair + Inter fonts |
-| **E2: Backend Gateway** | Implement Semantic Scholar API integration | `[x]` Done | Amelia / Dev | 8s timeout, query modification for Indonesia scope |
+| **E2: Backend Gateway** | Implement OpenAlex API integration | `[x]` Done | Amelia / Dev | 8s timeout, query modification for Indonesia scope |
 | **E2: Backend Gateway** | Implement SINTA Dictionary Mapper (`sinta_data.json`) | `[x]` Done | Amelia / Dev | 110+ journals, 20+ disciplines, case-insensitive matching |
 | **E2: Backend Gateway** | Implement Gemini AI Synthesis Prompt | `[x]` Done | Amelia / Dev | Temperature 0.3, token economy, safety settings |
 | **E2: Backend Gateway** | Create Research Handler (orchestration) | `[x]` Done | Amelia / Dev | Scholar → SINTA → Gemini flow, short-circuit on empty |

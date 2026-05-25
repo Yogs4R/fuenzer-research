@@ -25,7 +25,7 @@ shadcn/ui defaults to a very "Vercel-like" aesthetic. You MUST modify the genera
 
 - **Instant Feedback**: When a user hits "Search", transition immediately to the Playground screen. Do NOT wait for the API response on the Landing Page.
 - **Narrative Skeletons**: While the backend processes the data (which takes 2-4 seconds), the Playground screen MUST display Skeleton components that tell a story. Instead of just blinking grey boxes, show a progress sequence:
-  - Phase 1: "Mencari di Semantic Scholar..."
+  - Phase 1: "Mencari di OpenAlex..."
   - Phase 2: "Memfilter dataset jurnal lokal..."
   - Phase 3: "Menganalisis dan menyusun sintesis dengan AI..."
   This makes the waiting experience feel premium and high-end.

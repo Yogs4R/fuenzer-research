@@ -8,7 +8,7 @@
 - **State Management**: Zustand (for global state like selected SINTA filters) + React Query (for caching API responses from the backend).
 - **Backend Framework**: Golang 1.22+ using Fiber (Express-inspired, extremely fast HTTP engine).
 - **AI Engine**: Google Gemini 1.5 Flash (via Google Gen AI SDK for Go).
-- **External Data Source**: Semantic Scholar API.
+- **External Data Source**: OpenAlex API.
 - **Deployment**: Dockerized containers on Google Cloud Run.
 
 ## 2. System Architecture Diagram
@@ -19,7 +19,7 @@ graph TD
     User[User / Researcher]
     FE[React Frontend]
     BE[Golang Fiber Gateway]
-    Scholar[Semantic Scholar API]
+    Scholar[OpenAlex API]
     SintaMap[sinta_data.json Dictionary]
     Gemini[Google Gemini 1.5 Flash]
 
@@ -72,7 +72,7 @@ You MUST strictly follow this folder architecture. Do not deviate or create redu
 │   │   ├── /models        # Go structs for JSON parsing (AcademicSource, SynthesisResponse)
 │   │   ├── /services      # Core business logic
 │   │   │   ├── /gemini    # AI Prompt construction & SDK calls
-│   │   │   ├── /scholar   # Semantic Scholar API integration
+│   │   │   ├── /openalex   # OpenAlex API integration
 │   │   │   └── /sinta     # Local dictionary mapper for SINTA tiers
 │   │   └── /utils         # Helper functions
 │   ├── /data

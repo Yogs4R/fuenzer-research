@@ -11,7 +11,7 @@ Built for **JuaraVibeCoding** Hackathon by Google.
 
 ## ✨ Features
 
-- 🔍 **Pencarian Global** — Akses 200M+ paper dari Semantic Scholar
+- 🔍 **Pencarian Global** — Akses 200M+ paper dari OpenAlex
 - 🇮🇩 **Filter SINTA** — Identifikasi otomatis tier jurnal Indonesia (SINTA 1-6)
 - 🤖 **Sintesis AI** — Google Gemini 2.5 Flash menganalisis abstrak & menghasilkan ringkasan akademis
 - ⚡ **Real-time** — Dari query ke sintesis dalam <5 detik
@@ -26,7 +26,7 @@ Built for **JuaraVibeCoding** Hackathon by Google.
 | State | Zustand, React Query |
 | Backend | Golang 1.22+, Fiber |
 | AI Engine | Google Gemini 2.5 Flash |
-| Data Source | Semantic Scholar API |
+| Data Source | OpenAlex API |
 | Deployment | Docker, Google Cloud Run |
 
 ## 🚀 Getting Started
@@ -86,7 +86,7 @@ docker run -p 8080:8080 -e GEMINI_API_KEY=your_key fuenzer-research
 │   │   ├── /models     # [Models] Struktur data inti aplikasi (Go Structs)
 │   │   └── /services   # [Logic] Logika bisnis utama
 │   │       ├── /gemini   # [AI Engine] Sintesis data dengan Google Gemini API
-│   │       ├── /scholar  # [Data Source] Pencarian literatur Semantic Scholar
+│   │       ├── /openalex  # [Data Source] Pencarian literatur OpenAlex
 │   │       └── /sinta    # [Mapper] Penentuan peringkat jurnal SINTA (1-6)
 │   └── /data           # [Static] Direktori data pendukung (sinta_data.json)
 ├── /docs               # [Documentation] Kumpulan dokumen arsitektur teknis

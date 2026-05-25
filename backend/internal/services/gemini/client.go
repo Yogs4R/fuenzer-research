@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	modelName      = "gemini-2.5-flash"
+	modelName      = "gemini-3.1-flash-lite"
 	temperature    = 0.3
 	requestTimeout = 15 * time.Second
 )

@@ -6,7 +6,7 @@ import (
 
 	"fuenzer-research/backend/internal/models"
 	"fuenzer-research/backend/internal/services/gemini"
-	"fuenzer-research/backend/internal/services/scholar"
+	"fuenzer-research/backend/internal/services/openalex"
 	"fuenzer-research/backend/internal/services/sinta"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,17 +14,17 @@ import (
 
 // ResearchHandler holds dependencies for the research endpoint.
 type ResearchHandler struct {
-	scholarClient *scholar.Client
-	geminiClient  *gemini.Client
-	sintaMapper   *sinta.Mapper
+	openalexClient *openalex.Client
+	geminiClient   *gemini.Client
+	sintaMapper    *sinta.Mapper
 }
 
 // NewResearchHandler creates a new handler with all service dependencies.
-func NewResearchHandler(sc *scholar.Client, gc *gemini.Client, sm *sinta.Mapper) *ResearchHandler {
+func NewResearchHandler(oc *openalex.Client, gc *gemini.Client, sm *sinta.Mapper) *ResearchHandler {
 	return &ResearchHandler{
-		scholarClient: sc,
-		geminiClient:  gc,
-		sintaMapper:   sm,
+		openalexClient: oc,
+		geminiClient:   gc,
+		sintaMapper:    sm,
 	}
 }
 
@@ -58,8 +58,8 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 		})
 	}
 
-	// Step 1: Fetch papers from Semantic Scholar
-	papers, err := h.scholarClient.Search(req.Query, req.Scope)
+	// Step 1: Fetch works from OpenAlex
+	papers, err := h.openalexClient.Search(req.Query, req.Scope)
 	if err != nil {
 		// Timeout or API failure — return 504
 		return c.Status(fiber.StatusGatewayTimeout).JSON(fiber.Map{
@@ -76,37 +76,37 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 		})
 	}
 
-	// Step 2: Convert ScholarPaper → AcademicSource
+	// Step 2: Convert OpenAlexWork → AcademicSource
 	sources := make([]models.AcademicSource, 0, len(papers))
 	for _, p := range papers {
-		publisher := p.Venue
-		if p.Journal != nil && p.Journal.Name != "" {
-			publisher = p.Journal.Name
+		publisher := "OpenAlex Resource"
+		url := p.ID // default URL
+		if p.PrimaryLocation != nil {
+			if p.PrimaryLocation.Source != nil && p.PrimaryLocation.Source.DisplayName != "" {
+				publisher = p.PrimaryLocation.Source.DisplayName
+			}
+			if p.PrimaryLocation.LandingPageURL != "" {
+				url = p.PrimaryLocation.LandingPageURL
+			}
 		}
 
-		authors := make([]string, 0, len(p.Authors))
-		for _, a := range p.Authors {
-			authors = append(authors, a.Name)
+		authors := make([]string, 0, len(p.Authorships))
+		for _, a := range p.Authorships {
+			authors = append(authors, a.Author.DisplayName)
 		}
+
+		// Decode the abstract from inverted index
+		abstract := openalex.DecodeAbstract(p.AbstractInvertedIndex)
 
 		source := models.AcademicSource{
-			ID:        p.PaperId,
+			ID:        p.ID,
 			Title:     p.Title,
 			Authors:   authors,
-			Year:      p.Year,
+			Year:      p.PublicationYear,
 			Publisher: publisher,
-			Abstract:  p.Abstract,
-			URL:       p.URL,
+			Abstract:  abstract,
+			URL:       url,
 			Indexes:   []models.IndexEntry{},
-		}
-
-		// Build DOI URL if available
-		if p.ExternalIds != nil {
-			if doi, ok := p.ExternalIds["DOI"]; ok {
-				if doiStr, ok := doi.(string); ok && doiStr != "" {
-					source.URL = "https://doi.org/" + doiStr
-				}
-			}
 		}
 
 		sources = append(sources, source)
