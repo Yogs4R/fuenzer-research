@@ -1,15 +1,22 @@
 export function HeroBackground() {
   return (
     <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none h-full">
-      {/* Grid Pattern — capped to top 45% of the page, fades out at bottom */}
-      <div
-        className="absolute inset-x-0 top-0 bg-[linear-gradient(to_right,#80808018_1px,transparent_1px),linear-gradient(to_bottom,#80808018_1px,transparent_1px)] bg-size-[72px_72px]"
+      {/* Grid Pattern — capped height to stop before Why Choose, fades out at bottom, clear center corridor */}
+      <div 
+        className="absolute inset-x-0 top-0 h-[1100px]"
         style={{
-          height: '45%',
-          maskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, black 0%, black 70%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 70%, transparent 100%)',
         }}
-      />
+      >
+        <div
+          className="absolute inset-0 bg-[linear-gradient(to_right,#80808018_1px,transparent_1px),linear-gradient(to_bottom,#80808018_1px,transparent_1px)] bg-size-[72px_72px]"
+          style={{
+            maskImage: 'linear-gradient(to right, black 0%, black 15%, transparent 30%, transparent 70%, black 85%, black 100%)',
+            WebkitMaskImage: 'linear-gradient(to right, black 0%, black 15%, transparent 30%, transparent 70%, black 85%, black 100%)',
+          }}
+        />
+      </div>
 
       {/* Animated Data Points — confined to top 40% */}
       <div className="absolute top-[8%] left-[5%] w-3 h-3 rounded-full bg-fuenzer-teal/40 animate-pulse" />

@@ -38,11 +38,17 @@
   --shadow-subtle-2: color(display-p3 0.984314 0.984314 0.984314) 0px 0px 0px 8px;
 
   --animate-progress: progress 2s ease-in-out infinite;
+  --animate-progress-vertical: progress-vertical 2s ease-in-out infinite;
   --animate-marquee: marquee 20s linear infinite;
 
   @keyframes progress {
     0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    100% { transform: translateX(200%); }
+  }
+
+  @keyframes progress-vertical {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(200%); }
   }
 
   @keyframes marquee {

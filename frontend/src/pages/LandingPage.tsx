@@ -7,6 +7,7 @@ import { id } from '../locales/id';
 import { Navbar } from '../components/shared/Navbar';
 import { HeroBackground } from '../components/home/HeroBackground';
 import { CustomDropdown } from '../components/shared/CustomDropdown';
+import { NumberScramble } from '../components/shared/NumberScramble';
 import {
   BookOpen,
   ArrowRight,
@@ -14,9 +15,18 @@ import {
   Zap,
   Network,
   Bell,
-  ChevronUp,
   ChevronDown,
+  Search,
+  Cpu,
+  FileText
 } from 'lucide-react';
+
+import sintaLogo from '../assets/logos/sinta.webp';
+import garudaLogo from '../assets/logos/garuda.webp';
+import googleScholarLogo from '../assets/logos/googlescholar.webp';
+import scopusLogo from '../assets/logos/scopus.webp';
+import scimagoLogo from '../assets/logos/scimago.webp';
+import googleBooksLogo from '../assets/logos/googlebooks.webp';
 
 export function LandingPage() {
   const navigate = useNavigate();
@@ -31,6 +41,15 @@ export function LandingPage() {
   const rotatingWords = ['Research', 'Journals', 'Articles', 'Books'];
   const [rotatingIndex, setRotatingIndex] = useState(0);
   const [rotatingKey, setRotatingKey] = useState(0);
+
+  const accreditedSources = [
+    { name: 'SINTA', src: sintaLogo },
+    { name: 'GARUDA', src: garudaLogo },
+    { name: 'Google Scholar', src: googleScholarLogo },
+    { name: 'Scopus', src: scopusLogo },
+    { name: 'Scimago', src: scimagoLogo },
+    { name: 'Google Books', src: googleBooksLogo },
+  ];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -162,58 +181,164 @@ export function LandingPage() {
       </section>
 
       {/* Stats & Logos */}
-      <section className="max-w-5xl mx-auto px-6 pb-20 pt-10 text-center border-b border-cloud-canvas dark:border-stone-gray">
-        <div className="grid grid-cols-3 gap-8 mb-16 font-sans">
+      <section className="max-w-6xl mx-auto px-6 pb-20 pt-10 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20 font-sans">
           <div>
-            <p className="text-3xl font-bold font-serif dark:text-paper-white">50M+</p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2">{t.hero.stats.parsed}</p>
+            <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
+              <NumberScramble value="150M+" duration={1500} />
+            </p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">Global Publications</p>
           </div>
           <div>
-            <p className="text-3xl font-bold font-serif dark:text-paper-white">S1 - S6</p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2">{t.hero.stats.sinta}</p>
+            <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
+              <NumberScramble value="S1-S6" duration={1700} />
+            </p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">Sinta Accredited</p>
           </div>
           <div>
-            <p className="text-3xl font-bold font-serif dark:text-paper-white">&lt;100MS</p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2">{t.hero.stats.time}</p>
+            <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
+              <NumberScramble value="100%" duration={1900} />
+            </p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">AI-Assisted Synthesis</p>
+          </div>
+          <div>
+            <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
+              <NumberScramble value="5+" duration={2100} />
+            </p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">Supported Databases</p>
           </div>
         </div>
         
-        <p className="text-[10px] uppercase tracking-widest text-silver-mist mb-8 font-sans">ACCREDITED SOURCES</p>
-        <div className="flex flex-wrap justify-center items-center gap-16 opacity-50 dark:opacity-40">
-          <span className="text-2xl font-bold tracking-wide">SINTA</span>
-          <span className="text-2xl font-bold tracking-wide">GARUDA</span>
-          <span className="text-2xl font-bold tracking-wide">ARJUNA</span>
-          <span className="text-xl font-bold tracking-wide leading-tight text-left">Global<br/>Indexing</span>
+        <div className="flex flex-col items-center gap-4 font-sans w-full max-w-4xl mx-auto overflow-hidden">
+          <span className="text-[10px] font-semibold text-slate-gray dark:text-stone-gray uppercase tracking-widest">
+            Accredited Sources
+          </span>
+          <div className="relative flex w-full overflow-hidden" style={{maskImage:'linear-gradient(to right, transparent, black 15%, black 85%, transparent)'}}>
+            <div className="marquee-track flex w-max gap-12 whitespace-nowrap items-center py-4 opacity-70 dark:opacity-60">
+              {/* Duplicated for seamless marquee loop */}
+              {[...accreditedSources, ...accreditedSources].map((source, i) => (
+                <div key={i} className="flex items-center justify-center grayscale hover:grayscale-0 transition-all cursor-pointer px-4">
+                  <img 
+                    src={source.src} 
+                    alt={source.name} 
+                    className="h-8 md:h-10 w-auto object-contain max-w-[150px] drop-shadow-sm" 
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* The Future of Academic Inquiry */}
-      <section id="about" className="max-w-3xl mx-auto px-6 py-24 text-center">
-        <div className="bg-paper-white dark:bg-ink-black p-12 rounded-2xl shadow-xl border border-cloud-canvas dark:border-stone-gray transition-colors">
-          <h2 className="text-3xl font-bold mb-6 dark:text-paper-white">The Future of Academic Inquiry</h2>
-          <p className="text-stone-gray dark:text-silver-mist leading-relaxed font-sans">
-            Fuenzer Research is on a mission to bridge the gap between advanced artificial intelligence and traditional academic research. We provide scholars with the tools to navigate massive datasets effortlessly, extract meaningful insights, and synthesize knowledge faster than ever before.
-          </p>
+      <section id="about" className="max-w-6xl mx-auto px-6 py-24">
+        <div className="relative bg-paper-white dark:bg-[#1A1A1A] rounded-4xl shadow-xl border border-cloud-canvas dark:border-stone-gray overflow-hidden group">
+          {/* Subtle animated background gradient */}
+          <div className="absolute inset-0 opacity-20 dark:opacity-10 bg-[radial-gradient(circle_at_top_right,var(--tw-gradient-stops))] from-fuenzer-teal/40 via-transparent to-transparent transition-opacity duration-700 group-hover:opacity-40" />
+          
+          <div className="relative p-10 md:p-16 flex flex-col md:flex-row items-center gap-12">
+            <div className="flex-1 space-y-6 text-center md:text-left">
+              <h2 className="text-4xl md:text-5xl font-bold leading-tight dark:text-paper-white">
+                The Future of <br className="hidden md:block" />
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-fuenzer-teal to-fuenzer-teal-dark">
+                  Academic Inquiry
+                </span>
+              </h2>
+              <p className="text-lg text-stone-gray dark:text-silver-mist leading-relaxed font-sans max-w-2xl">
+                Fuenzer Research is an AI-powered scientific discovery engine designed to bridge the gap between traditional research methodologies and advanced artificial intelligence. We empower scholars, researchers, and students to navigate massive academic datasets, instantly synthesize complex papers, and uncover deep insights across millions of publications.
+              </p>
+            </div>
+            
+            {/* Visual element on the right */}
+            <div className="flex-1 w-full max-w-md relative aspect-square md:aspect-auto md:h-80 rounded-2xl border border-cloud-canvas dark:border-stone-gray/50 bg-[#F1F5F9] dark:bg-[#121212] overflow-hidden flex items-center justify-center">
+              {/* Decorative nodes */}
+              <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-fuenzer-teal/30 dark:bg-fuenzer-teal/20 rounded-full blur-2xl animate-pulse" />
+              <div className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-code-blue/30 dark:bg-code-blue/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+              
+              <div className="relative z-10 grid grid-cols-2 gap-4 p-8 w-full">
+                <div className="bg-white/80 dark:bg-black/40 backdrop-blur-md rounded-xl p-4 shadow-lg border border-white/50 dark:border-white/10 transform translate-y-4 group-hover:-translate-y-2 transition-transform duration-500">
+                  <div className="h-2 w-12 bg-cloud-canvas dark:bg-stone-gray rounded-full mb-3" />
+                  <div className="h-2 w-full bg-slate-200 dark:bg-stone-gray/50 rounded-full mb-2" />
+                  <div className="h-2 w-4/5 bg-slate-200 dark:bg-stone-gray/50 rounded-full" />
+                </div>
+                <div className="bg-white/80 dark:bg-black/40 backdrop-blur-md rounded-xl p-4 shadow-lg border border-white/50 dark:border-white/10 transform -translate-y-2 group-hover:translate-y-2 transition-transform duration-500 delay-100">
+                  <div className="h-2 w-16 bg-fuenzer-teal/50 rounded-full mb-3" />
+                  <div className="h-2 w-full bg-slate-200 dark:bg-stone-gray/50 rounded-full mb-2" />
+                  <div className="h-2 w-5/6 bg-slate-200 dark:bg-stone-gray/50 rounded-full" />
+                </div>
+                <div className="bg-white/80 dark:bg-black/40 backdrop-blur-md rounded-xl p-4 shadow-lg border border-white/50 dark:border-white/10 transform translate-y-2 group-hover:-translate-y-1 transition-transform duration-500 delay-150 col-span-2 flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full bg-fuenzer-teal/20 flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-fuenzer-teal" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-2 w-24 bg-cloud-canvas dark:bg-stone-gray rounded-full mb-2" />
+                    <div className="h-2 w-full bg-slate-200 dark:bg-stone-gray/50 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Why Choose */}
-      <section id="features" className="max-w-6xl mx-auto px-6 py-12 text-center">
-        <h2 className="text-3xl font-bold mb-12 dark:text-paper-white">Why Choose Fuenzer Research?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <section id="features" className="max-w-6xl mx-auto px-6 py-12">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold dark:text-paper-white mb-4">Why Choose Fuenzer Research?</h2>
+          <p className="text-slate-gray dark:text-silver-mist font-sans max-w-2xl mx-auto">Built for modern academics, our platform combines extensive database coverage with cutting-edge AI to streamline your research workflow.</p>
+        </div>
+        
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)]">
           {[
-            { icon: <BookOpen className="w-5 h-5 text-fuenzer-teal" />, title: 'SINTA-Ready Data', desc: 'Direct integration with recognized national databases ensuring your sources meet institutional standards.' },
-            { icon: <Zap className="w-5 h-5 text-fuenzer-teal" />, title: 'AI Synthesis', desc: 'Beyond search: our AI models help connect dots across disparate papers, summarizing findings rapidly.' },
-            { icon: <Globe className="w-5 h-5 text-fuenzer-teal" />, title: 'Global Reach', desc: 'Access millions of open-access articles worldwide, seamlessly integrated with local contexts.' },
-            { icon: <Bell className="w-5 h-5 text-fuenzer-teal" />, title: 'Real-time Updates', desc: 'Stay ahead with continuous indexing of the latest publications and preprint servers.' },
-            { icon: <Network className="w-5 h-5 text-fuenzer-teal" />, title: 'Cross-disciplinary Links', desc: 'Discover hidden connections between different fields of study through AI-driven semantic mapping.' },
+            { icon: <BookOpen className="w-6 h-6 text-fuenzer-teal" />, title: 'SINTA-Ready Data', desc: 'Direct integration with recognized national databases ensuring your sources meet institutional standards.', className: 'lg:col-span-1 lg:row-span-1' },
+            { icon: <Zap className="w-6 h-6 text-fuenzer-teal" />, title: 'AI Synthesis', desc: 'Beyond search: our AI models help connect dots across disparate papers, summarizing findings rapidly without losing academic rigor.', className: 'lg:col-span-1 lg:row-span-1' },
+            { 
+              icon: <Globe className="w-6 h-6 text-fuenzer-teal" />, 
+              title: 'Global Reach', 
+              desc: 'Access millions of open-access articles worldwide, seamlessly integrated with local contexts. Never miss a critical international paper again.', 
+              className: 'md:col-span-2 lg:col-span-1 lg:row-span-2 flex flex-col',
+              visual: (
+                <div className="mt-8 flex-1 flex flex-col items-center justify-center relative min-h-[160px] opacity-80 group-hover:opacity-100 transition-opacity">
+                  {/* Orbiting rings */}
+                  <div className="absolute w-32 h-32 border border-fuenzer-teal/20 rounded-full animate-[spin_10s_linear_infinite]" />
+                  <div className="absolute w-24 h-24 border border-fuenzer-teal/30 rounded-full animate-[spin_8s_linear_infinite_reverse]" />
+                  <Globe className="w-10 h-10 text-fuenzer-teal/50" />
+                  
+                  {/* Floating tags */}
+                  <div className="absolute w-full flex justify-between px-6">
+                    <span className="px-2.5 py-1 rounded-full bg-slate-100/80 dark:bg-[#2A2A2A]/80 backdrop-blur-sm text-[10px] font-bold text-slate-700 dark:text-paper-white shadow-sm animate-[bounce_3s_infinite]">IDN</span>
+                    <span className="px-2.5 py-1 rounded-full bg-slate-100/80 dark:bg-[#2A2A2A]/80 backdrop-blur-sm text-[10px] font-bold text-slate-700 dark:text-paper-white shadow-sm animate-[bounce_4s_infinite]" style={{animationDelay:'0.5s'}}>USA</span>
+                  </div>
+                  <div className="absolute top-0 w-full flex justify-center">
+                    <span className="px-2.5 py-1 rounded-full bg-fuenzer-teal/10 border border-fuenzer-teal/20 text-[10px] font-bold text-fuenzer-teal animate-[pulse_3s_infinite]">Global</span>
+                  </div>
+                </div>
+              )
+            },
+            { icon: <Bell className="w-6 h-6 text-fuenzer-teal" />, title: 'Real-time Updates', desc: 'Stay ahead with continuous indexing of the latest publications and preprint servers.', className: 'lg:col-span-1 lg:row-span-1' },
+            { icon: <Network className="w-6 h-6 text-fuenzer-teal" />, title: 'Cross-disciplinary Links', desc: 'Discover hidden connections between different fields of study through AI-driven semantic mapping.', className: 'lg:col-span-1 lg:row-span-1' },
           ].map((item, i) => (
-            <div key={i} className="bg-paper-white dark:bg-ink-black p-6 rounded-2xl shadow-sm border border-cloud-canvas dark:border-stone-gray hover:shadow-xl transition-all flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-fuenzer-teal/10 flex items-center justify-center mb-4">
+            <div key={i} className={`group relative bg-paper-white dark:bg-[#1A1A1A] p-8 rounded-3xl shadow-sm border border-cloud-canvas dark:border-stone-gray hover:shadow-xl hover:-translate-y-1 hover:border-fuenzer-teal/30 transition-all duration-300 overflow-hidden ${item.className}`}>
+              {/* Subtle hover gradient */}
+              <div className="absolute inset-0 bg-linear-to-br from-fuenzer-teal/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              {/* Abstract Large Icon Background */}
+              <div className="absolute -bottom-6 -right-6 opacity-[0.03] dark:opacity-[0.02] scale-[8] group-hover:scale-[10] group-hover:text-fuenzer-teal transition-all duration-700 pointer-events-none">
                 {item.icon}
               </div>
-              <h3 className="font-bold text-sm mb-3 dark:text-paper-white">{item.title}</h3>
-              <p className="text-[11px] text-slate-gray dark:text-silver-mist leading-relaxed text-center font-sans">{item.desc}</p>
+
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="text-fuenzer-teal transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                    {item.icon}
+                  </div>
+                  <h3 className="font-bold text-xl dark:text-paper-white group-hover:text-fuenzer-teal transition-colors">{item.title}</h3>
+                </div>
+                <p className="text-sm text-slate-gray dark:text-silver-mist leading-relaxed font-sans flex-1">{item.desc}</p>
+                {/* @ts-ignore */}
+                {item.visual && item.visual}
+              </div>
             </div>
           ))}
         </div>
@@ -222,19 +347,34 @@ export function LandingPage() {
       {/* Workflow */}
       <section id="workflow" className="max-w-4xl mx-auto px-6 py-24 text-center">
         <h2 className="text-3xl font-bold mb-16 dark:text-paper-white">From Query to Synthesis</h2>
-        <div className="relative flex flex-col md:flex-row justify-between items-center">
-          <div className="hidden md:block absolute top-6 left-16 right-16 h-px bg-cloud-canvas dark:bg-stone-gray -z-10" />
+        <div className="relative z-0 flex flex-col md:flex-row justify-center gap-12 md:gap-8 lg:gap-16 items-center w-full py-8">
+          
+          {/* Animated connection lines (Desktop) */}
+          <div className="hidden md:block absolute top-1/2 -translate-y-1/2 left-[10%] right-[10%] h-[2px] z-0 bg-cloud-canvas dark:bg-stone-gray/30 overflow-hidden rounded-full">
+            <div className="absolute inset-0 h-full bg-[linear-gradient(90deg,transparent_0%,var(--color-fuenzer-teal)_50%,transparent_100%)] w-1/2 animate-[progress_3s_linear_infinite]" />
+          </div>
+
+          {/* Animated connection lines (Mobile) */}
+          <div className="md:hidden absolute left-1/2 -translate-x-1/2 top-[15%] bottom-[15%] w-[2px] z-0 bg-cloud-canvas dark:bg-stone-gray/30 overflow-hidden rounded-full">
+            <div className="absolute inset-0 w-full bg-[linear-gradient(180deg,transparent_0%,var(--color-fuenzer-teal)_50%,transparent_100%)] h-1/2 animate-[progress-vertical_3s_linear_infinite]" />
+          </div>
+
           {[
-            { step: '1', title: 'Search Topic', desc: 'Query global and local databases simultaneously.' },
-            { step: '2', title: 'Analyze with AI', desc: 'Use Fuenzer AI to extract key findings and data.' },
-            { step: '3', title: 'Export Synthesis', desc: 'Generate structured literature reviews or summaries.' },
+            { step: '1', title: 'User Input', desc: 'Query global & local databases simultaneously using natural language.', icon: <Search className="w-6 h-6" /> },
+            { step: '2', title: 'AI Processing', desc: 'Fuenzer models extract, connect, and cross-reference research data.', icon: <Cpu className="w-6 h-6" /> },
+            { step: '3', title: 'Synthesis Output', desc: 'Generate structured, accurate literature reviews instantly.', icon: <FileText className="w-6 h-6" /> },
           ].map((item) => (
-            <div key={item.step} className="flex flex-col items-center bg-cloud-canvas dark:bg-[#121212] px-4 mb-8 md:mb-0 transition-colors">
-              <div className="w-12 h-12 rounded-full bg-fuenzer-teal/20 text-fuenzer-teal-dark dark:text-fuenzer-teal font-bold text-xl flex items-center justify-center mb-4">
-                {item.step}
+            <div key={item.step} className="relative flex flex-col items-center bg-paper-white dark:bg-[#1A1A1A] p-8 rounded-3xl border border-cloud-canvas dark:border-stone-gray shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-fuenzer-teal/40 transition-all duration-300 w-full md:w-80 mb-8 md:mb-0 z-10 group">
+              <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-fuenzer-teal/10 to-transparent border border-fuenzer-teal/20 text-fuenzer-teal flex items-center justify-center mb-6 relative overflow-hidden group-hover:scale-110 transition-transform duration-500">
+                {/* scanning effect inside icon */}
+                <div className="absolute inset-0 bg-linear-to-b from-transparent via-fuenzer-teal/20 dark:via-fuenzer-teal/40 to-transparent -translate-y-full group-hover:animate-[slideInFromTop_1.5s_infinite]" />
+                {item.icon}
               </div>
-              <h3 className="font-bold text-lg mb-2 dark:text-paper-white">{item.title}</h3>
-              <p className="text-xs text-slate-gray dark:text-silver-mist font-sans">{item.desc}</p>
+              <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-paper-white dark:bg-[#1A1A1A] border border-cloud-canvas dark:border-stone-gray flex items-center justify-center text-xs font-bold text-slate-gray dark:text-silver-mist shadow-sm">
+                0{item.step}
+              </div>
+              <h3 className="font-bold text-xl mb-3 dark:text-paper-white group-hover:text-fuenzer-teal transition-colors text-center">{item.title}</h3>
+              <p className="text-sm text-slate-gray dark:text-silver-mist font-sans text-center leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -245,10 +385,11 @@ export function LandingPage() {
         <h2 className="text-3xl font-bold text-center mb-12 dark:text-paper-white">Frequently Asked Questions</h2>
         <div className="space-y-4">
           {[
-            { q: 'What is SINTA integration?', a: "SINTA integration allows you to directly search and filter articles from Indonesia's Science and Technology Index, ensuring you find accredited local research easily." },
-            { q: 'How does the AI simplify jargon?', a: 'Our models process complex academic texts and generate accessible summaries, highlighting key methodologies and findings without the dense terminology.' },
-            { q: 'Is my data secure?', a: 'Yes, all your queries and generated reviews are private. We use industry-standard encryption and do not train our public models on your personal data.' },
-            { q: 'Can I export to LaTeX?', a: 'Currently, we support exporting synthesis and citations in Word, PDF, and standard BibTeX formats, which can be easily integrated into LaTeX workflows.' },
+            { q: 'What is Fuenzer Research?', a: 'Fuenzer Research is an AI-powered scientific discovery engine that bridges traditional research methodologies with advanced artificial intelligence, helping scholars navigate massive academic datasets and synthesize complex papers.' },
+            { q: 'How does the SINTA integration work?', a: 'We provide direct integration with recognized national databases like SINTA and GARUDA, ensuring your sources meet institutional standards while also accessing global repositories like Scopus and Google Scholar.' },
+            { q: 'Can the AI synthesize findings accurately?', a: 'Yes, our AI models are specifically tuned for academic rigor. They connect dots across disparate papers and summarize findings rapidly without losing critical academic context or hallucinating facts.' },
+            { q: 'Is my data and research secure?', a: 'Absolutely. All your queries and generated literature reviews are private. We use industry-standard encryption and guarantee that your personal research data is never used to train our public models.' },
+            { q: 'In what formats can I export my synthesis?', a: 'You can export your structured literature reviews, citations, and summaries in Word, PDF, and standard BibTeX formats, which seamlessly integrate into LaTeX workflows and reference managers.' },
           ].map((item, i) => (
             <div key={i} className="bg-paper-white dark:bg-ink-black rounded-xl shadow-sm border border-cloud-canvas dark:border-stone-gray overflow-hidden transition-colors">
               <button
@@ -259,15 +400,12 @@ export function LandingPage() {
                   <span className="italic font-bold text-xs font-serif">i</span>
                 </div>
                 <span className="font-bold text-sm flex-1 dark:text-paper-white">{item.q}</span>
-                <div className={`shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-all duration-300 ${
+                <div className={`shrink-0 w-6 h-6 flex items-center justify-center transition-transform duration-300 ${
                   openFaq === i 
-                    ? 'bg-fuenzer-teal text-white' 
+                    ? 'text-fuenzer-teal rotate-180' 
                     : 'text-stone-gray dark:text-silver-mist group-hover:text-fuenzer-teal'
                 }`}>
-                  {openFaq === i 
-                    ? <ChevronUp className="w-4 h-4" strokeWidth={2.5} />
-                    : <ChevronDown className="w-4 h-4" strokeWidth={2.5} />
-                  }
+                  <ChevronDown className="w-5 h-5" strokeWidth={2.5} />
                 </div>
               </button>
               {openFaq === i && (
