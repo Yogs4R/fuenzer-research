@@ -38,10 +38,26 @@
   --shadow-subtle-2: color(display-p3 0.984314 0.984314 0.984314) 0px 0px 0px 8px;
 
   --animate-progress: progress 2s ease-in-out infinite;
+  --animate-marquee: marquee 20s linear infinite;
 
   @keyframes progress {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  @keyframes word-flip-in {
+    0% { opacity: 0; transform: translateY(40%) scale(0.95); filter: blur(6px); }
+    100% { opacity: 1; transform: translateY(0%) scale(1); filter: blur(0); }
+  }
+
+  @keyframes word-flip-out {
+    0% { opacity: 1; transform: translateY(0%) scale(1); filter: blur(0); }
+    100% { opacity: 0; transform: translateY(-40%) scale(0.95); filter: blur(6px); }
   }
 }
 
@@ -88,6 +104,26 @@
 @keyframes slideInFromTop {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Marquee / Carousel */
+.marquee-track {
+  animation: marquee 20s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Rotating Word Animations */
+.word-flip-in {
+  display: inline-block;
+  animation: word-flip-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.word-flip-out {
+  display: inline-block;
+  animation: word-flip-out 0.3s cubic-bezier(0.55, 0, 1, 0.45) both;
 }
 
 /* Scrollbar styling */

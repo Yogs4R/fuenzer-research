@@ -9,12 +9,18 @@ import { searchResearch } from '../services/api';
 interface ResearchState {
   query: string;
   scope: SearchScope;
+  searchType: string;
+  searchLocation: string;
+  searchAccreditation: string;
   loadingPhase: LoadingPhase;
   response: ResearchResponse | null;
   error: string | null;
 
   setQuery: (query: string) => void;
   setScope: (scope: SearchScope) => void;
+  setSearchType: (type: string) => void;
+  setSearchLocation: (location: string) => void;
+  setSearchAccreditation: (accreditation: string) => void;
   executeSearch: () => Promise<void>;
   reset: () => void;
 }
@@ -22,12 +28,18 @@ interface ResearchState {
 export const useResearchStore = create<ResearchState>((set, get) => ({
   query: '',
   scope: 'global',
+  searchType: 'All',
+  searchLocation: 'Global',
+  searchAccreditation: 'Any',
   loadingPhase: 'idle',
   response: null,
   error: null,
 
   setQuery: (query: string) => set({ query }),
   setScope: (scope: SearchScope) => set({ scope }),
+  setSearchType: (type: string) => set({ searchType: type }),
+  setSearchLocation: (location: string) => set({ searchLocation: location }),
+  setSearchAccreditation: (accreditation: string) => set({ searchAccreditation: accreditation }),
 
   executeSearch: async () => {
     const { query, scope } = get();
@@ -62,6 +74,9 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     set({
       query: '',
       scope: 'global',
+      searchType: 'All',
+      searchLocation: 'Global',
+      searchAccreditation: 'Any',
       loadingPhase: 'idle',
       response: null,
       error: null,

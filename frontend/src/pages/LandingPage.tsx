@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResearchStore } from '../store/researchStore';
 import { useUiStore } from '../store/uiStore';
 import { en } from '../locales/en';
 import { id } from '../locales/id';
 import { Navbar } from '../components/shared/Navbar';
+import { HeroBackground } from '../components/home/HeroBackground';
+import { CustomDropdown } from '../components/shared/CustomDropdown';
 import {
   BookOpen,
   ArrowRight,
@@ -12,12 +14,52 @@ import {
   Zap,
   Network,
   Bell,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const { query, setQuery, executeSearch } = useResearchStore();
+  const { 
+    query, setQuery, executeSearch,
+    searchType, setSearchType,
+    searchLocation, setSearchLocation,
+    searchAccreditation, setSearchAccreditation
+  } = useResearchStore();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const rotatingWords = ['Research', 'Journals', 'Articles', 'Books'];
+  const [rotatingIndex, setRotatingIndex] = useState(0);
+  const [rotatingKey, setRotatingKey] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRotatingIndex((prev) => (prev + 1) % rotatingWords.length);
+      setRotatingKey((k) => k + 1);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getAccreditationOptions = () => {
+    if (searchLocation === 'Indonesia' && (searchType === 'Journals' || searchType === 'Articles')) {
+      return ['Global', 'SINTA', 'GARUDA'];
+    }
+    if (searchLocation === 'Indonesia' && searchType === 'Books') {
+      return ['Global', 'ARJUNA'];
+    }
+    if (searchLocation === 'Indonesia') {
+      return ['Global', 'SINTA', 'GARUDA', 'ARJUNA'];
+    }
+    return ['Global'];
+  };
+  const accreditationOptions = getAccreditationOptions();
+
+  // Auto-reset accreditation when type or location changes and current value is no longer valid
+  useEffect(() => {
+    if (!accreditationOptions.includes(searchAccreditation)) {
+      setSearchAccreditation('Global');
+    }
+  }, [searchType, searchLocation]);
   
   const { language } = useUiStore();
   const t = language === 'en' ? en : id;
@@ -33,51 +75,90 @@ export function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-cloud-canvas dark:bg-[#121212] text-ink-black dark:text-cloud-canvas font-serif transition-colors duration-200">
+    <div className="min-h-screen relative bg-cloud-canvas dark:bg-[#121212] text-ink-black dark:text-cloud-canvas font-serif transition-colors duration-200">
+      <HeroBackground />
       <Navbar mode="landing" />
 
       {/* Hero Section */}
-      <section className="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
-        <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6 dark:text-paper-white">
-          {t.hero.title}
-        </h1>
-        <p className="text-lg text-slate-gray dark:text-silver-mist max-w-2xl mx-auto mb-10 leading-relaxed font-light font-sans">
-          {t.hero.subtitle}
-        </p>
+      <section className="relative max-w-5xl mx-auto px-6 pt-24 pb-16 text-center z-10">
+        
+        <div className="relative z-10">
+          <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6 dark:text-paper-white flex flex-col items-center justify-center">
+            <span>Accelerate Your Academic</span>
+            <span className="relative overflow-hidden h-[1.3em] flex items-center justify-center text-fuenzer-teal mt-2">
+              <span key={rotatingKey} className="word-flip-in whitespace-nowrap">
+                {rotatingWords[rotatingIndex]}
+              </span>
+            </span>
+          </h1>
+          <p className="text-lg text-slate-gray dark:text-silver-mist max-w-2xl mx-auto mb-10 leading-relaxed font-sans">
+            Navigate millions of scientific papers with Fuenzer AI. Seamlessly search global databases and SINTA-indexed sources with unparalleled precision.
+          </p>
 
-        {/* Search Bar Container */}
-        <div className="max-w-3xl mx-auto relative group font-sans">
-          <div className="relative flex items-center bg-paper-white dark:bg-ink-black rounded-xl shadow-xl p-2 group-focus-within:ring-2 group-focus-within:ring-fuenzer-teal/50 transition-all border border-cloud-canvas dark:border-stone-gray">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={t.hero.searchPlaceholder}
-              className="flex-1 h-14 px-6 bg-transparent text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray outline-none text-lg"
-              maxLength={200}
-            />
-            <button
-              onClick={handleSearch}
-              disabled={query.trim().length < 3}
-              className="w-14 h-14 flex items-center justify-center rounded-lg bg-fuenzer-teal text-white hover:bg-fuenzer-teal-dark transition-colors disabled:opacity-50"
-            >
-              <ArrowRight className="w-6 h-6" strokeWidth={2} />
-            </button>
+          {/* Search Bar Container */}
+          <div className="max-w-3xl mx-auto relative group font-sans flex flex-col items-center">
+            
+            {/* Main Search Input */}
+            <div className="w-full relative flex items-center bg-paper-white dark:bg-ink-black rounded-xl shadow-xl p-2 group-focus-within:ring-2 group-focus-within:ring-fuenzer-teal/50 transition-all border border-cloud-canvas dark:border-stone-gray z-10 mb-4">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={t.hero.searchPlaceholder}
+                className="flex-1 h-14 px-6 bg-transparent text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray outline-none text-lg min-w-[200px]"
+                maxLength={200}
+              />
+              <button
+                onClick={handleSearch}
+                disabled={query.trim().length < 3}
+                className="w-14 h-14 flex items-center justify-center rounded-lg bg-fuenzer-teal text-white hover:bg-fuenzer-teal-dark transition-colors disabled:opacity-50"
+              >
+                <ArrowRight className="w-6 h-6" strokeWidth={2} />
+              </button>
+            </div>
+
+            {/* Dropdowns Below — relative z-20 so they appear above Popular Searches */}
+            <div className="flex flex-wrap justify-center gap-3 relative z-20">
+              <CustomDropdown
+                value={searchType}
+                onChange={setSearchType}
+                options={['All', 'Books', 'Journals', 'Articles']}
+              />
+
+              <CustomDropdown
+                value={searchLocation}
+                onChange={setSearchLocation}
+                options={['Global', 'Indonesia']}
+              />
+
+              <CustomDropdown
+                value={searchAccreditation}
+                onChange={setSearchAccreditation}
+                options={accreditationOptions}
+              />
+            </div>
+          </div>
+
+          {/* Popular Tags Marquee — z-10, mt-16 to clear dropdown panels */}
+          <div className="mt-16 flex flex-col items-center gap-4 font-sans w-full max-w-3xl mx-auto relative z-10">
+            <span className="text-[10px] font-semibold text-slate-gray dark:text-stone-gray uppercase tracking-widest">
+              Popular Searches
+            </span>
+            <div className="relative flex w-full overflow-hidden" style={{maskImage:'linear-gradient(to right, transparent, black 15%, black 85%, transparent)'}}>
+              <div className="marquee-track flex w-max gap-3 whitespace-nowrap">
+                {[...['Machine Learning', 'Climate Science', 'Economic Policy', 'Quantum Computing', 'Neuroscience', 'Renewable Energy', 'Bioinformatics', 'Nanotechnology'], ...['Machine Learning', 'Climate Science', 'Economic Policy', 'Quantum Computing', 'Neuroscience', 'Renewable Energy', 'Bioinformatics', 'Nanotechnology']].map((tag, i) => (
+                  <span 
+                    key={i} 
+                    className="px-4 py-1.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-paper-white text-xs font-bold border border-transparent hover:border-fuenzer-teal transition-all cursor-pointer shadow-sm select-none"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap justify-center gap-3 mt-6 font-sans">
-          {['Type: All', 'Location: Global', 'Accreditation: Any'].map((filter) => (
-            <span key={filter} className="px-4 py-1.5 rounded-full bg-paper-white dark:bg-ink-black text-stone-gray dark:text-silver-mist text-xs font-medium border border-cloud-canvas dark:border-stone-gray shadow-sm cursor-pointer hover:border-silver-mist dark:hover:border-slate-gray transition-colors">
-              {filter}
-            </span>
-          ))}
-        </div>
-        <p className="mt-4 text-xs text-silver-mist font-sans">
-          Popular: Machine Learning, Climate Science, Economic Policy
-        </p>
       </section>
 
       {/* Stats & Logos */}
@@ -172,12 +253,22 @@ export function LandingPage() {
             <div key={i} className="bg-paper-white dark:bg-ink-black rounded-xl shadow-sm border border-cloud-canvas dark:border-stone-gray overflow-hidden transition-colors">
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="w-full flex items-center gap-4 px-6 py-5 text-left hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-colors font-sans"
+                className="w-full flex items-center gap-4 px-6 py-5 text-left hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-colors font-sans group"
               >
-                <div className="w-6 h-6 rounded-full border border-fuenzer-teal text-fuenzer-teal flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-full bg-fuenzer-teal/10 border border-fuenzer-teal/30 text-fuenzer-teal flex items-center justify-center shrink-0">
                   <span className="italic font-bold text-xs font-serif">i</span>
                 </div>
                 <span className="font-bold text-sm flex-1 dark:text-paper-white">{item.q}</span>
+                <div className={`shrink-0 w-6 h-6 flex items-center justify-center rounded-full transition-all duration-300 ${
+                  openFaq === i 
+                    ? 'bg-fuenzer-teal text-white' 
+                    : 'text-stone-gray dark:text-silver-mist group-hover:text-fuenzer-teal'
+                }`}>
+                  {openFaq === i 
+                    ? <ChevronUp className="w-4 h-4" strokeWidth={2.5} />
+                    : <ChevronDown className="w-4 h-4" strokeWidth={2.5} />
+                  }
+                </div>
               </button>
               {openFaq === i && (
                 <div className="px-16 pb-6 text-sm text-stone-gray dark:text-silver-mist leading-relaxed animate-in slide-in-from-top-2 font-sans">

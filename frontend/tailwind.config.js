@@ -26,14 +26,37 @@ export default {
       boxShadow: {
         card: '0px 4px 20px rgba(0, 0, 0, 0.04)',
       },
-      animation: {
-        progress: 'progress 2s ease-in-out infinite',
-      },
       keyframes: {
         progress: {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(100%)' },
         },
+        'text-rotate': {
+          '0%, 15%': { transform: 'translateY(0)' },
+          '20%, 35%': { transform: 'translateY(-20%)' },
+          '40%, 55%': { transform: 'translateY(-40%)' },
+          '60%, 75%': { transform: 'translateY(-60%)' },
+          '80%, 95%': { transform: 'translateY(-80%)' },
+          '100%': { transform: 'translateY(-100%)' },
+        },
+        marquee: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+        'slide-up-fade': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '10%': { opacity: '1', transform: 'translateY(0)' },
+          '90%': { opacity: '1', transform: 'translateY(0)' },
+          '100%': { opacity: '0', transform: 'translateY(-10px)' },
+        },
+      },
+      animation: {
+        progress: 'progress 2s ease-in-out infinite',
+        'spin-slow': 'spin 8s linear infinite',
+        'spin-slow-reverse': 'spin 10s linear infinite reverse',
+        'text-rotate': 'text-rotate 8s infinite',
+        marquee: 'marquee 25s linear infinite',
+        'slide-up-fade': 'slide-up-fade 2.5s ease-in-out infinite',
       },
     },
   },
