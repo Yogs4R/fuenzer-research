@@ -56,7 +56,7 @@ function RotatingText() {
 export function LandingPage() {
   const navigate = useNavigate();
   const { 
-    query, setQuery, executeSearch,
+    query, setQuery, executeSearch, clearMessages,
     searchType, setSearchType,
     searchLocation, setSearchLocation,
     searchAccreditation, setSearchAccreditation,
@@ -94,8 +94,17 @@ export function LandingPage() {
 
   const handleSearch = async () => {
     if (query.trim().length < 3) return;
+    // Save to localStorage history as HistoryEntry
+    const historyKey = 'fuenzer_search_history';
+    const stored = localStorage.getItem(historyKey);
+    const history: Array<{id: string; query: string; title: string; timestamp: number}> = stored ? JSON.parse(stored) : [];
+    const newEntry = { id: `h-${Date.now()}`, query: query.trim(), title: query.trim(), timestamp: Date.now() };
+    const updated = [newEntry, ...history.filter((h) => h.query !== query.trim())].slice(0, 20);
+    localStorage.setItem(historyKey, JSON.stringify(updated));
+    // Clear previous messages so playground starts fresh
+    clearMessages();
     await executeSearch();
-    navigate('/search');
+    navigate('/playground');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

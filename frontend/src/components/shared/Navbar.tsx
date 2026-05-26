@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Moon, Sun, Bell, History, Globe, Menu, X } from 'lucide-react';
 import { useUiStore } from '../../store/uiStore';
+import { useResearchStore } from '../../store/researchStore';
 import { en } from '../../locales/en';
 import { id } from '../../locales/id';
 import { UpdateLogModal } from './UpdateLogModal';
@@ -22,9 +23,33 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [recentHistory, setRecentHistory] = useState<Array<{id: string; query: string; title: string; timestamp: number}>>([]);
+  const { setQuery } = useResearchStore();
   
   const notifRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
+
+  // Load history from localStorage when dropdown opens
+  useEffect(() => {
+    if (isHistoryOpen) {
+      const stored = localStorage.getItem('fuenzer_search_history');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          // Support both old (string[]) and new (HistoryEntry[]) format
+          if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'string') {
+            setRecentHistory(parsed.map((q: string) => ({ id: q, query: q, title: q, timestamp: Date.now() })));
+          } else {
+            setRecentHistory(parsed);
+          }
+        } catch {
+          setRecentHistory([]);
+        }
+      } else {
+        setRecentHistory([]);
+      }
+    }
+  }, [isHistoryOpen]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -48,7 +73,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
   ];
 
   const navLinksPlayground = [
-    { key: 'recent', label: t.recent },
+    { key: 'home', label: 'Home' },
     { key: 'library', label: t.library },
     { key: 'citations', label: t.citations },
     { key: 'workspace', label: t.workspace },
@@ -97,7 +122,13 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
           {currentLinks.map((link) => (
             <div
               key={link.key}
-              onClick={() => mode === 'landing' ? handleScrollTo(link.key) : undefined}
+              onClick={() => {
+                if (mode === 'landing') {
+                  handleScrollTo(link.key);
+                } else if (link.key === 'home') {
+                  navigate('/');
+                }
+              }}
               className={`h-full flex items-center text-sm font-semibold cursor-pointer border-b-2 px-1 transition-colors ${
                 mode === 'playground' && link.key === 'workspace'
                   ? 'border-fuenzer-teal text-fuenzer-teal-dark dark:text-fuenzer-teal'
@@ -121,12 +152,41 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
               <History className="w-4 h-4 md:w-5 md:h-5" />
             </button>
             {isHistoryOpen && (
-              <div className="absolute top-12 right-0 w-64 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-xl p-4 animate-in fade-in">
-                <h4 className="font-bold text-sm mb-3 dark:text-cloud-canvas">Recent Prompts</h4>
-                <div className="text-center py-4">
-                  <p className="text-sm font-medium text-ink-black dark:text-paper-white mb-1">No History Yet</p>
-                  <p className="text-[10px] text-slate-gray dark:text-silver-mist">Your recent searches will appear here.</p>
+              <div className="absolute top-12 right-0 w-72 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-xl overflow-hidden animate-in fade-in">
+                <div className="px-4 py-3 border-b border-cloud-canvas dark:border-stone-gray flex justify-between items-center">
+                  <h4 className="font-bold text-sm dark:text-cloud-canvas">Recent Searches</h4>
+                  {recentHistory.length > 0 && (
+                    <button 
+                      onClick={() => { setIsHistoryOpen(false); setIsHistoryModalOpen(true); }}
+                      className="text-[10px] font-bold text-fuenzer-teal hover:underline"
+                    >
+                      See All
+                    </button>
+                  )}
                 </div>
+                {recentHistory.length === 0 ? (
+                  <div className="text-center py-5 px-4">
+                    <p className="text-sm font-medium text-ink-black dark:text-paper-white mb-1">No History Yet</p>
+                    <p className="text-[10px] text-slate-gray dark:text-silver-mist">Your recent searches will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="py-1 max-h-64 overflow-y-auto">
+                    {recentHistory.slice(0, 5).map((item, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setIsHistoryOpen(false);
+                          setQuery(item.query);
+                          navigate('/playground');
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-ink-black dark:text-cloud-canvas hover:bg-cloud-canvas/60 dark:hover:bg-stone-gray/30 transition-colors"
+                      >
+                        <History className="w-3.5 h-3.5 text-silver-mist shrink-0" />
+                        <span className="truncate">{item.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -204,7 +264,13 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
             {currentLinks.map((link) => (
               <div
                 key={link.key}
-                onClick={() => mode === 'landing' ? handleScrollTo(link.key) : undefined}
+                onClick={() => {
+                  if (mode === 'landing') {
+                    handleScrollTo(link.key);
+                  } else if (link.key === 'home') {
+                    navigate('/');
+                  }
+                }}
                 className="text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer hover:text-fuenzer-teal transition-colors"
               >
                 {link.label}
