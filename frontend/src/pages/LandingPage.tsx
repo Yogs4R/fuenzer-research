@@ -7,7 +7,10 @@ import { id } from '../locales/id';
 import { Navbar } from '../components/shared/Navbar';
 import { HeroBackground } from '../components/home/HeroBackground';
 import { CustomDropdown } from '../components/shared/CustomDropdown';
+import { CustomMultiSelect } from '../components/shared/CustomMultiSelect';
 import { NumberScramble } from '../components/shared/NumberScramble';
+import { FadeIn } from '../components/shared/FadeIn';
+import { Footer } from '../components/shared/Footer';
 import {
   BookOpen,
   ArrowRight,
@@ -28,19 +31,38 @@ import scopusLogo from '../assets/logos/scopus.webp';
 import scimagoLogo from '../assets/logos/scimago.webp';
 import googleBooksLogo from '../assets/logos/googlebooks.webp';
 
+function RotatingText() {
+  const rotatingWords = ['Research', 'Journals', 'Articles', 'Books'];
+  const [rotatingIndex, setRotatingIndex] = useState(0);
+  const [rotatingKey, setRotatingKey] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRotatingIndex((prev) => (prev + 1) % rotatingWords.length);
+      setRotatingKey((k) => k + 1);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <span className="relative overflow-hidden h-[1.3em] flex items-center justify-center text-fuenzer-teal mt-2">
+      <span key={rotatingKey} className="word-flip-in whitespace-nowrap">
+        {rotatingWords[rotatingIndex]}
+      </span>
+    </span>
+  );
+}
+
 export function LandingPage() {
   const navigate = useNavigate();
   const { 
     query, setQuery, executeSearch,
     searchType, setSearchType,
     searchLocation, setSearchLocation,
-    searchAccreditation, setSearchAccreditation
+    searchAccreditation, setSearchAccreditation,
+    sintaRank, setSintaRank
   } = useResearchStore();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-  const rotatingWords = ['Research', 'Journals', 'Articles', 'Books'];
-  const [rotatingIndex, setRotatingIndex] = useState(0);
-  const [rotatingKey, setRotatingKey] = useState(0);
 
   const accreditedSources = [
     { name: 'SINTA', src: sintaLogo },
@@ -51,23 +73,10 @@ export function LandingPage() {
     { name: 'Google Books', src: googleBooksLogo },
   ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRotatingIndex((prev) => (prev + 1) % rotatingWords.length);
-      setRotatingKey((k) => k + 1);
-    }, 2800);
-    return () => clearInterval(interval);
-  }, []);
-
   const getAccreditationOptions = () => {
-    if (searchLocation === 'Indonesia' && (searchType === 'Journals' || searchType === 'Articles')) {
-      return ['Global', 'SINTA', 'GARUDA'];
-    }
-    if (searchLocation === 'Indonesia' && searchType === 'Books') {
-      return ['Global', 'ARJUNA'];
-    }
     if (searchLocation === 'Indonesia') {
-      return ['Global', 'SINTA', 'GARUDA', 'ARJUNA'];
+      if (searchType === 'Books') return ['Global'];
+      return ['Global', 'SINTA', 'GARUDA'];
     }
     return ['Global'];
   };
@@ -98,17 +107,14 @@ export function LandingPage() {
       <HeroBackground />
       <Navbar mode="landing" />
 
-      {/* Hero Section */}
-      <section className="relative max-w-5xl mx-auto px-6 pt-24 pb-16 text-center z-10">
+      <main>
+        {/* Hero Section */}
+        <section className="relative max-w-5xl mx-auto px-6 pt-24 pb-16 text-center z-10">
         
         <div className="relative z-10">
           <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6 dark:text-paper-white flex flex-col items-center justify-center">
             <span>Accelerate Your Academic</span>
-            <span className="relative overflow-hidden h-[1.3em] flex items-center justify-center text-fuenzer-teal mt-2">
-              <span key={rotatingKey} className="word-flip-in whitespace-nowrap">
-                {rotatingWords[rotatingIndex]}
-              </span>
-            </span>
+            <RotatingText />
           </h1>
           <p className="text-lg text-slate-gray dark:text-silver-mist max-w-2xl mx-auto mb-10 leading-relaxed font-sans">
             Navigate millions of scientific papers with Fuenzer AI. Seamlessly search global databases and SINTA-indexed sources with unparalleled precision.
@@ -131,7 +137,8 @@ export function LandingPage() {
               <button
                 onClick={handleSearch}
                 disabled={query.trim().length < 3}
-                className="w-14 h-14 flex items-center justify-center rounded-lg bg-fuenzer-teal text-white hover:bg-fuenzer-teal-dark transition-colors disabled:opacity-50"
+                aria-label="Search"
+                className="w-14 h-14 flex items-center justify-center rounded-lg bg-fuenzer-teal-dark text-white hover:bg-fuenzer-teal transition-colors disabled:opacity-50"
               >
                 <ArrowRight className="w-6 h-6" strokeWidth={2} />
               </button>
@@ -156,6 +163,14 @@ export function LandingPage() {
                 onChange={setSearchAccreditation}
                 options={accreditationOptions}
               />
+
+              {searchAccreditation === 'SINTA' && (
+                <CustomMultiSelect
+                  values={sintaRank}
+                  onChange={setSintaRank}
+                  options={['All', 'SINTA 1', 'SINTA 2', 'SINTA 3', 'SINTA 4', 'SINTA 5', 'SINTA 6']}
+                />
+              )}
             </div>
           </div>
 
@@ -237,7 +252,7 @@ export function LandingPage() {
           <div className="absolute inset-0 opacity-20 dark:opacity-10 bg-[radial-gradient(circle_at_top_right,var(--tw-gradient-stops))] from-fuenzer-teal/40 via-transparent to-transparent transition-opacity duration-700 group-hover:opacity-40" />
           
           <div className="relative p-10 md:p-16 flex flex-col md:flex-row items-center gap-12">
-            <div className="flex-1 space-y-6 text-center md:text-left">
+            <FadeIn className="flex-1 space-y-6 text-center md:text-left" direction="up">
               <h2 className="text-4xl md:text-5xl font-bold leading-tight dark:text-paper-white">
                 The Future of <br className="hidden md:block" />
                 <span className="text-transparent bg-clip-text bg-linear-to-r from-fuenzer-teal to-fuenzer-teal-dark">
@@ -247,10 +262,10 @@ export function LandingPage() {
               <p className="text-lg text-stone-gray dark:text-silver-mist leading-relaxed font-sans max-w-2xl">
                 Fuenzer Research is an AI-powered scientific discovery engine designed to bridge the gap between traditional research methodologies and advanced artificial intelligence. We empower scholars, researchers, and students to navigate massive academic datasets, instantly synthesize complex papers, and uncover deep insights across millions of publications.
               </p>
-            </div>
+            </FadeIn>
             
             {/* Visual element on the right */}
-            <div className="flex-1 w-full max-w-md relative aspect-square md:aspect-auto md:h-80 rounded-2xl border border-cloud-canvas dark:border-stone-gray/50 bg-[#F1F5F9] dark:bg-[#121212] overflow-hidden flex items-center justify-center">
+            <FadeIn delay={300} direction="up" className="flex-1 w-full max-w-md relative aspect-square md:aspect-auto md:h-80 rounded-2xl border border-cloud-canvas dark:border-stone-gray/50 bg-[#F1F5F9] dark:bg-[#121212] overflow-hidden flex items-center justify-center">
               {/* Decorative nodes */}
               <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-fuenzer-teal/30 dark:bg-fuenzer-teal/20 rounded-full blur-2xl animate-pulse" />
               <div className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-code-blue/30 dark:bg-code-blue/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
@@ -276,17 +291,17 @@ export function LandingPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
 
       {/* Why Choose */}
       <section id="features" className="max-w-6xl mx-auto px-6 py-12">
-        <div className="text-center mb-16">
+        <FadeIn direction="up" className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold dark:text-paper-white mb-4">Why Choose Fuenzer Research?</h2>
           <p className="text-slate-gray dark:text-silver-mist font-sans max-w-2xl mx-auto">Built for modern academics, our platform combines extensive database coverage with cutting-edge AI to streamline your research workflow.</p>
-        </div>
+        </FadeIn>
         
         {/* Bento Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)]">
@@ -319,7 +334,7 @@ export function LandingPage() {
             { icon: <Bell className="w-6 h-6 text-fuenzer-teal" />, title: 'Real-time Updates', desc: 'Stay ahead with continuous indexing of the latest publications and preprint servers.', className: 'lg:col-span-1 lg:row-span-1' },
             { icon: <Network className="w-6 h-6 text-fuenzer-teal" />, title: 'Cross-disciplinary Links', desc: 'Discover hidden connections between different fields of study through AI-driven semantic mapping.', className: 'lg:col-span-1 lg:row-span-1' },
           ].map((item, i) => (
-            <div key={i} className={`group relative bg-paper-white dark:bg-[#1A1A1A] p-8 rounded-3xl shadow-sm border border-cloud-canvas dark:border-stone-gray hover:shadow-xl hover:-translate-y-1 hover:border-fuenzer-teal/30 transition-all duration-300 overflow-hidden ${item.className}`}>
+            <FadeIn key={i} delay={i * 100} className={`group relative bg-paper-white dark:bg-[#1A1A1A] p-8 rounded-3xl shadow-sm border border-cloud-canvas dark:border-stone-gray hover:shadow-xl hover:-translate-y-1 hover:border-fuenzer-teal/30 transition-all duration-300 overflow-hidden ${item.className}`}>
               {/* Subtle hover gradient */}
               <div className="absolute inset-0 bg-linear-to-br from-fuenzer-teal/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               
@@ -339,14 +354,16 @@ export function LandingPage() {
                 {/* @ts-ignore */}
                 {item.visual && item.visual}
               </div>
-            </div>
+            </FadeIn>
           ))}
         </div>
       </section>
 
       {/* Workflow */}
       <section id="workflow" className="max-w-4xl mx-auto px-6 py-24 text-center">
-        <h2 className="text-3xl font-bold mb-16 dark:text-paper-white">From Query to Synthesis</h2>
+        <FadeIn direction="up">
+          <h2 className="text-3xl font-bold mb-16 dark:text-paper-white">From Query to Synthesis</h2>
+        </FadeIn>
         <div className="relative z-0 flex flex-col md:flex-row justify-center gap-12 md:gap-8 lg:gap-16 items-center w-full py-8">
           
           {/* Animated connection lines (Desktop) */}
@@ -363,8 +380,8 @@ export function LandingPage() {
             { step: '1', title: 'User Input', desc: 'Query global & local databases simultaneously using natural language.', icon: <Search className="w-6 h-6" /> },
             { step: '2', title: 'AI Processing', desc: 'Fuenzer models extract, connect, and cross-reference research data.', icon: <Cpu className="w-6 h-6" /> },
             { step: '3', title: 'Synthesis Output', desc: 'Generate structured, accurate literature reviews instantly.', icon: <FileText className="w-6 h-6" /> },
-          ].map((item) => (
-            <div key={item.step} className="relative flex flex-col items-center bg-paper-white dark:bg-[#1A1A1A] p-8 rounded-3xl border border-cloud-canvas dark:border-stone-gray shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-fuenzer-teal/40 transition-all duration-300 w-full md:w-80 mb-8 md:mb-0 z-10 group">
+          ].map((item, i) => (
+            <FadeIn key={item.step} delay={i * 200} className="relative flex flex-col items-center bg-paper-white dark:bg-[#1A1A1A] p-8 rounded-3xl border border-cloud-canvas dark:border-stone-gray shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-fuenzer-teal/40 transition-all duration-300 w-full md:w-80 mb-8 md:mb-0 z-10 group">
               <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-fuenzer-teal/10 to-transparent border border-fuenzer-teal/20 text-fuenzer-teal flex items-center justify-center mb-6 relative overflow-hidden group-hover:scale-110 transition-transform duration-500">
                 {/* scanning effect inside icon */}
                 <div className="absolute inset-0 bg-linear-to-b from-transparent via-fuenzer-teal/20 dark:via-fuenzer-teal/40 to-transparent -translate-y-full group-hover:animate-[slideInFromTop_1.5s_infinite]" />
@@ -375,14 +392,16 @@ export function LandingPage() {
               </div>
               <h3 className="font-bold text-xl mb-3 dark:text-paper-white group-hover:text-fuenzer-teal transition-colors text-center">{item.title}</h3>
               <p className="text-sm text-slate-gray dark:text-silver-mist font-sans text-center leading-relaxed">{item.desc}</p>
-            </div>
+            </FadeIn>
           ))}
         </div>
       </section>
 
       {/* FAQ */}
       <section id="faq" className="max-w-3xl mx-auto px-6 py-20">
-        <h2 className="text-3xl font-bold text-center mb-12 dark:text-paper-white">Frequently Asked Questions</h2>
+        <FadeIn direction="up">
+          <h2 className="text-3xl font-bold text-center mb-12 dark:text-paper-white">Frequently Asked Questions</h2>
+        </FadeIn>
         <div className="space-y-4">
           {[
             { q: 'What is Fuenzer Research?', a: 'Fuenzer Research is an AI-powered scientific discovery engine that bridges traditional research methodologies with advanced artificial intelligence, helping scholars navigate massive academic datasets and synthesize complex papers.' },
@@ -391,7 +410,7 @@ export function LandingPage() {
             { q: 'Is my data and research secure?', a: 'Absolutely. All your queries and generated literature reviews are private. We use industry-standard encryption and guarantee that your personal research data is never used to train our public models.' },
             { q: 'In what formats can I export my synthesis?', a: 'You can export your structured literature reviews, citations, and summaries in Word, PDF, and standard BibTeX formats, which seamlessly integrate into LaTeX workflows and reference managers.' },
           ].map((item, i) => (
-            <div key={i} className="bg-paper-white dark:bg-ink-black rounded-xl shadow-sm border border-cloud-canvas dark:border-stone-gray overflow-hidden transition-colors">
+            <FadeIn key={i} delay={i * 100} direction="up" className="bg-paper-white dark:bg-ink-black rounded-xl shadow-sm border border-cloud-canvas dark:border-stone-gray overflow-hidden transition-colors">
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 className="w-full flex items-center gap-4 px-6 py-5 text-left hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-colors font-sans group"
@@ -413,33 +432,14 @@ export function LandingPage() {
                   {item.a}
                 </div>
               )}
-            </div>
+            </FadeIn>
           ))}
         </div>
       </section>
+      </main>
 
       {/* Footer */}
-      <footer className="bg-paper-white dark:bg-ink-black border-t border-cloud-canvas dark:border-stone-gray text-stone-gray dark:text-silver-mist py-12 text-xs transition-colors">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-fuenzer-teal flex items-center justify-center text-paper-white font-bold rounded-sm">
-              F
-            </div>
-            <span className="text-lg font-bold text-fuenzer-teal-dark dark:text-fuenzer-teal">
-              Fuenzer Research
-            </span>
-          </div>
-          <div className="flex items-center gap-6 uppercase tracking-widest font-semibold font-sans">
-            <a href="#" className="hover:text-ink-black dark:hover:text-paper-white transition-colors">GITHUB</a>
-            <a href="#" className="hover:text-ink-black dark:hover:text-paper-white transition-colors">CONTACT</a>
-            <a href="#" className="hover:text-ink-black dark:hover:text-paper-white transition-colors">TERMS OF SERVICE</a>
-            <a href="#" className="hover:text-ink-black dark:hover:text-paper-white transition-colors">PRIVACY POLICY</a>
-          </div>
-        </div>
-        <div className="text-center mt-12 text-silver-mist dark:text-stone-gray font-sans">
-          © 2026 Fuenzer Research. Built for modern scholars.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

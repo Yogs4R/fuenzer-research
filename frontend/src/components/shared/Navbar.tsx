@@ -116,6 +116,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
             <button 
               onClick={() => setIsHistoryOpen(!isHistoryOpen)}
               className="p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray"
+              aria-label="History"
             >
               <History className="w-4 h-4 md:w-5 md:h-5" />
             </button>
@@ -143,6 +144,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
           <button 
             onClick={toggleTheme}
             className="p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray"
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {theme === 'dark' ? <Sun className="w-4 h-4 md:w-5 md:h-5" /> : <Moon className="w-4 h-4 md:w-5 md:h-5" />}
           </button>
@@ -152,6 +154,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
              <button 
               onClick={() => setIsNotifOpen(!isNotifOpen)}
               className="relative p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray"
+              aria-label="Notifications"
              >
                <Bell className="w-4 h-4 md:w-5 md:h-5" />
                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-paper-white dark:border-ink-black"></span>
@@ -178,7 +181,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
             <button className="text-xs md:text-sm font-semibold text-fuenzer-teal-dark dark:text-fuenzer-teal hover:text-fuenzer-teal">
               {t.login}
             </button>
-            <button className="px-3 py-1.5 md:px-5 md:py-2 rounded-lg bg-fuenzer-teal text-white text-xs md:text-sm font-bold tracking-wide hover:bg-fuenzer-teal-dark transition-all">
+            <button className="px-3 py-1.5 md:px-5 md:py-2 rounded-lg bg-fuenzer-teal-dark text-white text-xs md:text-sm font-bold tracking-wide hover:bg-fuenzer-teal hover:text-white transition-all">
               {t.signup}
             </button>
           </div>
@@ -187,6 +190,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
           <button 
             className="xl:hidden p-2 text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray transition-colors"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            aria-label="Toggle mobile menu"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

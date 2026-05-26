@@ -12,6 +12,7 @@ interface ResearchState {
   searchType: string;
   searchLocation: string;
   searchAccreditation: string;
+  sintaRank: string[];
   loadingPhase: LoadingPhase;
   response: ResearchResponse | null;
   error: string | null;
@@ -21,6 +22,7 @@ interface ResearchState {
   setSearchType: (type: string) => void;
   setSearchLocation: (location: string) => void;
   setSearchAccreditation: (accreditation: string) => void;
+  setSintaRank: (rank: string[]) => void;
   executeSearch: () => Promise<void>;
   reset: () => void;
 }
@@ -31,6 +33,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   searchType: 'All',
   searchLocation: 'Global',
   searchAccreditation: 'Any',
+  sintaRank: ['All'],
   loadingPhase: 'idle',
   response: null,
   error: null,
@@ -40,6 +43,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   setSearchType: (type: string) => set({ searchType: type }),
   setSearchLocation: (location: string) => set({ searchLocation: location }),
   setSearchAccreditation: (accreditation: string) => set({ searchAccreditation: accreditation }),
+  setSintaRank: (rank: string[]) => set({ sintaRank: rank }),
 
   executeSearch: async () => {
     const { query, scope } = get();
@@ -77,6 +81,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       searchType: 'All',
       searchLocation: 'Global',
       searchAccreditation: 'Any',
+      sintaRank: ['All'],
       loadingPhase: 'idle',
       response: null,
       error: null,
