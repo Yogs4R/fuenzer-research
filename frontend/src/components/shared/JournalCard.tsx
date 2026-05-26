@@ -43,32 +43,8 @@ export function JournalCard({
 }: JournalCardProps) {
   const sintaIndex = source.indexes?.find((idx) => idx.provider.toLowerCase() === 'sinta');
   const garudaIndex = source.indexes?.find((idx) => idx.provider.toLowerCase() === 'garuda');
-  const displayTier = sintaIndex?.tier || garudaIndex?.tier;
   const isSinta = !!sintaIndex;
-
-  const getTierBadge = (tier: string | undefined) => {
-    if (!tier) return null;
-    let text = 'IDX';
-    if (tier.includes('SINTA 1')) text = 'S1';
-    else if (tier.includes('SINTA 2')) text = 'S2';
-    else if (tier.includes('SINTA 3')) text = 'S3';
-    else if (tier.includes('SINTA 4')) text = 'S4';
-    else if (tier.includes('SINTA 5')) text = 'S5';
-    else if (tier.includes('SINTA 6')) text = 'S6';
-    else if (tier.includes('Garuda')) text = 'GARUDA';
-    else if (tier === '1') text = 'S1';
-    else if (tier === '2') text = 'S2';
-    else if (tier === '3') text = 'S3';
-    else if (tier === '4') text = 'S4';
-    else if (tier === '5') text = 'S5';
-    else if (tier === '6') text = 'S6';
-    
-    return (
-       <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-fuenzer-teal text-white tracking-wide">
-         {text}
-       </span>
-    );
-  };
+  const isGaruda = !!garudaIndex;
 
   return (
     <div className={`group flex bg-paper-white dark:bg-ink-black rounded-xl shadow-sm hover:shadow-xl dark:hover:shadow-2xl border transition-all ${isSelected ? 'border-fuenzer-teal ring-1 ring-fuenzer-teal' : 'border-cloud-canvas dark:border-stone-gray'}`}>
@@ -93,11 +69,15 @@ export function JournalCard({
           </h3>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
             {isSinta && (
-               <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FF9800]/10 text-[#F57C00] tracking-wide border border-[#FF9800]/20">
-                 SINTA
+               <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 tracking-wide border border-blue-200/50 dark:border-blue-800/40">
+                 {sintaIndex.tier ? `SINTA ${sintaIndex.tier}` : 'SINTA'}
                </span>
             )}
-            {getTierBadge(displayTier)}
+            {isGaruda && (
+               <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 tracking-wide border border-red-200/50 dark:border-red-800/40">
+                 GARUDA
+               </span>
+            )}
             <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-cloud-canvas dark:bg-stone-gray text-slate-gray dark:text-cloud-canvas tracking-wide">
                Global
             </span>

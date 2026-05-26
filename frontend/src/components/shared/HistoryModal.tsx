@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, History, Trash2, Clock } from 'lucide-react';
 import { useResearchStore } from '../../store/researchStore';
+import { useUiStore } from '../../store/uiStore';
+import { en } from '../../locales/en';
+import { id } from '../../locales/id';
 
 const HISTORY_KEY = 'fuenzer_search_history';
 
@@ -20,7 +23,9 @@ interface HistoryModalProps {
 export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const navigate = useNavigate();
-  const { setQuery } = useResearchStore();
+  const { loadSession, currentSessionId, reset } = useResearchStore();
+  const { language } = useUiStore();
+  const t = language === 'en' ? en.nav : id.nav;
 
   useEffect(() => {
     if (isOpen) {
@@ -35,6 +40,13 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
               query: q,
               title: q,
               timestamp: Date.now() - i * 60000,
+              messages: [],
+              response: null,
+              scope: 'global',
+              searchType: 'All',
+              searchLocation: 'Global',
+              searchAccreditation: 'Any',
+              sintaRank: ['All']
             }));
             localStorage.setItem(HISTORY_KEY, JSON.stringify(migrated));
             setHistory(migrated);
@@ -56,9 +68,9 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
     const h: HistoryEntry[] = stored ? JSON.parse(stored) : [];
     const updated = [entry, ...h.filter((x) => x.id !== entry.id)].slice(0, 20);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
-    // Just set the query and navigate — do NOT re-execute search
-    // The playground will show empty with the pre-filled query context
-    setQuery(entry.query);
+    
+    // Load full session state
+    loadSession(entry.id);
     onClose();
     navigate('/playground');
   };
@@ -68,11 +80,15 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
     const updated = history.filter((h) => h.id !== id);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
     setHistory(updated);
+    if (currentSessionId === id) {
+      reset();
+    }
   };
 
   const handleClearAll = () => {
     localStorage.removeItem(HISTORY_KEY);
     setHistory([]);
+    reset();
   };
 
   const formatTime = (ts: number) => {
@@ -96,7 +112,7 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
         <div className="flex justify-between items-center p-5 border-b border-cloud-canvas dark:border-stone-gray">
           <h2 className="text-lg font-bold text-ink-black dark:text-cloud-canvas flex items-center gap-2 font-serif">
             <History className="w-5 h-5 text-fuenzer-teal" />
-            Recent Searches
+            {t.recentSearches}
           </h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray text-slate-gray transition-colors">
             <X className="w-4 h-4" />
@@ -108,8 +124,8 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
           {history.length === 0 ? (
             <div className="text-center py-12 px-6">
               <Clock className="w-10 h-10 text-cloud-canvas dark:text-stone-gray mx-auto mb-3" />
-              <p className="text-sm font-medium text-ink-black dark:text-paper-white mb-1">No History Yet</p>
-              <p className="text-xs text-slate-gray dark:text-silver-mist">Your recent searches will appear here.</p>
+              <p className="text-sm font-medium text-ink-black dark:text-paper-white mb-1">{t.noHistoryYet}</p>
+              <p className="text-xs text-slate-gray dark:text-silver-mist">{t.noHistoryDesc}</p>
             </div>
           ) : (
             <div className="py-2">
@@ -149,7 +165,7 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
               onClick={handleClearAll}
               className="w-full text-sm font-semibold text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 py-2 px-4 rounded-lg transition-colors"
             >
-              Clear All History
+              {t.clearAllHistory}
             </button>
           </div>
         )}

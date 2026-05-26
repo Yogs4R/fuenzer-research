@@ -3,8 +3,11 @@ import type {
   SearchScope,
   LoadingPhase,
   ResearchResponse,
+  AcademicSource,
 } from '../types/research';
 import { searchResearch } from '../services/api';
+
+export const HISTORY_KEY = 'fuenzer_search_history';
 
 export interface ChatMessage {
   id: string;
@@ -14,6 +17,20 @@ export interface ChatMessage {
   error?: string;
   phase: LoadingPhase;
   timestamp: number;
+}
+
+export interface HistoryEntry {
+  id: string;
+  query: string;
+  title: string;
+  timestamp: number;
+  messages: ChatMessage[];
+  response: ResearchResponse | null;
+  scope: SearchScope;
+  searchType: string;
+  searchLocation: string;
+  searchAccreditation: string;
+  sintaRank: string[];
 }
 
 interface ResearchState {
@@ -27,6 +44,10 @@ interface ResearchState {
   response: ResearchResponse | null;
   error: string | null;
   messages: ChatMessage[];
+  currentSessionId: string | null;
+
+  bookmarkedSources: AcademicSource[];
+  toggleBookmark: (source: AcademicSource) => void;
 
   setQuery: (query: string) => void;
   setScope: (scope: SearchScope) => void;
@@ -38,7 +59,43 @@ interface ResearchState {
   clearMessages: () => void;
   loadDemoData: () => void;
   reset: () => void;
+
+  // History Actions
+  initSession: (queryText: string) => string;
+  loadSession: (sessionId: string) => void;
+  updateSessionTitle: (title: string) => void;
 }
+
+const syncCurrentSessionToLocalStorage = (state: ResearchState) => {
+  const { currentSessionId } = state;
+  if (!currentSessionId) return;
+
+  const stored = localStorage.getItem(HISTORY_KEY);
+  if (!stored) return;
+
+  try {
+    const history: HistoryEntry[] = JSON.parse(stored);
+    const updated = history.map((entry) => {
+      if (entry.id === currentSessionId) {
+        return {
+          ...entry,
+          query: state.query,
+          messages: state.messages,
+          response: state.response,
+          scope: state.scope,
+          searchType: state.searchType,
+          searchLocation: state.searchLocation,
+          searchAccreditation: state.searchAccreditation,
+          sintaRank: state.sintaRank,
+        };
+      }
+      return entry;
+    });
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Failed to sync session to localStorage', e);
+  }
+};
 
 export const useResearchStore = create<ResearchState>((set, get) => ({
   query: '',
@@ -50,7 +107,29 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   loadingPhase: 'idle',
   response: null,
   error: null,
+  bookmarkedSources: (() => {
+    try {
+      const stored = localStorage.getItem('fuenzer_bookmarked_library');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  })(),
   messages: [],
+  currentSessionId: null,
+
+  toggleBookmark: (source: AcademicSource) => {
+    const current = get().bookmarkedSources;
+    const exists = current.some((s) => s.id === source.id);
+    let updated;
+    if (exists) {
+      updated = current.filter((s) => s.id !== source.id);
+    } else {
+      updated = [...current, source];
+    }
+    localStorage.setItem('fuenzer_bookmarked_library', JSON.stringify(updated));
+    set({ bookmarkedSources: updated });
+  },
 
   setQuery: (query: string) => set({ query }),
   setScope: (scope: SearchScope) => set({ scope }),
@@ -59,9 +138,87 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   setSearchAccreditation: (accreditation: string) => set({ searchAccreditation: accreditation }),
   setSintaRank: (rank: string[]) => set({ sintaRank: rank }),
 
+  initSession: (queryText: string) => {
+    const sessionId = `h-${Date.now()}`;
+    const stored = localStorage.getItem(HISTORY_KEY);
+    const history: HistoryEntry[] = stored ? JSON.parse(stored) : [];
+    
+    const newEntry: HistoryEntry = {
+      id: sessionId,
+      query: queryText,
+      title: queryText,
+      timestamp: Date.now(),
+      messages: [],
+      response: null,
+      scope: get().scope,
+      searchType: get().searchType,
+      searchLocation: get().searchLocation,
+      searchAccreditation: get().searchAccreditation,
+      sintaRank: get().sintaRank,
+    };
+
+    const updated = [newEntry, ...history.filter((h) => h.query !== queryText)].slice(0, 20);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+
+    set({
+      currentSessionId: sessionId,
+      query: queryText,
+      messages: [],
+      response: null,
+      error: null,
+      loadingPhase: 'idle',
+    });
+
+    return sessionId;
+  },
+
+  loadSession: (sessionId: string) => {
+    const stored = localStorage.getItem(HISTORY_KEY);
+    if (!stored) return;
+
+    try {
+      const history: HistoryEntry[] = JSON.parse(stored);
+      const entry = history.find((h) => h.id === sessionId);
+      if (!entry) return;
+
+      set({
+        currentSessionId: entry.id,
+        query: entry.query,
+        messages: entry.messages || [],
+        response: entry.response || null,
+        scope: entry.scope || 'global',
+        searchType: entry.searchType || 'All',
+        searchLocation: entry.searchLocation || 'Global',
+        searchAccreditation: entry.searchAccreditation || 'Any',
+        sintaRank: entry.sintaRank || ['All'],
+        loadingPhase: (entry.messages && entry.messages.length > 0) ? 'complete' : 'idle',
+        error: null,
+      });
+    } catch (e) {
+      console.error('Failed to load session', e);
+    }
+  },
+
+  updateSessionTitle: (title: string) => {
+    const { currentSessionId } = get();
+    if (!currentSessionId) return;
+
+    const stored = localStorage.getItem(HISTORY_KEY);
+    const history: HistoryEntry[] = stored ? JSON.parse(stored) : [];
+    const updated = history.map((h) =>
+      h.id === currentSessionId ? { ...h, title: title } : h
+    );
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+  },
+
   executeSearch: async () => {
     const { query, scope } = get();
     if (query.trim().length < 3) return;
+
+    let sessionId = get().currentSessionId;
+    if (!sessionId) {
+      sessionId = get().initSession(query.trim());
+    }
 
     const msgId = `msg-${Date.now()}`;
 
@@ -87,6 +244,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         },
       ],
     }));
+    syncCurrentSessionToLocalStorage(get());
 
     // Simulate narrative phases for UX
     const phaseTimer = setTimeout(() => {
@@ -96,6 +254,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
           m.id === `${msgId}-ai` ? { ...m, phase: 'filtering' as LoadingPhase } : m
         ),
       }));
+      syncCurrentSessionToLocalStorage(get());
     }, 1500);
 
     const synthTimer = setTimeout(() => {
@@ -105,6 +264,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
           m.id === `${msgId}-ai` ? { ...m, phase: 'synthesizing' as LoadingPhase } : m
         ),
       }));
+      syncCurrentSessionToLocalStorage(get());
     }, 3500);
 
     try {
@@ -120,6 +280,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
             : m
         ),
       }));
+      syncCurrentSessionToLocalStorage(get());
     } catch (err: unknown) {
       clearTimeout(phaseTimer);
       clearTimeout(synthTimer);
@@ -134,16 +295,19 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
             : m
         ),
       }));
+      syncCurrentSessionToLocalStorage(get());
     }
   },
 
-  clearMessages: () =>
+  clearMessages: () => {
     set({
       messages: [],
       loadingPhase: 'idle',
       response: null,
       error: null,
-    }),
+    });
+    syncCurrentSessionToLocalStorage(get());
+  },
 
   loadDemoData: () => {
     const demoResponse: ResearchResponse = {
@@ -232,6 +396,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         { id: `${msgId}-ai`, role: 'ai', response: demoResponse, phase: 'complete', timestamp: Date.now() - 5000 },
       ],
     });
+    syncCurrentSessionToLocalStorage(get());
   },
 
   reset: () =>
@@ -246,5 +411,6 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       response: null,
       error: null,
       messages: [],
+      currentSessionId: null,
     }),
 }));

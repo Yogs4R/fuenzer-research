@@ -4,6 +4,8 @@ import { LandingPage } from './pages/LandingPage';
 import { PlaygroundPage } from './pages/PlaygroundPage';
 import { TermsPage } from './pages/TermsPage';
 import { PrivacyPage } from './pages/PrivacyPage';
+import { LibraryPage } from './pages/LibraryPage';
+import { CitationsPage } from './pages/CitationsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +23,8 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/playground" element={<PlaygroundPage />} />
+          <Route path="/library" element={<LibraryPage />} />
+          <Route path="/citations" element={<CitationsPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>

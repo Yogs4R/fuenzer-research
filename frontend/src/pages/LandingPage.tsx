@@ -32,7 +32,9 @@ import scimagoLogo from '../assets/logos/scimago.webp';
 import googleBooksLogo from '../assets/logos/googlebooks.webp';
 
 function RotatingText() {
-  const rotatingWords = ['Research', 'Journals', 'Articles', 'Books'];
+  const { language } = useUiStore();
+  const t = language === 'en' ? en.landing : id.landing;
+  const rotatingWords = t.rotatingWords;
   const [rotatingIndex, setRotatingIndex] = useState(0);
   const [rotatingKey, setRotatingKey] = useState(0);
 
@@ -42,7 +44,7 @@ function RotatingText() {
       setRotatingKey((k) => k + 1);
     }, 2800);
     return () => clearInterval(interval);
-  }, []);
+  }, [rotatingWords]);
 
   return (
     <span className="relative overflow-hidden h-[1.3em] flex items-center justify-center text-fuenzer-teal mt-2">
@@ -56,13 +58,20 @@ function RotatingText() {
 export function LandingPage() {
   const navigate = useNavigate();
   const { 
-    query, setQuery, executeSearch, clearMessages,
+    query, setQuery, executeSearch,
     searchType, setSearchType,
     searchLocation, setSearchLocation,
     searchAccreditation, setSearchAccreditation,
-    sintaRank, setSintaRank
+    sintaRank, setSintaRank,
+    initSession,
+    reset
   } = useResearchStore();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // Reset the store state when returning to the landing page so search query starts empty
+  useEffect(() => {
+    reset();
+  }, [reset]);
 
   const accreditedSources = [
     { name: 'SINTA', src: sintaLogo },
@@ -94,15 +103,7 @@ export function LandingPage() {
 
   const handleSearch = async () => {
     if (query.trim().length < 3) return;
-    // Save to localStorage history as HistoryEntry
-    const historyKey = 'fuenzer_search_history';
-    const stored = localStorage.getItem(historyKey);
-    const history: Array<{id: string; query: string; title: string; timestamp: number}> = stored ? JSON.parse(stored) : [];
-    const newEntry = { id: `h-${Date.now()}`, query: query.trim(), title: query.trim(), timestamp: Date.now() };
-    const updated = [newEntry, ...history.filter((h) => h.query !== query.trim())].slice(0, 20);
-    localStorage.setItem(historyKey, JSON.stringify(updated));
-    // Clear previous messages so playground starts fresh
-    clearMessages();
+    initSession(query.trim());
     await executeSearch();
     navigate('/playground');
   };
@@ -122,11 +123,11 @@ export function LandingPage() {
         
         <div className="relative z-10">
           <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6 dark:text-paper-white flex flex-col items-center justify-center">
-            <span>Accelerate Your Academic</span>
+            <span>{t.landing.titlePart}</span>
             <RotatingText />
           </h1>
           <p className="text-lg text-slate-gray dark:text-silver-mist max-w-2xl mx-auto mb-10 leading-relaxed font-sans">
-            Navigate millions of scientific papers with Fuenzer AI. Seamlessly search global databases and SINTA-indexed sources with unparalleled precision.
+            {t.landing.subtitle}
           </p>
 
           {/* Search Bar Container */}
@@ -159,18 +160,21 @@ export function LandingPage() {
                 value={searchType}
                 onChange={setSearchType}
                 options={['All', 'Books', 'Journals', 'Articles']}
+                prefix={t.hero.filterType}
               />
 
               <CustomDropdown
                 value={searchLocation}
                 onChange={setSearchLocation}
                 options={['Global', 'Indonesia']}
+                prefix={t.hero.filterScope}
               />
 
               <CustomDropdown
                 value={searchAccreditation}
                 onChange={setSearchAccreditation}
                 options={accreditationOptions}
+                prefix={t.hero.filterIndex}
               />
 
               {searchAccreditation === 'SINTA' && (
@@ -186,7 +190,7 @@ export function LandingPage() {
           {/* Popular Tags Marquee — z-10, mt-16 to clear dropdown panels */}
           <div className="mt-16 flex flex-col items-center gap-4 font-sans w-full max-w-3xl mx-auto relative z-10">
             <span className="text-[10px] font-semibold text-slate-gray dark:text-stone-gray uppercase tracking-widest">
-              Popular Searches
+              {t.landing.popularSearches}
             </span>
             <div className="relative flex w-full overflow-hidden" style={{maskImage:'linear-gradient(to right, transparent, black 15%, black 85%, transparent)'}}>
               <div className="marquee-track flex w-max gap-3 whitespace-nowrap">
@@ -211,31 +215,31 @@ export function LandingPage() {
             <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
               <NumberScramble value="150M+" duration={1500} />
             </p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">Global Publications</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.globalPublications}</p>
           </div>
           <div>
             <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
               <NumberScramble value="S1-S6" duration={1700} />
             </p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">Sinta Accredited</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.sintaAccredited}</p>
           </div>
           <div>
             <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
               <NumberScramble value="100%" duration={1900} />
             </p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">AI-Assisted Synthesis</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.aiSynthesis}</p>
           </div>
           <div>
             <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
               <NumberScramble value="5+" duration={2100} />
             </p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">Supported Databases</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.supportedDatabases}</p>
           </div>
         </div>
         
         <div className="flex flex-col items-center gap-4 font-sans w-full max-w-4xl mx-auto overflow-hidden">
           <span className="text-[10px] font-semibold text-slate-gray dark:text-stone-gray uppercase tracking-widest">
-            Accredited Sources
+            {t.landing.accreditedSources}
           </span>
           <div className="relative flex w-full overflow-hidden" style={{maskImage:'linear-gradient(to right, transparent, black 15%, black 85%, transparent)'}}>
             <div className="marquee-track flex w-max gap-12 whitespace-nowrap items-center py-4 opacity-70 dark:opacity-60">
@@ -263,13 +267,13 @@ export function LandingPage() {
           <div className="relative p-10 md:p-16 flex flex-col md:flex-row items-center gap-12">
             <FadeIn className="flex-1 space-y-6 text-center md:text-left" direction="up">
               <h2 className="text-4xl md:text-5xl font-bold leading-tight dark:text-paper-white">
-                The Future of <br className="hidden md:block" />
+                {t.landing.about.titlePart1} <br className="hidden md:block" />
                 <span className="text-transparent bg-clip-text bg-linear-to-r from-fuenzer-teal to-fuenzer-teal-dark">
-                  Academic Inquiry
+                  {t.landing.about.titlePart2}
                 </span>
               </h2>
               <p className="text-lg text-stone-gray dark:text-silver-mist leading-relaxed font-sans max-w-2xl">
-                Fuenzer Research is an AI-powered scientific discovery engine designed to bridge the gap between traditional research methodologies and advanced artificial intelligence. We empower scholars, researchers, and students to navigate massive academic datasets, instantly synthesize complex papers, and uncover deep insights across millions of publications.
+                {t.landing.about.desc}
               </p>
             </FadeIn>
             
@@ -308,19 +312,19 @@ export function LandingPage() {
       {/* Why Choose */}
       <section id="features" className="max-w-6xl mx-auto px-6 py-12">
         <FadeIn direction="up" className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold dark:text-paper-white mb-4">Why Choose Fuenzer Research?</h2>
-          <p className="text-slate-gray dark:text-silver-mist font-sans max-w-2xl mx-auto">Built for modern academics, our platform combines extensive database coverage with cutting-edge AI to streamline your research workflow.</p>
+          <h2 className="text-3xl md:text-4xl font-bold dark:text-paper-white mb-4">{t.landing.features.badge}</h2>
+          <p className="text-slate-gray dark:text-silver-mist font-sans max-w-2xl mx-auto">{t.landing.features.subtitle}</p>
         </FadeIn>
         
         {/* Bento Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)]">
           {[
-            { icon: <BookOpen className="w-6 h-6 text-fuenzer-teal" />, title: 'SINTA-Ready Data', desc: 'Direct integration with recognized national databases ensuring your sources meet institutional standards.', className: 'lg:col-span-1 lg:row-span-1' },
-            { icon: <Zap className="w-6 h-6 text-fuenzer-teal" />, title: 'AI Synthesis', desc: 'Beyond search: our AI models help connect dots across disparate papers, summarizing findings rapidly without losing academic rigor.', className: 'lg:col-span-1 lg:row-span-1' },
+            { icon: <BookOpen className="w-6 h-6 text-fuenzer-teal" />, title: t.landing.features.sintaTitle, desc: t.landing.features.sintaDesc, className: 'lg:col-span-1 lg:row-span-1' },
+            { icon: <Zap className="w-6 h-6 text-fuenzer-teal" />, title: t.landing.features.aiTitle, desc: t.landing.features.aiDesc, className: 'lg:col-span-1 lg:row-span-1' },
             { 
               icon: <Globe className="w-6 h-6 text-fuenzer-teal" />, 
-              title: 'Global Reach', 
-              desc: 'Access millions of open-access articles worldwide, seamlessly integrated with local contexts. Never miss a critical international paper again.', 
+              title: t.landing.features.globalTitle, 
+              desc: t.landing.features.globalDesc, 
               className: 'md:col-span-2 lg:col-span-1 lg:row-span-2 flex flex-col',
               visual: (
                 <div className="mt-8 flex-1 flex flex-col items-center justify-center relative min-h-[160px] opacity-80 group-hover:opacity-100 transition-opacity">
@@ -340,8 +344,8 @@ export function LandingPage() {
                 </div>
               )
             },
-            { icon: <Bell className="w-6 h-6 text-fuenzer-teal" />, title: 'Real-time Updates', desc: 'Stay ahead with continuous indexing of the latest publications and preprint servers.', className: 'lg:col-span-1 lg:row-span-1' },
-            { icon: <Network className="w-6 h-6 text-fuenzer-teal" />, title: 'Cross-disciplinary Links', desc: 'Discover hidden connections between different fields of study through AI-driven semantic mapping.', className: 'lg:col-span-1 lg:row-span-1' },
+            { icon: <Bell className="w-6 h-6 text-fuenzer-teal" />, title: t.landing.features.realtimeTitle, desc: t.landing.features.realtimeDesc, className: 'lg:col-span-1 lg:row-span-1' },
+            { icon: <Network className="w-6 h-6 text-fuenzer-teal" />, title: t.landing.features.crossTitle, desc: t.landing.features.crossDesc, className: 'lg:col-span-1 lg:row-span-1' },
           ].map((item, i) => (
             <FadeIn key={i} delay={i * 100} className={`group relative bg-paper-white dark:bg-[#1A1A1A] p-8 rounded-3xl shadow-sm border border-cloud-canvas dark:border-stone-gray hover:shadow-xl hover:-translate-y-1 hover:border-fuenzer-teal/30 transition-all duration-300 overflow-hidden ${item.className}`}>
               {/* Subtle hover gradient */}
@@ -371,7 +375,7 @@ export function LandingPage() {
       {/* Workflow */}
       <section id="workflow" className="max-w-4xl mx-auto px-6 py-24 text-center">
         <FadeIn direction="up">
-          <h2 className="text-3xl font-bold mb-16 dark:text-paper-white">From Query to Synthesis</h2>
+          <h2 className="text-3xl font-bold mb-16 dark:text-paper-white">{t.landing.workflow.title}</h2>
         </FadeIn>
         <div className="relative z-0 flex flex-col md:flex-row justify-center gap-12 md:gap-8 lg:gap-16 items-center w-full py-8">
           
@@ -386,9 +390,9 @@ export function LandingPage() {
           </div>
 
           {[
-            { step: '1', title: 'User Input', desc: 'Query global & local databases simultaneously using natural language.', icon: <Search className="w-6 h-6" /> },
-            { step: '2', title: 'AI Processing', desc: 'Fuenzer models extract, connect, and cross-reference research data.', icon: <Cpu className="w-6 h-6" /> },
-            { step: '3', title: 'Synthesis Output', desc: 'Generate structured, accurate literature reviews instantly.', icon: <FileText className="w-6 h-6" /> },
+            { step: '1', title: t.landing.workflow.step1Title, desc: t.landing.workflow.step1Desc, icon: <Search className="w-6 h-6" /> },
+            { step: '2', title: t.landing.workflow.step2Title, desc: t.landing.workflow.step2Desc, icon: <Cpu className="w-6 h-6" /> },
+            { step: '3', title: t.landing.workflow.step3Title, desc: t.landing.workflow.step3Desc, icon: <FileText className="w-6 h-6" /> },
           ].map((item, i) => (
             <FadeIn key={item.step} delay={i * 200} className="relative flex flex-col items-center bg-paper-white dark:bg-[#1A1A1A] p-8 rounded-3xl border border-cloud-canvas dark:border-stone-gray shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-fuenzer-teal/40 transition-all duration-300 w-full md:w-80 mb-8 md:mb-0 z-10 group">
               <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-fuenzer-teal/10 to-transparent border border-fuenzer-teal/20 text-fuenzer-teal flex items-center justify-center mb-6 relative overflow-hidden group-hover:scale-110 transition-transform duration-500">
@@ -409,15 +413,15 @@ export function LandingPage() {
       {/* FAQ */}
       <section id="faq" className="max-w-3xl mx-auto px-6 py-20">
         <FadeIn direction="up">
-          <h2 className="text-3xl font-bold text-center mb-12 dark:text-paper-white">Frequently Asked Questions</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 dark:text-paper-white">{t.landing.faq.title}</h2>
         </FadeIn>
         <div className="space-y-4">
           {[
-            { q: 'What is Fuenzer Research?', a: 'Fuenzer Research is an AI-powered scientific discovery engine that bridges traditional research methodologies with advanced artificial intelligence, helping scholars navigate massive academic datasets and synthesize complex papers.' },
-            { q: 'How does the SINTA integration work?', a: 'We provide direct integration with recognized national databases like SINTA and GARUDA, ensuring your sources meet institutional standards while also accessing global repositories like Scopus and Google Scholar.' },
-            { q: 'Can the AI synthesize findings accurately?', a: 'Yes, our AI models are specifically tuned for academic rigor. They connect dots across disparate papers and summarize findings rapidly without losing critical academic context or hallucinating facts.' },
-            { q: 'Is my data and research secure?', a: 'Absolutely. All your queries and generated literature reviews are private. We use industry-standard encryption and guarantee that your personal research data is never used to train our public models.' },
-            { q: 'In what formats can I export my synthesis?', a: 'You can export your structured literature reviews, citations, and summaries in Word, PDF, and standard BibTeX formats, which seamlessly integrate into LaTeX workflows and reference managers.' },
+            { q: t.landing.faq.q1, a: t.landing.faq.a1 },
+            { q: t.landing.faq.q2, a: t.landing.faq.a2 },
+            { q: t.landing.faq.q3, a: t.landing.faq.a3 },
+            { q: t.landing.faq.q4, a: t.landing.faq.a4 },
+            { q: t.landing.faq.q5, a: t.landing.faq.a5 },
           ].map((item, i) => (
             <FadeIn key={i} delay={i * 100} direction="up" className="bg-paper-white dark:bg-ink-black rounded-xl shadow-sm border border-cloud-canvas dark:border-stone-gray overflow-hidden transition-colors">
               <button

@@ -24,7 +24,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [recentHistory, setRecentHistory] = useState<Array<{id: string; query: string; title: string; timestamp: number}>>([]);
-  const { setQuery } = useResearchStore();
+  const { loadSession } = useResearchStore();
   
   const notifRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
@@ -73,10 +73,10 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
   ];
 
   const navLinksPlayground = [
-    { key: 'home', label: 'Home' },
-    { key: 'library', label: t.library },
-    { key: 'citations', label: t.citations },
-    { key: 'workspace', label: t.workspace },
+    { key: 'home', label: 'Home', path: '/' },
+    { key: 'library', label: t.library, path: '/library' },
+    { key: 'citations', label: t.citations, path: '/citations' },
+    { key: 'workspace', label: t.workspace, path: '/playground' },
   ];
 
   const currentLinks = mode === 'landing' ? navLinksLanding : navLinksPlayground;
@@ -125,12 +125,14 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
               onClick={() => {
                 if (mode === 'landing') {
                   handleScrollTo(link.key);
-                } else if (link.key === 'home') {
-                  navigate('/');
+                } else {
+                  // @ts-ignore
+                  navigate(link.path);
                 }
               }}
               className={`h-full flex items-center text-sm font-semibold cursor-pointer border-b-2 px-1 transition-colors ${
-                mode === 'playground' && link.key === 'workspace'
+                // @ts-ignore
+                (mode === 'playground' && location.pathname === link.path)
                   ? 'border-fuenzer-teal text-fuenzer-teal-dark dark:text-fuenzer-teal'
                   : 'border-transparent text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
               }`}
@@ -154,20 +156,20 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
             {isHistoryOpen && (
               <div className="absolute top-12 right-0 w-72 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-xl overflow-hidden animate-in fade-in">
                 <div className="px-4 py-3 border-b border-cloud-canvas dark:border-stone-gray flex justify-between items-center">
-                  <h4 className="font-bold text-sm dark:text-cloud-canvas">Recent Searches</h4>
+                  <h4 className="font-bold text-sm dark:text-cloud-canvas">{t.recentSearches}</h4>
                   {recentHistory.length > 0 && (
                     <button 
                       onClick={() => { setIsHistoryOpen(false); setIsHistoryModalOpen(true); }}
                       className="text-[10px] font-bold text-fuenzer-teal hover:underline"
                     >
-                      See All
+                      {t.seeAll}
                     </button>
                   )}
                 </div>
                 {recentHistory.length === 0 ? (
                   <div className="text-center py-5 px-4">
-                    <p className="text-sm font-medium text-ink-black dark:text-paper-white mb-1">No History Yet</p>
-                    <p className="text-[10px] text-slate-gray dark:text-silver-mist">Your recent searches will appear here.</p>
+                    <p className="text-sm font-medium text-ink-black dark:text-paper-white mb-1">{t.noHistoryYet}</p>
+                    <p className="text-[10px] text-slate-gray dark:text-silver-mist">{t.noHistoryDesc}</p>
                   </div>
                 ) : (
                   <div className="py-1 max-h-64 overflow-y-auto">
@@ -176,7 +178,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
                         key={i}
                         onClick={() => {
                           setIsHistoryOpen(false);
-                          setQuery(item.query);
+                          loadSession(item.id);
                           navigate('/playground');
                         }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-ink-black dark:text-cloud-canvas hover:bg-cloud-canvas/60 dark:hover:bg-stone-gray/30 transition-colors"
@@ -221,8 +223,8 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
              </button>
              {isNotifOpen && (
               <div className="absolute top-12 right-0 w-72 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-xl p-4 animate-in fade-in">
-                <h4 className="font-bold text-sm mb-2 dark:text-cloud-canvas">Notifications</h4>
-                <p className="text-xs text-slate-gray dark:text-silver-mist mb-4">Version 1.2 is out! New AI models and localized indexing are now live.</p>
+                <h4 className="font-bold text-sm mb-2 dark:text-cloud-canvas">{t.notifications}</h4>
+                <p className="text-xs text-slate-gray dark:text-silver-mist mb-4">{t.notifDesc}</p>
                 <button 
                   onClick={() => {
                     setIsNotifOpen(false);
@@ -230,7 +232,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
                   }}
                   className="w-full text-center text-xs font-bold bg-fuenzer-teal text-white py-2 rounded-lg hover:bg-fuenzer-teal-dark transition-colors"
                 >
-                  View Details
+                  {t.viewDetails}
                 </button>
               </div>
             )}
@@ -265,10 +267,12 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
               <div
                 key={link.key}
                 onClick={() => {
+                  setIsMobileMenuOpen(false);
                   if (mode === 'landing') {
                     handleScrollTo(link.key);
-                  } else if (link.key === 'home') {
-                    navigate('/');
+                  } else {
+                    // @ts-ignore
+                    navigate(link.path);
                   }
                 }}
                 className="text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer hover:text-fuenzer-teal transition-colors"
@@ -279,30 +283,36 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
           </div>
 
           <div className="flex flex-col gap-4 pt-4 border-t border-cloud-canvas dark:border-stone-gray">
-            <button 
-              onClick={toggleLanguage}
+             <button 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                toggleLanguage();
+              }}
               className="flex items-center gap-3 text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer"
             >
               <Globe className="w-5 h-5 text-slate-gray" />
-              Change Language ({language === 'en' ? 'EN' : 'ID'})
+              {t.changeLanguage} ({language === 'en' ? 'EN' : 'ID'})
             </button>
             <button 
               onClick={() => {
-                // Don't close the menu, just open the modal on top
+                setIsMobileMenuOpen(false);
                 setIsLogModalOpen(true);
               }}
               className="flex items-center gap-3 text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer hover:text-fuenzer-teal"
             >
               <Bell className="w-5 h-5 text-slate-gray" />
-              View Notifications
+              {t.viewNotifications}
             </button>
             <div className="flex flex-col gap-2">
               <button 
-                onClick={() => setIsHistoryModalOpen(true)}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsHistoryModalOpen(true);
+                }}
                 className="flex items-center gap-3 text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer hover:text-fuenzer-teal"
               >
                 <History className="w-5 h-5 text-slate-gray" />
-                History
+                {t.history}
               </button>
             </div>
           </div>

@@ -6,9 +6,10 @@ interface CustomDropdownProps {
   onChange: (val: string) => void;
   options: string[];
   placeholder?: string;
+  prefix?: string;
 }
 
-export function CustomDropdown({ value, onChange, options, placeholder }: CustomDropdownProps) {
+export function CustomDropdown({ value, onChange, options, placeholder, prefix }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -31,7 +32,10 @@ export function CustomDropdown({ value, onChange, options, placeholder }: Custom
         onClick={() => setIsOpen(!isOpen)}
         className={`h-9 px-5 bg-paper-white dark:bg-[#1A1A1A] border ${isOpen ? 'border-fuenzer-teal' : 'border-cloud-canvas dark:border-stone-gray'} rounded-full text-xs font-medium text-stone-gray dark:text-silver-mist outline-none cursor-pointer hover:border-fuenzer-teal/50 transition-colors shadow-sm focus:ring-1 focus:ring-fuenzer-teal flex items-center gap-2 justify-between min-w-[120px]`}
       >
-        <span>{value || placeholder}</span>
+        <span>
+          {prefix ? `${prefix}: ` : ''}
+          {value || placeholder}
+        </span>
         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180 text-fuenzer-teal' : ''}`} />
       </button>
 

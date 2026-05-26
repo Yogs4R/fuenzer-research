@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResearchStore } from '../store/researchStore';
+import { useUiStore } from '../store/uiStore';
+import { en } from '../locales/en';
+import { id } from '../locales/id';
 import { JournalCard } from '../components/shared/JournalCard';
 import { Navbar } from '../components/shared/Navbar';
 import { Footer } from '../components/shared/Footer';
@@ -129,12 +132,13 @@ export function PlaygroundPage() {
   const [indexFilters, setIndexFilters] = useState<Set<FilterIndex>>(new Set(['All']));
   const [citation, setCitation] = useState<CitationStyle>('APA');
   const [searchRef, setSearchRef] = useState('');
-  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
   const [selectedRefs, setSelectedRefs] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
 
   const navigate = useNavigate();
-  const { query, messages, loadDemoData } = useResearchStore();
+  const { query, messages, loadDemoData, bookmarkedSources, toggleBookmark } = useResearchStore();
+  const { language } = useUiStore();
+  const t = language === 'en' ? en.playground : id.playground;
 
   // Redirect only if neither query nor messages (handles history navigation with empty messages)
   useEffect(() => {
@@ -152,16 +156,6 @@ export function PlaygroundPage() {
   const isLoading = messages.some(
     (m) => m.role === 'ai' && (m.phase === 'searching' || m.phase === 'filtering' || m.phase === 'synthesizing')
   );
-
-  // Toggle single bookmark
-  const toggleBookmark = (id: string) => {
-    setBookmarks((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
   // Toggle single selection
   const toggleSelection = (id: string) => {
@@ -204,13 +198,20 @@ export function PlaygroundPage() {
       )
     : afterIndexFilter;
   const sorted = sortSources(afterSearch, sort);
-  const bookmarkedRefs = sorted.filter((s) => bookmarks.has(s.id));
+  const bookmarkedRefs = sorted.filter((s) => bookmarkedSources.some((b) => b.id === s.id));
   const displayedRefs = tab === 'bookmarked' ? bookmarkedRefs : sorted;
 
-  const currentSortLabel = SORT_OPTIONS.find((o) => o.value === sort)?.label ?? 'Sort';
+  const sortOptionLabels: Record<SortOption, string> = {
+    relevance: t.sortRelevance,
+    newest: t.sortNewest,
+    oldest: t.sortOldest,
+    citations: t.sortCitations,
+  };
+
+  const currentSortLabel = sortOptionLabels[sort] ?? 'Sort';
 
   const handleExportPDF = () => {
-    alert('PDF export coming soon!');
+    alert(t.exportPDFMsg);
   };
 
   return (
@@ -226,36 +227,36 @@ export function PlaygroundPage() {
         />
 
         {/* Right Panel: References — its own scroll context */}
-        <section className="flex-1 flex flex-col bg-paper-white dark:bg-ink-black relative transition-colors overflow-hidden">
+        <section className="flex-1 flex flex-col bg-paper-white dark:bg-ink-black relative transition-colors overflow-hidden min-w-0">
 
           {/* ── Sticky Toolbar ───────────────────────────────────────────────── */}
           <div className="px-4 md:px-6 pt-4 pb-3 border-b border-cloud-canvas dark:border-stone-gray shrink-0 flex flex-col gap-3">
 
             {/* Row 1: Toggle + Title + Tabs + Citation + Export */}
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 md:gap-3 flex-nowrap overflow-x-auto no-scrollbar">
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 className="p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-lg hover:bg-cloud-canvas dark:hover:bg-stone-gray shrink-0"
-                title="Toggle AI Assistant"
+                title={t.sidebarToggle}
               >
                 <PanelLeft className="w-5 h-5" />
               </button>
 
-              <h2 className="text-xl md:text-2xl font-bold text-ink-black dark:text-paper-white font-serif shrink-0">
-                References
+              <h2 className="text-base md:text-2xl font-bold text-ink-black dark:text-paper-white font-serif shrink-0">
+                {t.referencesTitle}
               </h2>
 
               {/* Tab switcher */}
-              <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray">
+              <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray shrink-0">
                 <button
                   onClick={() => setTab('all')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  className={`px-2.5 py-1 md:px-3 md:py-1.5 text-xs font-semibold rounded-md transition-all ${
                     tab === 'all'
                       ? 'bg-paper-white dark:bg-ink-black text-ink-black dark:text-cloud-canvas shadow-sm'
                       : 'text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
                   }`}
                 >
-                  All
+                  {t.tabAll}
                   {allRefs.length > 0 && (
                     <span className="ml-1 text-[10px] bg-cloud-canvas dark:bg-stone-gray px-1.5 py-0.5 rounded-full font-bold">
                       {allRefs.length}
@@ -264,23 +265,23 @@ export function PlaygroundPage() {
                 </button>
                 <button
                   onClick={() => setTab('bookmarked')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1 ${
+                  className={`px-2.5 py-1 md:px-3 md:py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1 ${
                     tab === 'bookmarked'
                       ? 'bg-paper-white dark:bg-ink-black text-fuenzer-teal shadow-sm'
                       : 'text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
                   }`}
                 >
                   <Bookmark className="w-3 h-3" />
-                  Saved
-                  {bookmarks.size > 0 && (
+                  {t.tabSaved}
+                  {bookmarkedSources.length > 0 && (
                     <span className="text-[10px] bg-fuenzer-teal/20 text-fuenzer-teal px-1.5 py-0.5 rounded-full font-bold">
-                      {bookmarks.size}
+                      {bookmarkedSources.length}
                     </span>
                   )}
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 ml-auto">
+              <div className="flex items-center gap-2 ml-auto shrink-0">
                 {/* Citation style dropdown */}
                 <Dropdown
                   trigger={
@@ -299,14 +300,14 @@ export function PlaygroundPage() {
                 {/* Export dropdown */}
                 <Dropdown
                   trigger={
-                    <button className="flex items-center gap-1.5 h-8 px-3 bg-fuenzer-teal/10 text-fuenzer-teal-dark dark:text-fuenzer-teal rounded-lg text-xs font-semibold hover:bg-fuenzer-teal/20 transition-colors cursor-pointer">
+                    <button className="flex items-center gap-1 md:gap-1.5 h-8 px-2 md:px-3 bg-fuenzer-teal/10 text-fuenzer-teal-dark dark:text-fuenzer-teal rounded-lg text-xs font-semibold hover:bg-fuenzer-teal/20 transition-colors cursor-pointer shrink-0">
                       <Download className="w-3.5 h-3.5" />
                       Export
-                      <ChevronDown className="w-3 h-3" />
+                      <ChevronDown className="w-3.5 h-3.5" />
                     </button>
                   }
                 >
-                  <DropdownItem label="Export as PDF" onClick={handleExportPDF} />
+                  <DropdownItem label={t.exportPDF} onClick={handleExportPDF} />
                 </Dropdown>
               </div>
             </div>
@@ -318,7 +319,7 @@ export function PlaygroundPage() {
                 <Search className="w-3.5 h-3.5 text-silver-mist shrink-0" />
                 <input
                   type="text"
-                  placeholder="Search references..."
+                  placeholder={t.searchPlaceholder}
                   className="flex-1 h-full px-2 text-sm outline-none bg-transparent dark:text-cloud-canvas placeholder:text-silver-mist min-w-0"
                   value={searchRef}
                   onChange={(e) => setSearchRef(e.target.value)}
@@ -342,7 +343,7 @@ export function PlaygroundPage() {
                 }
               >
                 {SORT_OPTIONS.map((o) => (
-                  <DropdownItem key={o.value} label={o.label} active={sort === o.value} onClick={() => setSort(o.value)} />
+                  <DropdownItem key={o.value} label={sortOptionLabels[o.value]} active={sort === o.value} onClick={() => setSort(o.value)} />
                 ))}
               </Dropdown>
 
@@ -386,13 +387,13 @@ export function PlaygroundPage() {
             {showFilters && (
               <div className="flex flex-col gap-2 animate-in slide-in-from-top-2 duration-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-silver-mist">Index Filter</span>
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-silver-mist">{t.filterIndex}</span>
                   {activeFilterCount > 0 && (
                     <button
                       onClick={() => setIndexFilters(new Set(['All']))}
                       className="text-[10px] font-bold text-fuenzer-teal hover:underline"
                     >
-                      Clear filters
+                      {t.clearFilters}
                     </button>
                   )}
                 </div>
@@ -423,8 +424,8 @@ export function PlaygroundPage() {
           </div>
 
           {/* ── Scrollable Content Area (Footer lives here, only visible on scroll) ── */}
-          <div className="flex-1 overflow-y-auto flex flex-col">
-            <div className="p-4 md:p-6 bg-cloud-canvas/30 dark:bg-[#121212]/50 flex-1 flex flex-col">
+          <div className="flex-1 overflow-y-auto flex flex-col bg-cloud-canvas/30 dark:bg-[#121212]/50">
+            <div className="p-4 md:p-6 min-h-full flex flex-col">
 
               {/* Bookmarked empty state */}
               {tab === 'bookmarked' && bookmarkedRefs.length === 0 && (
@@ -444,7 +445,7 @@ export function PlaygroundPage() {
               {/* No match after filter */}
               {tab === 'all' && latestResponse && displayedRefs.length === 0 && !isLoading && (
                 <div className="text-center py-16 text-silver-mist text-sm bg-paper-white dark:bg-ink-black rounded-xl border border-cloud-canvas dark:border-stone-gray">
-                  No references match your current filters.
+                  {t.noFiltersMatch}
                 </div>
               )}
 
@@ -457,8 +458,8 @@ export function PlaygroundPage() {
                         source={source} 
                         isSelected={selectedRefs.has(source.id)}
                         onToggleSelect={() => toggleSelection(source.id)}
-                        isBookmarked={bookmarks.has(source.id)}
-                        onToggleBookmark={() => toggleBookmark(source.id)}
+                        isBookmarked={bookmarkedSources.some((b) => b.id === source.id)}
+                        onToggleBookmark={() => toggleBookmark(source)}
                         citationStyle={citation}
                       />
                     </div>
@@ -483,15 +484,15 @@ export function PlaygroundPage() {
               )}
 
               {/* Empty state for "All" tab — friendly with demo button */}
-              {messages.length === 0 && !isLoading && tab === 'all' && (
+              {!latestResponse && !isLoading && tab === 'all' && (
                 <div className="flex flex-col items-center justify-center py-24 text-center gap-5 flex-1">
                   <div className="w-20 h-20 rounded-2xl bg-cloud-canvas dark:bg-stone-gray/50 flex items-center justify-center">
                     <BookOpen className="w-10 h-10 text-silver-mist" strokeWidth={1.5} />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <p className="text-sm font-semibold text-ink-black dark:text-paper-white">No references yet</p>
+                    <p className="text-sm font-semibold text-ink-black dark:text-paper-white">{t.noRefsYet}</p>
                     <p className="text-xs text-silver-mist max-w-[260px] leading-relaxed">
-                      Ask a question in the AI Assistant on the left to generate your first literature review.
+                      {t.noRefsYetDesc}
                     </p>
                   </div>
                   <button
@@ -499,7 +500,7 @@ export function PlaygroundPage() {
                     className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-cloud-canvas dark:border-stone-gray text-xs font-semibold text-slate-gray dark:text-silver-mist hover:border-fuenzer-teal hover:text-fuenzer-teal transition-all"
                   >
                     <FlaskConical className="w-3.5 h-3.5" />
-                    Load demo data to preview buttons
+                    {t.loadDemoButton}
                   </button>
                 </div>
               )}

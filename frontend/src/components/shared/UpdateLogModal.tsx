@@ -1,4 +1,7 @@
 import { X } from 'lucide-react';
+import { useUiStore } from '../../store/uiStore';
+import { en } from '../../locales/en';
+import { id } from '../../locales/id';
 
 interface UpdateLogModalProps {
   isOpen: boolean;
@@ -6,6 +9,9 @@ interface UpdateLogModalProps {
 }
 
 export function UpdateLogModal({ isOpen, onClose }: UpdateLogModalProps) {
+  const { language } = useUiStore();
+  const t = language === 'en' ? en.updates : id.updates;
+
   if (!isOpen) return null;
 
   return (
@@ -20,7 +26,7 @@ export function UpdateLogModal({ isOpen, onClose }: UpdateLogModalProps) {
       <div className="relative bg-paper-white dark:bg-ink-black w-full max-w-lg p-6 rounded-2xl shadow-2xl border border-cloud-canvas dark:border-stone-gray animate-in fade-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-ink-black dark:text-cloud-canvas">
-            Update Logs
+            {t.title}
           </h2>
           <button 
             onClick={onClose}
@@ -31,11 +37,7 @@ export function UpdateLogModal({ isOpen, onClose }: UpdateLogModalProps) {
         </div>
 
         <div className="space-y-6 max-h-[60vh] overflow-y-auto">
-          {[
-            { date: '25 May 2026', title: 'Dark Mode & Localization', desc: 'Added support for dark mode theme, English/Indonesian localization, and interactive Navbar.' },
-            { date: '24 May 2026', title: 'Playground Redesign', desc: 'Introduced an advanced split-screen AI Assistant playground with citation filters.' },
-            { date: '20 May 2026', title: 'Initial Alpha Release', desc: 'Fuenzer Research launched its initial proof of concept with SINTA integrations.' }
-          ].map((log, i) => (
+          {t.logs.map((log, i) => (
             <div key={i} className="flex gap-4">
               <div className="w-24 shrink-0 text-xs font-semibold text-fuenzer-teal-dark dark:text-fuenzer-teal pt-1">
                 {log.date}

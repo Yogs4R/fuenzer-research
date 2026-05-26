@@ -2,9 +2,14 @@ import { Navbar } from '../components/shared/Navbar';
 import { Footer } from '../components/shared/Footer';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { useUiStore } from '../store/uiStore';
+import { en } from '../locales/en';
+import { id } from '../locales/id';
 
 export function PrivacyPage() {
   const navigate = useNavigate();
+  const { language } = useUiStore();
+  const t = language === 'en' ? en.privacy : id.privacy;
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#121212] transition-colors overflow-hidden font-serif selection:bg-fuenzer-teal/30 selection:text-ink-black dark:selection:text-paper-white">
@@ -15,26 +20,26 @@ export function PrivacyPage() {
           className="flex items-center gap-2 text-sm font-medium hover:text-ink-black dark:hover:text-paper-white mb-6 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
-          Back
+          {t.back}
         </button>
-        <h1 className="text-4xl font-bold font-serif dark:text-paper-white mb-8">Privacy Policy</h1>
+        <h1 className="text-4xl font-bold font-serif dark:text-paper-white mb-8">{t.title}</h1>
         <div className="space-y-6 leading-relaxed">
-          <p>Last updated: May 2026</p>
+          <p>{t.lastUpdated}</p>
           <section>
-            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white mb-4 mt-8">1. Information We Collect</h2>
-            <p>Fuenzer Research is designed with privacy in mind. We collect basic account information necessary for service delivery, such as your email address when you sign up. More importantly, your academic queries, uploaded documents, and generated literature reviews remain strictly private.</p>
+            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white mb-4 mt-8">{t.sec1Title}</h2>
+            <p>{t.sec1Desc}</p>
           </section>
           <section>
-            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white mb-4 mt-8">2. AI Training and Data Usage</h2>
-            <p>We respect the confidentiality of your research. Therefore, we explicitly guarantee that:</p>
+            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white mb-4 mt-8">{t.sec2Title}</h2>
+            <p>{t.sec2Desc}</p>
             <ul className="list-disc pl-6 mt-2 space-y-2">
-              <li>Your personal research queries and synthesized outputs are <strong>never</strong> used to train our public generative AI models.</li>
-              <li>Data is processed statelessly where possible, meaning your queries are processed to generate results and are not persistently stored for training purposes.</li>
+              <li>{t.sec2List1}</li>
+              <li>{t.sec2List2}</li>
             </ul>
           </section>
           <section>
-            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white mb-4 mt-8">3. Data Security</h2>
-            <p>We implement industry-standard security measures, including encryption in transit and at rest, to maintain the safety of your personal information and research data against unauthorized access or disclosure.</p>
+            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white mb-4 mt-8">{t.sec3Title}</h2>
+            <p>{t.sec3Desc}</p>
           </section>
         </div>
       </main>
