@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://research.fuenzer.web.id/sitemap.xml
