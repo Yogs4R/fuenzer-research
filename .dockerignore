@@ -1,0 +1,48 @@
+# ==================================
+# .dockerignore - Fuenzer Research
+# Keep it minimal & effective
+# ==================================
+
+# Version Control
+.git
+
+# Environment & Secrets
+.env
+backend/.env
+
+# Dependencies (rebuilt in container)
+frontend/node_modules
+
+# Build outputs (rebuilt in container)
+frontend/dist
+backend/tmp
+
+# Documentation (not needed in image)
+*.md
+docs/
+
+# IDE & Editor
+.vscode
+.idea
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# CI/CD & Scripts
+.github
+deploy.sh
+
+# Docker files (prevent recursive)
+Dockerfile
+.dockerignore
+
+# Internal tools
+_bmad-output/
+_bmad/
+.agent/
+.kiro/
+
+# Logs & Coverage
+*.log
+coverage/

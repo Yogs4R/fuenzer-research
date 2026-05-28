@@ -11,7 +11,9 @@ FROM golang:1.22-alpine AS backend-builder
 WORKDIR /app/backend
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
-COPY backend/ ./
+# Hanya copy source code, JANGAN copy folder data yang berat ke builder
+COPY backend/cmd ./cmd
+COPY backend/internal ./internal
 RUN CGO_ENABLED=0 GOOS=linux go build -o /api ./cmd/api
 
 # ---- Production Stage ----
@@ -23,10 +25,10 @@ WORKDIR /app
 # Copy backend binary
 COPY --from=backend-builder /api ./api
 
-# Copy SINTA dictionary
-COPY --from=backend-builder /app/backend/data ./data
+# Copy folder data (sinta.json & garuda.db) dari laptop ke container production
+COPY backend/data ./data
 
-# Copy frontend build output (to be served by the backend or a reverse proxy)
+# Copy frontend build output
 COPY --from=frontend-builder /app/frontend/dist ./public
 
 EXPOSE 8080
