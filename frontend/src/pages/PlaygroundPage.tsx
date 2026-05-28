@@ -31,6 +31,7 @@ type SortOption = 'relevance' | 'newest' | 'oldest' | 'citations';
 type CitationStyle = 'APA' | 'Harvard' | 'MLA' | 'Chicago' | 'Vancouver';
 type FilterIndex = 'All' | 'SINTA 1' | 'SINTA 2' | 'SINTA 3' | 'SINTA 4' | 'SINTA 5' | 'SINTA 6' | 'Scopus' | 'Garuda';
 type ViewTab = 'all' | 'bookmarked';
+type ContentTypeTab = 'All' | 'Articles' | 'Journals' | 'Books';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'relevance', label: 'Most Relevant' },
@@ -134,6 +135,7 @@ export function PlaygroundPage() {
   const [searchRef, setSearchRef] = useState('');
   const [selectedRefs, setSelectedRefs] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
+  const [contentTypeFilter, setContentTypeFilter] = useState<ContentTypeTab>('All');
 
   const navigate = useNavigate();
   const { query, messages, loadDemoData, bookmarkedSources, toggleBookmark } = useResearchStore();
@@ -190,13 +192,27 @@ export function PlaygroundPage() {
   // Process references pipeline
   const allRefs = latestResponse?.references ?? [];
   const afterIndexFilter = filterByIndexes(allRefs, indexFilters);
+  
+  // Content type filtering
+  const afterContentType = contentTypeFilter === 'All'
+    ? afterIndexFilter
+    : afterIndexFilter.filter((s) => {
+        const ct = s.content_type?.toLowerCase() || '';
+        switch (contentTypeFilter) {
+          case 'Articles': return ct === 'article' || ct === 'journal-article';
+          case 'Journals': return ct === 'article' || ct === 'journal-article'; // articles from journals
+          case 'Books': return ct === 'book' || ct === 'book-chapter';
+          default: return true;
+        }
+      });
+
   const afterSearch = searchRef.trim()
-    ? afterIndexFilter.filter(
+    ? afterContentType.filter(
         (s) =>
           s.title.toLowerCase().includes(searchRef.toLowerCase()) ||
           s.authors.join(' ').toLowerCase().includes(searchRef.toLowerCase())
       )
-    : afterIndexFilter;
+    : afterContentType;
   const sorted = sortSources(afterSearch, sort);
   const bookmarkedRefs = sorted.filter((s) => bookmarkedSources.some((b) => b.id === s.id));
   const displayedRefs = tab === 'bookmarked' ? bookmarkedRefs : sorted;
@@ -279,6 +295,23 @@ export function PlaygroundPage() {
                     </span>
                   )}
                 </button>
+              </div>
+
+              {/* Content Type Filter Chips */}
+              <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray shrink-0">
+                {(['All', 'Articles', 'Journals', 'Books'] as const).map((ct) => (
+                  <button
+                    key={ct}
+                    onClick={() => setContentTypeFilter(ct)}
+                    className={`px-2.5 py-1 md:px-3 md:py-1.5 text-xs font-semibold rounded-md transition-all ${
+                      contentTypeFilter === ct
+                        ? 'bg-fuenzer-teal/10 text-fuenzer-teal shadow-sm border border-fuenzer-teal/30'
+                        : 'text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
+                    }`}
+                  >
+                    {ct}
+                  </button>
+                ))}
               </div>
 
               <div className="flex items-center gap-2 ml-auto shrink-0">

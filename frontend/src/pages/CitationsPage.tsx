@@ -59,8 +59,22 @@ export function CitationsPage() {
   const [selectedStyle, setSelectedStyle] = useState<CitationStyle>('APA');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
+  const [contentTypeFilter, setContentTypeFilter] = useState<'All' | 'Articles' | 'Journals' | 'Books'>('All');
   const { language } = useUiStore();
   const t = language === 'en' ? en.citations : id.citations;
+
+  // Filter sources by content type
+  const filteredSources = contentTypeFilter === 'All'
+    ? bookmarkedSources
+    : bookmarkedSources.filter((s) => {
+        const ct = s.content_type?.toLowerCase() || '';
+        switch (contentTypeFilter) {
+          case 'Articles': return ct === 'article' || ct === 'journal-article';
+          case 'Journals': return ct === 'article' || ct === 'journal-article';
+          case 'Books': return ct === 'book' || ct === 'book-chapter';
+          default: return true;
+        }
+      });
 
   // Copy single citation to clipboard
   const handleCopySingle = async (source: AcademicSource) => {
@@ -76,8 +90,8 @@ export function CitationsPage() {
 
   // Copy all citations to clipboard
   const handleCopyAll = async () => {
-    if (bookmarkedSources.length === 0) return;
-    const allText = bookmarkedSources
+    if (filteredSources.length === 0) return;
+    const allText = filteredSources
       .map((s) => getFormattedCitation(s, selectedStyle))
       .join('\n\n');
     try {
@@ -91,8 +105,8 @@ export function CitationsPage() {
 
   // Download BibTeX file
   const handleDownloadBibTeX = () => {
-    if (bookmarkedSources.length === 0) return;
-    const bibText = generateBibTeX(bookmarkedSources);
+    if (filteredSources.length === 0) return;
+    const bibText = generateBibTeX(filteredSources);
     const blob = new Blob([bibText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -174,6 +188,28 @@ export function CitationsPage() {
         ) : (
           /* Citations formatter area */
           <div className="space-y-8 flex-1">
+            {/* Content Type Filter Tabs */}
+            <div className="flex items-center gap-3">
+              <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray">
+                {(['All', 'Articles', 'Journals', 'Books'] as const).map((ct) => (
+                  <button
+                    key={ct}
+                    onClick={() => setContentTypeFilter(ct)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                      contentTypeFilter === ct
+                        ? 'bg-fuenzer-teal/10 text-fuenzer-teal shadow-sm border border-fuenzer-teal/30'
+                        : 'text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
+                    }`}
+                  >
+                    {ct}
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs font-bold text-slate-gray dark:text-silver-mist uppercase tracking-wider ml-auto">
+                {filteredSources.length} sources
+              </span>
+            </div>
+
             {/* Style switcher row */}
             <div className="flex items-center justify-between pb-3 border-b border-cloud-canvas dark:border-stone-gray">
               <div className="flex items-center gap-2 flex-wrap">
@@ -195,7 +231,7 @@ export function CitationsPage() {
 
             {/* List of generated citations */}
             <div className="space-y-4">
-              {bookmarkedSources.map((source) => {
+              {filteredSources.map((source) => {
                 const text = getFormattedCitation(source, selectedStyle);
                 const isCopied = copiedId === source.id;
                 return (

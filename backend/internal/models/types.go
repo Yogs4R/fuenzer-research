@@ -4,6 +4,7 @@ package models
 type ResearchRequest struct {
 	Query string `json:"query" validate:"required,min=3,max=200"`
 	Scope string `json:"scope" validate:"required,oneof=global indonesia"`
+	Type  string `json:"type,omitempty"` // "article", "book", "journal", or "" for all
 }
 
 // IndexEntry represents a single index/tier assignment for a journal.
@@ -14,14 +15,15 @@ type IndexEntry struct {
 
 // AcademicSource represents a single journal/paper reference in the response.
 type AcademicSource struct {
-	ID        string       `json:"id"`
-	Title     string       `json:"title"`
-	Authors   []string     `json:"authors"`
-	Year      int          `json:"year"`
-	Publisher string       `json:"publisher"`
-	Abstract  string       `json:"abstract,omitempty"`
-	Indexes   []IndexEntry `json:"indexes"`
-	URL       string       `json:"url"`
+	ID          string       `json:"id"`
+	Title       string       `json:"title"`
+	Authors     []string     `json:"authors"`
+	Year        int          `json:"year"`
+	Publisher   string       `json:"publisher"`
+	Abstract    string       `json:"abstract,omitempty"`
+	Indexes     []IndexEntry `json:"indexes"`
+	URL         string       `json:"url"`
+	ContentType string       `json:"content_type,omitempty"` // "article", "book", "journal", etc.
 }
 
 // ResearchResponse is the unified response sent back to the frontend.
@@ -35,7 +37,9 @@ type ResearchResponse struct {
 type OpenAlexWork struct {
 	ID                    string               `json:"id"`
 	Title                 string               `json:"title"`
+	Type                  string               `json:"type"`
 	PublicationYear       int                  `json:"publication_year"`
+	CitedByCount          int                  `json:"cited_by_count"`
 	PrimaryLocation       *OpenAlexLocation    `json:"primary_location"`
 	Authorships           []OpenAlexAuthorship `json:"authorships"`
 	AbstractInvertedIndex map[string][]int     `json:"abstract_inverted_index"`

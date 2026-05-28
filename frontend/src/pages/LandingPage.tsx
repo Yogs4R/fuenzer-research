@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResearchStore } from '../store/researchStore';
 import { useUiStore } from '../store/uiStore';
@@ -11,6 +11,8 @@ import { CustomMultiSelect } from '../components/shared/CustomMultiSelect';
 import { NumberScramble } from '../components/shared/NumberScramble';
 import { FadeIn } from '../components/shared/FadeIn';
 import { Footer } from '../components/shared/Footer';
+import { extractKeywords } from '../utils/keywordExtractor';
+import { fetchAutocomplete } from '../services/api';
 import {
   BookOpen,
   ArrowRight,
@@ -68,10 +70,71 @@ export function LandingPage() {
   } = useResearchStore();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  // "Did you mean?" state
+  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [isValidKeyword, setIsValidKeyword] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Reset the store state when returning to the landing page so search query starts empty
   useEffect(() => {
     reset();
   }, [reset]);
+
+  // Extract keywords and fetch autocomplete on query change
+  useEffect(() => {
+    const extracted = extractKeywords(query);
+    
+    // If nothing meaningful extracted or too short, mark invalid
+    if (extracted.length < 3) {
+      setIsValidKeyword(false);
+      setSuggestion(null);
+      return;
+    }
+
+    // Mark as valid initially (will be overridden by autocomplete if needed)
+    setIsValidKeyword(true);
+    setSuggestion(null);
+
+    // Debounce autocomplete call (500ms)
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const suggestions = await fetchAutocomplete(extracted);
+        if (suggestions.length > 0) {
+          const topSuggestion = suggestions[0];
+          // If the suggestion differs significantly from input, show "Did you mean?"
+          if (topSuggestion.toLowerCase() !== extracted.toLowerCase() &&
+              !topSuggestion.toLowerCase().startsWith(extracted.toLowerCase()) &&
+              !extracted.toLowerCase().startsWith(topSuggestion.toLowerCase())) {
+            setSuggestion(topSuggestion);
+            setIsValidKeyword(false);
+          } else {
+            setSuggestion(null);
+            setIsValidKeyword(true);
+          }
+        }
+      } catch {
+        // Autocomplete failed — allow search anyway
+        setIsValidKeyword(true);
+      }
+    }, 500);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query]);
+
+  // Apply suggestion when user clicks "Did you mean?"
+  const applySuggestion = useCallback(() => {
+    if (suggestion) {
+      setQuery(suggestion);
+      setSuggestion(null);
+      setIsValidKeyword(true);
+    }
+  }, [suggestion, setQuery]);
+
+  // Determine if search button should be enabled
+  const canSearch = query.trim().length >= 3 && isValidKeyword;
 
   const accreditedSources = [
     { name: 'SINTA', src: sintaLogo },
@@ -83,8 +146,11 @@ export function LandingPage() {
   ];
 
   const getAccreditationOptions = () => {
+    // When type is Books, show book-specific sources
+    if (searchType === 'Books') {
+      return ['OpenAlex', 'Google Books'];
+    }
     if (searchLocation === 'Indonesia') {
-      if (searchType === 'Books') return ['Global'];
       return ['Global', 'SINTA', 'GARUDA'];
     }
     return ['Global'];
@@ -102,8 +168,10 @@ export function LandingPage() {
   const t = language === 'en' ? en : id;
 
   const handleSearch = async () => {
-    if (query.trim().length < 3) return;
-    initSession(query.trim());
+    if (!canSearch) return;
+    const extracted = extractKeywords(query);
+    setQuery(extracted); // Clean query before searching
+    initSession(extracted);
     await executeSearch();
     navigate('/playground');
   };
@@ -134,7 +202,7 @@ export function LandingPage() {
           <div className="max-w-3xl mx-auto relative group font-sans flex flex-col items-center">
             
             {/* Main Search Input */}
-            <div className="w-full relative flex items-center bg-paper-white dark:bg-ink-black rounded-xl shadow-xl p-2 group-focus-within:ring-2 group-focus-within:ring-fuenzer-teal/50 transition-all border border-cloud-canvas dark:border-stone-gray z-10 mb-4">
+            <div className="w-full relative flex items-center bg-paper-white dark:bg-ink-black rounded-xl shadow-xl p-2 group-focus-within:ring-2 group-focus-within:ring-fuenzer-teal/50 transition-all border border-cloud-canvas dark:border-stone-gray z-10 mb-2">
               <input
                 type="text"
                 value={query}
@@ -146,16 +214,36 @@ export function LandingPage() {
               />
               <button
                 onClick={handleSearch}
-                disabled={query.trim().length < 3}
+                disabled={!canSearch}
                 aria-label="Search"
-                className="w-14 h-14 flex items-center justify-center rounded-lg bg-fuenzer-teal-dark text-white hover:bg-fuenzer-teal transition-colors disabled:opacity-50"
+                className={`w-14 h-14 flex items-center justify-center rounded-lg transition-all duration-200 ${
+                  canSearch
+                    ? 'bg-fuenzer-teal-dark text-white hover:bg-fuenzer-teal cursor-pointer'
+                    : 'bg-fuenzer-teal-dark/30 text-white/50 cursor-not-allowed'
+                }`}
               >
                 <ArrowRight className="w-6 h-6" strokeWidth={2} />
               </button>
             </div>
 
+            {/* "Did you mean?" Suggestion */}
+            {suggestion && (
+              <div className="w-full text-left px-4 mb-3 z-10 animate-in fade-in slide-in-from-top-2">
+                <button
+                  onClick={applySuggestion}
+                  className="text-sm font-sans text-slate-gray dark:text-silver-mist hover:text-fuenzer-teal transition-colors cursor-pointer"
+                >
+                  Did you mean:{' '}
+                  <span className="text-fuenzer-teal font-semibold italic underline underline-offset-2">
+                    {suggestion}
+                  </span>
+                  ?
+                </button>
+              </div>
+            )}
+
             {/* Dropdowns Below — relative z-20 so they appear above Popular Searches */}
-            <div className="flex flex-wrap justify-center gap-3 relative z-20">
+            <div className="flex flex-wrap justify-center gap-3 relative z-20 mt-2">
               <CustomDropdown
                 value={searchType}
                 onChange={setSearchType}
