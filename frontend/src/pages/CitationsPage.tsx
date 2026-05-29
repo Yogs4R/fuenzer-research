@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResearchStore } from '../store/researchStore';
 import { useUiStore } from '../store/uiStore';
@@ -14,14 +14,34 @@ import {
   Download,
   ArrowRight,
   Sparkles,
+  Search,
+  X,
+  SlidersHorizontal,
+  CheckSquare,
+  Square,
+  Filter,
+  ChevronDown,
 } from 'lucide-react';
 
 type CitationStyle = 'APA' | 'Harvard' | 'MLA' | 'Chicago' | 'Vancouver';
 const CITATION_STYLES: CitationStyle[] = ['APA', 'Harvard', 'MLA', 'Chicago', 'Vancouver'];
 
+type SortOption = 'relevance' | 'newest' | 'oldest' | 'title';
+type FilterIndex = 'All' | 'SINTA 1' | 'SINTA 2' | 'SINTA 3' | 'SINTA 4' | 'SINTA 5' | 'SINTA 6' | 'Scopus' | 'Garuda';
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'relevance', label: 'Most Relevant' },
+  { value: 'newest', label: 'Newest First' },
+  { value: 'oldest', label: 'Oldest First' },
+  { value: 'title', label: 'Title (A-Z)' },
+];
+
+const INDEX_FILTERS: FilterIndex[] = ['All', 'SINTA 1', 'SINTA 2', 'SINTA 3', 'SINTA 4', 'SINTA 5', 'SINTA 6', 'Scopus', 'Garuda'];
+
 // Citation formatter
 function getFormattedCitation(source: AcademicSource, style: CitationStyle) {
-  const authors = source.authors.join(', ');
+  const authorsArr = source.authors || [];
+  const authors = authorsArr.length > 0 ? authorsArr.join(', ') : 'Penulis tidak tersedia';
   const year = source.year > 0 ? source.year : 'n.d.';
   const title = source.title;
   const pub = source.publisher || 'Unknown Publisher';
@@ -47,10 +67,89 @@ function generateBibTeX(sources: AcademicSource[]): string {
   return sources
     .map((s, idx) => {
       const citeKey = `source_${idx + 1}`;
-      const authors = s.authors.join(' and ');
+      const authors = (s.authors || []).join(' and ') || 'Unknown Author';
       return `@article{${citeKey},\n  author = {${authors}},\n  title = {${s.title}},\n  journal = {${s.publisher || 'Unknown Journal'}},\n  year = {${s.year > 0 ? s.year : 'n.d.'}}\n}`;
     })
     .join('\n\n');
+}
+
+function sortSources(sources: AcademicSource[], sort: SortOption): AcademicSource[] {
+  const copy = [...sources];
+  if (sort === 'newest') return copy.sort((a, b) => b.year - a.year);
+  if (sort === 'oldest') return copy.sort((a, b) => a.year - b.year);
+  if (sort === 'title') return copy.sort((a, b) => a.title.localeCompare(b.title));
+  return copy;
+}
+
+function filterByIndexes(sources: AcademicSource[], filters: Set<FilterIndex>): AcademicSource[] {
+  if (filters.has('All') || filters.size === 0) return sources;
+  return sources.filter((s) =>
+    [...filters].some((f) => {
+      if (f === 'Scopus') return s.indexes?.some((i) => i.provider.toLowerCase() === 'scopus');
+      if (f === 'Garuda') return s.indexes?.some((i) => i.provider.toLowerCase() === 'garuda');
+      const tier = f.split(' ')[1]; // 'SINTA 1' → '1'
+      return s.indexes?.some((i) => i.provider.toLowerCase() === 'sinta' && i.tier === tier);
+    })
+  );
+}
+
+// Reusable Dropdown Component
+function Dropdown({
+  trigger,
+  children,
+  align = 'right',
+}: {
+  trigger: React.ReactNode;
+  children: React.ReactNode;
+  align?: 'right' | 'left';
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handle = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
+
+  return (
+    <div className="relative font-sans" ref={ref}>
+      <div onClick={() => setOpen((o) => !o)}>{trigger}</div>
+      {open && (
+        <div
+          className={`absolute top-full mt-1 z-30 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-xl py-1 min-w-[160px] animate-in fade-in zoom-in-95 duration-150 ${align === 'right' ? 'right-0' : 'left-0'}`}
+          onClick={() => setOpen(false)}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DropdownItem({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+        active
+          ? 'font-bold text-fuenzer-teal bg-fuenzer-teal/10'
+          : 'text-ink-black dark:text-cloud-canvas hover:bg-cloud-canvas/60 dark:hover:bg-stone-gray/30'
+      }`}
+    >
+      {label}
+    </button>
+  );
 }
 
 export function CitationsPage() {
@@ -60,21 +159,62 @@ export function CitationsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
   const [contentTypeFilter, setContentTypeFilter] = useState<'All' | 'Articles' | 'Journals' | 'Books'>('All');
+  
+  // Search, Sort, Filters States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sort, setSort] = useState<SortOption>('relevance');
+  const [indexFilters, setIndexFilters] = useState<Set<FilterIndex>>(new Set(['All']));
+  const [showFilters, setShowFilters] = useState(false);
+
   const { language } = useUiStore();
   const t = language === 'en' ? en.citations : id.citations;
 
-  // Filter sources by content type
-  const filteredSources = contentTypeFilter === 'All'
-    ? bookmarkedSources
-    : bookmarkedSources.filter((s) => {
-        const ct = s.content_type?.toLowerCase() || '';
-        switch (contentTypeFilter) {
-          case 'Articles': return ct === 'article' || ct === 'journal-article';
-          case 'Journals': return ct === 'article' || ct === 'journal-article';
-          case 'Books': return ct === 'book' || ct === 'book-chapter';
-          default: return true;
-        }
-      });
+  const toggleIndexFilter = (f: FilterIndex) => {
+    setIndexFilters((prev) => {
+      const next = new Set(prev);
+      if (f === 'All') {
+        return new Set<FilterIndex>(['All']);
+      }
+      next.delete('All');
+      if (next.has(f)) {
+        next.delete(f);
+        if (next.size === 0) next.add('All');
+      } else {
+        next.add(f);
+      }
+      return next;
+    });
+  };
+
+  const activeFilterCount = indexFilters.has('All') ? 0 : indexFilters.size;
+
+  // Pipeline execution
+  const afterContentType = bookmarkedSources.filter((s) => {
+    if (contentTypeFilter !== 'All') {
+      const ct = s.content_type?.toLowerCase() || '';
+      switch (contentTypeFilter) {
+        case 'Articles': return ct === 'article' || ct === 'journal-article';
+        case 'Journals': return ct === 'journal' || ct === 'journal-article';
+        case 'Books': return ct === 'book' || ct === 'book-chapter';
+      }
+    }
+    return true;
+  });
+
+  const afterIndexFilter = filterByIndexes(afterContentType, indexFilters);
+
+  const afterSearch = searchQuery.trim()
+    ? afterIndexFilter.filter((s) => {
+        const query = searchQuery.toLowerCase();
+        return (
+          s.title.toLowerCase().includes(query) ||
+          s.authors.join(' ').toLowerCase().includes(query) ||
+          (s.publisher && s.publisher.toLowerCase().includes(query))
+        );
+      })
+    : afterIndexFilter;
+
+  const filteredSources = sortSources(afterSearch, sort);
 
   // Copy single citation to clipboard
   const handleCopySingle = async (source: AcademicSource) => {
@@ -117,6 +257,15 @@ export function CitationsPage() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  const sortOptionLabels: Record<SortOption, string> = {
+    relevance: 'Most Relevant',
+    newest: 'Newest First',
+    oldest: 'Oldest First',
+    title: 'Title (A-Z)',
+  };
+
+  const currentSortLabel = sortOptionLabels[sort] ?? 'Sort';
 
   return (
     <div className="min-h-screen flex flex-col bg-cloud-canvas dark:bg-[#121212] font-serif transition-colors duration-200">
@@ -187,27 +336,127 @@ export function CitationsPage() {
           </div>
         ) : (
           /* Citations formatter area */
-          <div className="space-y-8 flex-1">
-            {/* Content Type Filter Tabs */}
-            <div className="flex items-center gap-3">
-              <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray">
-                {(['All', 'Articles', 'Journals', 'Books'] as const).map((ct) => (
+          <div className="space-y-6 flex-1">
+            {/* Search, Tabs, Sort, and Filters Row */}
+            <div className="flex flex-col gap-4 pb-4 border-b border-cloud-canvas dark:border-stone-gray">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 flex-wrap">
+                {/* Search Bar + Tabs */}
+                <div className="flex items-center gap-3 flex-wrap w-full lg:w-auto">
+                  {/* Search bar */}
+                  <div className="flex items-center border border-cloud-canvas dark:border-stone-gray rounded-xl px-3 h-10 hover:border-silver-mist focus-within:border-fuenzer-teal bg-cloud-canvas/30 dark:bg-stone-gray/30 transition-colors w-full sm:w-64 font-sans">
+                    <Search className="w-4 h-4 text-silver-mist shrink-0 mr-2" />
+                    <input
+                      type="text"
+                      placeholder="Search citations..."
+                      className="flex-1 h-full text-sm outline-none bg-transparent dark:text-cloud-canvas placeholder:text-silver-mist"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery('')} className="text-silver-mist hover:text-ink-black dark:hover:text-paper-white shrink-0">
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Content Type Tabs */}
+                  <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray shrink-0 max-w-fit">
+                    {(['All', 'Articles', 'Journals', 'Books'] as const).map((ct) => (
+                      <button
+                        key={ct}
+                        onClick={() => setContentTypeFilter(ct)}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                          contentTypeFilter === ct
+                            ? 'bg-fuenzer-teal/10 text-fuenzer-teal shadow-sm border border-fuenzer-teal/30'
+                            : 'text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
+                        }`}
+                      >
+                        {ct}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Sort + Filter + Sources Count */}
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:ml-auto">
+                  {/* Sort By Dropdown */}
+                  <Dropdown
+                    align="left"
+                    trigger={
+                      <button className="flex items-center gap-1.5 h-10 px-3 border border-cloud-canvas dark:border-stone-gray rounded-xl text-xs font-medium text-slate-gray dark:text-silver-mist hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-colors cursor-pointer whitespace-nowrap">
+                        <Filter className="w-3.5 h-3.5" />
+                        {currentSortLabel}
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                    }
+                  >
+                    {SORT_OPTIONS.map((o) => (
+                      <DropdownItem key={o.value} label={sortOptionLabels[o.value]} active={sort === o.value} onClick={() => setSort(o.value)} />
+                    ))}
+                  </Dropdown>
+
+                  {/* Filters Toggle Button */}
                   <button
-                    key={ct}
-                    onClick={() => setContentTypeFilter(ct)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                      contentTypeFilter === ct
-                        ? 'bg-fuenzer-teal/10 text-fuenzer-teal shadow-sm border border-fuenzer-teal/30'
-                        : 'text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
+                    onClick={() => setShowFilters((f) => !f)}
+                    className={`flex items-center gap-1.5 h-10 px-3 border rounded-xl text-xs font-medium transition-colors ${
+                      showFilters || activeFilterCount > 0
+                        ? 'border-fuenzer-teal text-fuenzer-teal bg-fuenzer-teal/10'
+                        : 'border-cloud-canvas dark:border-stone-gray text-slate-gray dark:text-silver-mist hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50'
                     }`}
                   >
-                    {ct}
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <span className="w-4 h-4 rounded-full bg-fuenzer-teal text-white text-[9px] font-bold flex items-center justify-center">
+                        {activeFilterCount}
+                      </span>
+                    )}
                   </button>
-                ))}
+
+                  <span className="text-xs font-bold text-slate-gray dark:text-silver-mist uppercase tracking-wider font-sans ml-auto sm:ml-2 whitespace-nowrap">
+                    {filteredSources.length} sources
+                  </span>
+                </div>
               </div>
-              <span className="text-xs font-bold text-slate-gray dark:text-silver-mist uppercase tracking-wider ml-auto">
-                {filteredSources.length} sources
-              </span>
+
+              {/* Index Filters Checklist */}
+              {showFilters && (
+                <div className="flex flex-col gap-2 animate-in slide-in-from-top-2 duration-200 bg-cloud-canvas/20 dark:bg-stone-gray/10 p-3.5 rounded-xl border border-cloud-canvas dark:border-stone-gray">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-silver-mist">Index Filter</span>
+                    {activeFilterCount > 0 && (
+                      <button
+                        onClick={() => setIndexFilters(new Set(['All']))}
+                        className="text-[10px] font-bold text-fuenzer-teal hover:underline"
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {INDEX_FILTERS.map((f) => {
+                      const checked = indexFilters.has(f);
+                      return (
+                        <button
+                          key={f}
+                          onClick={() => toggleIndexFilter(f)}
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                            checked
+                              ? 'bg-fuenzer-teal text-white border-fuenzer-teal'
+                              : 'border-cloud-canvas dark:border-stone-gray text-slate-gray dark:text-silver-mist hover:border-fuenzer-teal/60 hover:text-fuenzer-teal'
+                          }`}
+                        >
+                          {checked
+                            ? <CheckSquare className="w-3 h-3 shrink-0" />
+                            : <Square className="w-3 h-3 shrink-0" />
+                          }
+                          {f}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Style switcher row */}
@@ -231,37 +480,43 @@ export function CitationsPage() {
 
             {/* List of generated citations */}
             <div className="space-y-4">
-              {filteredSources.map((source) => {
-                const text = getFormattedCitation(source, selectedStyle);
-                const isCopied = copiedId === source.id;
-                return (
-                  <div
-                    key={source.id}
-                    className="p-5 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray hover:border-silver-mist/50 dark:hover:border-stone-gray/70 rounded-2xl shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
-                  >
-                    <div className="space-y-1.5 flex-1 min-w-0 pr-4">
-                      <p className="text-xs font-bold text-fuenzer-teal-dark dark:text-fuenzer-teal uppercase tracking-wider font-sans">
-                        {source.title}
-                      </p>
-                      <p className="text-[13px] text-ink-black dark:text-cloud-canvas leading-relaxed select-all">
-                        {text}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => handleCopySingle(source)}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ml-auto border cursor-pointer ${
-                        isCopied
-                          ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30'
-                          : 'bg-cloud-canvas/30 hover:bg-cloud-canvas/70 dark:bg-stone-gray/20 dark:hover:bg-stone-gray/40 border-cloud-canvas dark:border-stone-gray text-slate-gray dark:text-silver-mist'
-                      }`}
+              {filteredSources.length === 0 ? (
+                <div className="text-center py-16 text-silver-mist text-sm bg-paper-white dark:bg-ink-black rounded-xl border border-cloud-canvas dark:border-stone-gray shadow-sm">
+                  No citations match your search and filter criteria.
+                </div>
+              ) : (
+                filteredSources.map((source) => {
+                  const text = getFormattedCitation(source, selectedStyle);
+                  const isCopied = copiedId === source.id;
+                  return (
+                    <div
+                      key={source.id}
+                      className="p-5 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray hover:border-silver-mist/50 dark:hover:border-stone-gray/70 rounded-2xl shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
                     >
-                      {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      {isCopied ? t.copiedSingle : t.copySingle}
-                    </button>
-                  </div>
-                );
-              })}
+                      <div className="space-y-1.5 flex-1 min-w-0 pr-4">
+                        <p className="text-xs font-bold text-fuenzer-teal-dark dark:text-fuenzer-teal uppercase tracking-wider font-sans">
+                          {source.title}
+                        </p>
+                        <p className="text-[13px] text-ink-black dark:text-cloud-canvas leading-relaxed select-all">
+                          {text}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => handleCopySingle(source)}
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ml-auto border cursor-pointer ${
+                          isCopied
+                            ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30'
+                            : 'bg-cloud-canvas/30 hover:bg-cloud-canvas/70 dark:bg-stone-gray/20 dark:hover:bg-stone-gray/40 border-cloud-canvas dark:border-stone-gray text-slate-gray dark:text-silver-mist'
+                        }`}
+                      >
+                        {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                        {isCopied ? t.copiedSingle : t.copySingle}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         )}

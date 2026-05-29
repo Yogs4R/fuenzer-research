@@ -159,7 +159,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       sintaRank: get().sintaRank,
     };
 
-    const updated = [newEntry, ...history.filter((h) => h.query !== queryText)].slice(0, 20);
+    const updated = [newEntry, ...history].slice(0, 20);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
 
     set({

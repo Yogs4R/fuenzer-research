@@ -72,7 +72,6 @@ export const en = {
     emptyTitle: 'Your Library is Empty',
     emptyDesc: 'Bookmark your favorite journals and academic books from the Workspace to collect and access them here.',
     searchButton: 'Search References Now',
-    savedCount: 'saved papers',
     noResults: 'No references match your search query.'
   },
   citations: {

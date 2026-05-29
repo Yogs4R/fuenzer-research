@@ -72,7 +72,6 @@ export const id = {
     emptyTitle: 'Pustaka Anda Kosong',
     emptyDesc: 'Bookmark jurnal dan buku akademis favorit Anda dari menu Ruang Kerja untuk dikumpulkan dan diakses di sini.',
     searchButton: 'Cari Referensi Sekarang',
-    savedCount: 'paper tersimpan',
     noResults: 'Tidak ada referensi yang cocok dengan kata kunci pencarian Anda.'
   },
   citations: {
