@@ -107,7 +107,7 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 				})
 			}
 		}
-	} else if req.Type == "book" || (req.Index == "Google Books" && req.Type == "") || (req.Type == "book" && req.Scope == "indonesia") {
+	} else if (req.Type == "book" && req.Index == "Google Books") || (req.Index == "Google Books" && req.Type == "") {
 		// Use Google Books client for book searches
 		sources, err = h.googleBooksClient.Search(req.Query, req.Scope, limit)
 		if err != nil {
@@ -168,6 +168,9 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 				Indexes:     []models.IndexEntry{},
 				ContentType: contentType,
 			}
+			if req.Scope == "indonesia" {
+				source.Indexes = append(source.Indexes, models.IndexEntry{Provider: "location", Tier: "Indonesia"})
+			}
 
 			sources = append(sources, source)
 		}
@@ -213,6 +216,39 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 		}
 	}
 
+
+	// Strict title check for book type searches: title must contain the query
+	if req.Type == "book" {
+		var filtered []models.AcademicSource
+		for _, src := range sources {
+			if strings.Contains(strings.ToLower(src.Title), strings.ToLower(req.Query)) {
+				filtered = append(filtered, src)
+			}
+		}
+		sources = filtered
+	}
+
+	// Strict title check for journal type searches: title must contain the query
+	if req.Type == "journal" {
+		var filtered []models.AcademicSource
+		for _, src := range sources {
+			if strings.Contains(strings.ToLower(src.Title), strings.ToLower(req.Query)) {
+				filtered = append(filtered, src)
+			}
+		}
+		sources = filtered
+	}
+
+	// Strict title check for article type searches: title must contain the query
+	if req.Type == "article" {
+		var filtered []models.AcademicSource
+		for _, src := range sources {
+			if strings.Contains(strings.ToLower(src.Title), strings.ToLower(req.Query)) {
+				filtered = append(filtered, src)
+			}
+		}
+		sources = filtered
+	}
 
 	// Short-circuit: empty results — do NOT call Gemini
 	if len(sources) == 0 {

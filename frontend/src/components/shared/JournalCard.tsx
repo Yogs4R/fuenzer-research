@@ -49,6 +49,7 @@ export function JournalCard({
   const garudaIndex = source.indexes?.find((idx) => idx.provider.toLowerCase() === 'garuda');
   const isSinta = !!sintaIndex;
   const isGaruda = !!garudaIndex;
+  const isIndonesia = isSinta || isGaruda || source.indexes?.some((idx) => idx.tier.toLowerCase() === 'indonesia' || idx.provider.toLowerCase() === 'location');
 
   return (
     <div className={`group flex bg-paper-white dark:bg-ink-black rounded-xl shadow-sm hover:shadow-xl dark:hover:shadow-2xl border transition-all ${isSelected ? 'border-fuenzer-teal ring-1 ring-fuenzer-teal' : 'border-cloud-canvas dark:border-stone-gray'}`}>
@@ -83,7 +84,7 @@ export function JournalCard({
                </span>
             )}
             <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-cloud-canvas dark:bg-stone-gray text-slate-gray dark:text-cloud-canvas tracking-wide">
-               Global
+               {isIndonesia ? 'Indonesia' : 'Global'}
              </span>
           </div>
         </div>

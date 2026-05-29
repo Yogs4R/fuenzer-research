@@ -133,7 +133,10 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   setQuery: (query: string) => set({ query }),
   setScope: (scope: SearchScope) => set({ scope }),
   setSearchType: (type: string) => set({ searchType: type }),
-  setSearchLocation: (location: string) => set({ searchLocation: location }),
+  setSearchLocation: (location: string) => set({ 
+    searchLocation: location,
+    scope: location.toLowerCase() === 'indonesia' ? 'indonesia' : 'global'
+  }),
   setSearchAccreditation: (accreditation: string) => set({ searchAccreditation: accreditation }),
   setSintaRank: (rank: string[]) => set({ sintaRank: rank }),
 

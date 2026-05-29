@@ -149,12 +149,10 @@ func (m *Mapper) SearchJournals(query string, sintaRanks []string, limit int) []
 	hasRankFilter := len(sintaRanks) > 0 && !containsAll(sintaRanks)
 
 	for _, j := range m.journals {
-		// Keyword matching against Title, Field (Institution), or Subject Area
+		// Keyword matching specifically against Title (Publisher in struct represents journal name)
 		nameMatch := strings.Contains(strings.ToLower(j.Publisher), queryLower)
-		fieldMatch := strings.Contains(strings.ToLower(j.Field), queryLower)
-		subjectMatch := strings.Contains(strings.ToLower(j.SubjectArea), queryLower)
 
-		if nameMatch || fieldMatch || subjectMatch {
+		if nameMatch {
 			// Apply tier filter if requested
 			if hasRankFilter {
 				matchTierFound := false
@@ -187,7 +185,7 @@ func (m *Mapper) SearchJournals(query string, sintaRanks []string, limit int) []
 
 			urlVal := j.URL
 			if urlVal == "" {
-				urlVal = "https://sinta.kemdikbud.go.id"
+				urlVal = "https://sinta.kemdiktisaintek.go.id"
 			}
 
 			source := models.AcademicSource{

@@ -60,14 +60,24 @@ func (c *Client) Search(query string, workType string) ([]models.AcademicSource,
 	// Format keywords for case-insensitive LIKE search
 	searchTerm := "%" + strings.ToLower(query) + "%"
 
-	// Query from artikel table
-	rows, err := db.Query(
-		`SELECT article_title, title, article_abstract, article_year, doi, url, source
-		 FROM artikel
-		 WHERE lower(article_title) LIKE ? OR lower(article_abstract) LIKE ?
-		 LIMIT ?`,
-		searchTerm, searchTerm, limit,
-	)
+	var rows *sql.Rows
+	if workType == "journal" {
+		rows, err = db.Query(
+			`SELECT article_title, title, article_abstract, article_year, doi, url, source
+			 FROM artikel
+			 WHERE lower(title) LIKE ?
+			 LIMIT ?`,
+			searchTerm, limit,
+		)
+	} else {
+		rows, err = db.Query(
+			`SELECT article_title, title, article_abstract, article_year, doi, url, source
+			 FROM artikel
+			 WHERE lower(article_title) LIKE ? OR lower(article_abstract) LIKE ?
+			 LIMIT ?`,
+			searchTerm, searchTerm, limit,
+		)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("garuda SQLite query execution failed: %w", err)
 	}
@@ -108,6 +118,10 @@ func (c *Client) Search(query string, workType string) ([]models.AcademicSource,
 			contentType = "article"
 		case "book":
 			contentType = "book"
+		case "journal":
+			contentType = "journal"
+			title = publisher
+			publisher = articleTitle.String
 		}
 
 		// Sanitize title for ID generation

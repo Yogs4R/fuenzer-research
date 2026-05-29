@@ -85,7 +85,9 @@ func (c *Client) Search(query string, scope string, workType string) ([]models.O
 func (c *Client) searchWithLimit(query string, scope string, workType string, limit int) ([]models.OpenAlexWork, error) {
 	searchQuery := query
 	if scope == "indonesia" {
-		searchQuery = query + " Indonesia Universitas"
+		if workType == "book" {
+			searchQuery = "Indonesia"
+		}
 	}
 
 	params := url.Values{}
@@ -93,17 +95,26 @@ func (c *Client) searchWithLimit(query string, scope string, workType string, li
 	params.Set("per-page", fmt.Sprintf("%d", limit))
 	params.Set("mailto", mailto)
 
-	// Apply type filter if specified
+	// Apply type and scope filters dynamically
+	var filterParts []string
 	if workType != "" {
 		switch workType {
 		case "article":
-			params.Set("filter", "type:article")
+			filterParts = append(filterParts, "type:article")
 		case "book":
-			params.Set("filter", "type:book")
+			filterParts = append(filterParts, "type:book", "title.search:"+query)
 		case "journal":
 			// "Journals" = articles published in journal sources
-			params.Set("filter", "primary_location.source.type:journal")
+			filterParts = append(filterParts, "primary_location.source.type:journal")
 		}
+	}
+
+	if scope == "indonesia" {
+		filterParts = append(filterParts, "institutions.country_code:ID")
+	}
+
+	if len(filterParts) > 0 {
+		params.Set("filter", strings.Join(filterParts, ","))
 	}
 
 	reqURL := fmt.Sprintf("%s?%s", baseURL, params.Encode())
@@ -281,6 +292,9 @@ func (c *Client) SearchSources(query string, scope string, limit int) ([]models.
 
 	var results []models.AcademicSource
 	for _, item := range sourcesResp.Results {
+		if !strings.Contains(strings.ToLower(item.DisplayName), strings.ToLower(query)) {
+			continue
+		}
 		// Map topics to subject areas
 		var subjects []string
 		for _, t := range item.Topics {

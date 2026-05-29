@@ -42,6 +42,7 @@ type GoogleBooksResponse struct {
 			Publisher           string   `json:"publisher"`
 			PublishedDate       string   `json:"publishedDate"`
 			InfoLink            string   `json:"infoLink"`
+			Description         string   `json:"description"`
 			IndustryIdentifiers []struct {
 				Type       string `json:"type"`
 				Identifier string `json:"identifier"`
@@ -57,7 +58,7 @@ func (c *Client) Search(query string, scope string, limit int) ([]models.Academi
 	}
 
 	params := url.Values{}
-	params.Set("q", query)
+	params.Set("q", "intitle:"+query)
 	params.Set("maxResults", fmt.Sprintf("%d", limit))
 	params.Set("key", c.apiKey)
 	if scope == "indonesia" {
@@ -109,18 +110,25 @@ func (c *Client) Search(query string, scope string, limit int) ([]models.Academi
 			urlVal = "https://isbnsearch.org/isbn/" + isbn
 		}
 
+		if !strings.Contains(strings.ToLower(item.VolumeInfo.Title), strings.ToLower(query)) {
+			continue
+		}
+
 		source := models.AcademicSource{
 			ID:          "googlebooks-" + item.ID,
 			Title:       item.VolumeInfo.Title,
 			Authors:     item.VolumeInfo.Authors,
 			Year:        year,
 			Publisher:   publisher,
-			Abstract:    "", // Google Books API doesn't return full clean abstract, leaving it brief/empty for synthesis context
+			Abstract:    item.VolumeInfo.Description,
 			URL:         urlVal,
 			Indexes: []models.IndexEntry{
 				{Provider: "googlebooks", Tier: "Google Books"},
 			},
 			ContentType: "book",
+		}
+		if scope == "indonesia" {
+			source.Indexes = append(source.Indexes, models.IndexEntry{Provider: "location", Tier: "Indonesia"})
 		}
 
 		// Handle empty authors gracefully in case of missing authors

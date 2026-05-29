@@ -191,6 +191,9 @@ export function LandingPage() {
       return ['OpenAlex', 'Google Books'];
     }
     if (searchLocation === 'Indonesia') {
+      if (searchType === 'Articles') {
+        return ['Global', 'GARUDA'];
+      }
       return ['Global', 'SINTA', 'GARUDA'];
     }
     return ['Global'];
@@ -200,9 +203,9 @@ export function LandingPage() {
   // Auto-reset accreditation when type or location changes and current value is no longer valid
   useEffect(() => {
     if (!accreditationOptions.includes(searchAccreditation)) {
-      setSearchAccreditation('Global');
+      setSearchAccreditation(accreditationOptions[0]);
     }
-  }, [searchType, searchLocation]);
+  }, [searchType, searchLocation, accreditationOptions, searchAccreditation, setSearchAccreditation]);
   
   const { language } = useUiStore();
   const t = language === 'en' ? en : id;

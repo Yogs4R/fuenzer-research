@@ -194,8 +194,8 @@ export function PlaygroundPage() {
     : afterIndexFilter.filter((s) => {
         const ct = s.content_type?.toLowerCase() || '';
         switch (contentTypeFilter) {
-          case 'Articles': return ct === 'article';
-          case 'Journals': return ct === 'journal-article'; // articles from journals only!
+          case 'Articles': return ct === 'article' || ct === 'journal-article';
+          case 'Journals': return ct === 'journal' || ct === 'journal-article';
           case 'Books': return ct === 'book' || ct === 'book-chapter';
           default: return true;
         }
