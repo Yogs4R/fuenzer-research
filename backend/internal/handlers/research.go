@@ -58,8 +58,14 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 		})
 	}
 
-	// Step 1: Fetch works from OpenAlex
-	papers, err := h.openalexClient.Search(req.Query, req.Scope)
+	// Validate type filter (optional)
+	validTypes := map[string]bool{"": true, "article": true, "book": true, "journal": true}
+	if !validTypes[req.Type] {
+		req.Type = ""
+	}
+
+	// Step 1: Fetch works from OpenAlex (with type filter)
+	papers, err := h.openalexClient.Search(req.Query, req.Scope, req.Type)
 	if err != nil {
 		// Timeout or API failure — return 504
 		return c.Status(fiber.StatusGatewayTimeout).JSON(fiber.Map{
@@ -99,14 +105,15 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 		abstract := openalex.DecodeAbstract(p.AbstractInvertedIndex)
 
 		source := models.AcademicSource{
-			ID:        p.ID,
-			Title:     p.Title,
-			Authors:   authors,
-			Year:      p.PublicationYear,
-			Publisher: publisher,
-			Abstract:  abstract,
-			URL:       url,
-			Indexes:   []models.IndexEntry{},
+			ID:          p.ID,
+			Title:       p.Title,
+			Authors:     authors,
+			Year:        p.PublicationYear,
+			Publisher:   publisher,
+			Abstract:    abstract,
+			URL:         url,
+			Indexes:     []models.IndexEntry{},
+			ContentType: p.Type,
 		}
 
 		sources = append(sources, source)

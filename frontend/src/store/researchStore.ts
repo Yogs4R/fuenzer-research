@@ -268,7 +268,17 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     }, 3500);
 
     try {
-      const response = await searchResearch({ query: query.trim(), scope });
+      // Map dropdown searchType to API type parameter
+      const typeMap: Record<string, string> = {
+        'All': '',
+        'Articles': 'article',
+        'Journals': 'journal',
+        'Books': 'book',
+      };
+      const searchTypeValue = get().searchType;
+      const typeFilter = typeMap[searchTypeValue] || '';
+
+      const response = await searchResearch({ query: query.trim(), scope, ...(typeFilter ? { type: typeFilter as 'article' | 'book' | 'journal' } : {}) });
       clearTimeout(phaseTimer);
       clearTimeout(synthTimer);
       set((state) => ({

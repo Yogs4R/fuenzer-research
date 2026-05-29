@@ -18,11 +18,22 @@ export function LibraryPage() {
   const navigate = useNavigate();
   const { bookmarkedSources, toggleBookmark } = useResearchStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [contentTypeFilter, setContentTypeFilter] = useState<'All' | 'Articles' | 'Journals' | 'Books'>('All');
   const { language } = useUiStore();
   const t = language === 'en' ? en.library : id.library;
 
-  // Filter bookmarked sources locally based on search query
+  // Filter bookmarked sources locally based on search query and content type
   const filtered = bookmarkedSources.filter((s) => {
+    // Content type filter
+    if (contentTypeFilter !== 'All') {
+      const ct = s.content_type?.toLowerCase() || '';
+      switch (contentTypeFilter) {
+        case 'Articles': if (ct !== 'article' && ct !== 'journal-article') return false; break;
+        case 'Journals': if (ct !== 'article' && ct !== 'journal-article') return false; break;
+        case 'Books': if (ct !== 'book' && ct !== 'book-chapter') return false; break;
+      }
+    }
+    // Text search filter
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -96,8 +107,24 @@ export function LibraryPage() {
         ) : (
           /* Cards list */
           <div className="space-y-6 flex-1">
-            <div className="flex justify-between items-center pb-2 border-b border-cloud-canvas dark:border-stone-gray">
-              <span className="text-xs font-bold text-slate-gray dark:text-silver-mist uppercase tracking-wider font-sans">
+            {/* Content Type Filter Tabs */}
+            <div className="flex items-center gap-2 pb-4 border-b border-cloud-canvas dark:border-stone-gray">
+              <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray">
+                {(['All', 'Articles', 'Journals', 'Books'] as const).map((ct) => (
+                  <button
+                    key={ct}
+                    onClick={() => setContentTypeFilter(ct)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                      contentTypeFilter === ct
+                        ? 'bg-fuenzer-teal/10 text-fuenzer-teal shadow-sm border border-fuenzer-teal/30'
+                        : 'text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
+                    }`}
+                  >
+                    {ct}
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs font-bold text-slate-gray dark:text-silver-mist uppercase tracking-wider font-sans ml-auto">
                 {filtered.length} {t.savedCount}
               </span>
             </div>

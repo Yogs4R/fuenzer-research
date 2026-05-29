@@ -34,6 +34,7 @@ func main() {
 
 	// Initialize handler
 	researchHandler := handlers.NewResearchHandler(openalexClient, geminiClient, sintaMapper)
+	autocompleteHandler := handlers.NewAutocompleteHandler(openalexClient)
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -78,6 +79,7 @@ func main() {
 	// API Routes
 	api := app.Group("/api/v1")
 	api.Post("/research", researchHandler.Handle)
+	api.Get("/autocomplete", autocompleteHandler.Handle)
 
 	// Serve static frontend files (production mode)
 	if cfg.Env == "production" {

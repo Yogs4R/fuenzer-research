@@ -14,6 +14,7 @@ export interface AcademicSource {
   publisher: string;
   indexes: IndexEntry[];
   url: string;
+  content_type?: string; // "article", "book", "book-chapter", etc.
 }
 
 export interface ResearchResponse {
@@ -25,9 +26,16 @@ export interface ResearchResponse {
 export interface ResearchRequest {
   query: string;
   scope: 'global' | 'indonesia';
+  type?: 'article' | 'book' | 'journal' | ''; // content type filter
+}
+
+export interface AutocompleteResponse {
+  suggestions: string[];
 }
 
 export type SearchScope = 'global' | 'indonesia';
+
+export type ContentType = 'All' | 'Articles' | 'Journals' | 'Books';
 
 export type LoadingPhase =
   | 'idle'
