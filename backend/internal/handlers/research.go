@@ -266,10 +266,10 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 		synthesis = "Sintesis AI sedang tidak tersedia. Silakan lihat referensi di bawah."
 	}
 
-	// Strip abstracts from response (frontend doesn't need them)
-	for i := range sources {
-		sources[i].Abstract = ""
-	}
+	// Strip abstracts from response disabled so frontend can print abstracts to PDF
+	// for i := range sources {
+	// 	sources[i].Abstract = ""
+	// }
 
 	return c.Status(fiber.StatusOK).JSON(models.ResearchResponse{
 		Synthesis:  synthesis,

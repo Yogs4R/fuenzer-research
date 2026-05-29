@@ -9,6 +9,8 @@ import { Navbar } from '../components/shared/Navbar';
 import { Footer } from '../components/shared/Footer';
 import { AIAssistantPanel } from '../components/playground/AIAssistantPanel';
 import type { AcademicSource } from '../types/research';
+import JSZip from 'jszip';
+import { generatePdfDocument } from '../utils/pdfExport';
 import {
   Search,
   BookOpen,
@@ -220,8 +222,78 @@ export function PlaygroundPage() {
 
   const currentSortLabel = sortOptionLabels[sort] ?? 'Sort';
 
-  const handleExportPDF = () => {
-    alert(t.exportPDFMsg);
+  const handleExportPDF = async () => {
+    // 1. Resolve references to export (use selection, fallback to displayed)
+    let sourcesToExport: AcademicSource[] = [];
+    if (selectedRefs.size > 0) {
+      sourcesToExport = allRefs.filter((s) => selectedRefs.has(s.id));
+    } else {
+      sourcesToExport = displayedRefs;
+    }
+
+    if (sourcesToExport.length === 0) {
+      alert(language === 'en' ? 'No references available to export.' : 'Tidak ada referensi untuk diekspor.');
+      return;
+    }
+
+    // 2. Filter for Articles and Books only (skip Journal containers)
+    const finalExportList = sourcesToExport.filter((s) => {
+      const ct = s.content_type?.toLowerCase() || '';
+      return ct === 'article' || ct === 'journal-article' || ct === 'book' || ct === 'book-chapter';
+    });
+
+    const skippedCount = sourcesToExport.length - finalExportList.length;
+
+    if (finalExportList.length === 0) {
+      alert(language === 'en' 
+        ? 'Export to PDF is only supported for Articles and Books (Journals are not supported).' 
+        : 'Ekspor PDF hanya didukung untuk Artikel dan Buku (Jurnal tidak didukung).');
+      return;
+    }
+
+    if (skippedCount > 0) {
+      alert(language === 'en'
+        ? `Skipped ${skippedCount} journal container(s) as they do not support PDF exports.`
+        : `Melewati ${skippedCount} wadah jurnal karena tidak mendukung ekspor PDF.`);
+    }
+
+    // 3. Generate and download
+    try {
+      if (finalExportList.length === 1) {
+        const source = finalExportList[0];
+        const doc = generatePdfDocument(source, citation);
+        const safeTitle = source.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .substring(0, 50);
+        doc.save(`${safeTitle}_fuenzer_research.pdf`);
+      } else {
+        const zip = new JSZip();
+        
+        for (const source of finalExportList) {
+          const doc = generatePdfDocument(source, citation);
+          const pdfBlob = doc.output('blob');
+          const safeTitle = source.title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .substring(0, 50);
+          zip.file(`${safeTitle}.pdf`, pdfBlob);
+        }
+
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(zipBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `references_fuenzer_research.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('Failed to export PDF/ZIP', err);
+      alert(language === 'en' ? 'An error occurred during PDF generation.' : 'Terjadi kesalahan saat membuat PDF.');
+    }
   };
 
   return (

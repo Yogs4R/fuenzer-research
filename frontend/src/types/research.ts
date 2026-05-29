@@ -15,6 +15,7 @@ export interface AcademicSource {
   indexes: IndexEntry[];
   url: string;
   content_type?: string; // "article", "book", "book-chapter", etc.
+  abstract?: string;
 }
 
 export interface ResearchResponse {
