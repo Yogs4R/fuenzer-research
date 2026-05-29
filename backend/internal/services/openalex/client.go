@@ -38,6 +38,51 @@ func NewClient() *Client {
 // locale keywords to the query per api-flow.md rules.
 // workType can be "article", "book", "journal", or "" for all types.
 func (c *Client) Search(query string, scope string, workType string) ([]models.OpenAlexWork, error) {
+	if workType == "" {
+		// Concurrently fetch 5 articles, 5 journals, and 5 books, then merge and deduplicate
+		type result struct {
+			works []models.OpenAlexWork
+			err   error
+		}
+		ch := make(chan result, 3)
+		types := []string{"article", "journal", "book"}
+
+		for _, t := range types {
+			go func(wt string) {
+				works, err := c.searchWithLimit(query, scope, wt, 5)
+				ch <- result{works: works, err: err}
+			}(t)
+		}
+
+		var combined []models.OpenAlexWork
+		var firstErr error
+		seen := make(map[string]bool)
+
+		for i := 0; i < 3; i++ {
+			res := <-ch
+			if res.err != nil && firstErr == nil {
+				firstErr = res.err
+			}
+			for _, w := range res.works {
+				if !seen[w.ID] {
+					seen[w.ID] = true
+					combined = append(combined, w)
+				}
+			}
+		}
+
+		// Return combined works if we got any, otherwise return error
+		if len(combined) == 0 && firstErr != nil {
+			return nil, firstErr
+		}
+		return combined, nil
+	}
+
+	return c.searchWithLimit(query, scope, workType, defaultLimit)
+}
+
+// searchWithLimit is the internal search implementation with configurable result limit.
+func (c *Client) searchWithLimit(query string, scope string, workType string, limit int) ([]models.OpenAlexWork, error) {
 	searchQuery := query
 	if scope == "indonesia" {
 		searchQuery = query + " Indonesia Universitas"
@@ -45,7 +90,7 @@ func (c *Client) Search(query string, scope string, workType string) ([]models.O
 
 	params := url.Values{}
 	params.Set("search", searchQuery)
-	params.Set("per-page", fmt.Sprintf("%d", defaultLimit))
+	params.Set("per-page", fmt.Sprintf("%d", limit))
 	params.Set("mailto", mailto)
 
 	// Apply type filter if specified
@@ -176,3 +221,114 @@ func DecodeAbstract(invertedIndex map[string][]int) string {
 
 	return strings.Join(result, " ")
 }
+
+// OpenAlexSourceItem represents a single journal source returned by the OpenAlex Sources API.
+type OpenAlexSourceItem struct {
+	ID                   string   `json:"id"`
+	DisplayName          string   `json:"display_name"`
+	ISSN                 []string `json:"issn"`
+	HomepageURL          string   `json:"homepage_url"`
+	WorksCount           int      `json:"works_count"`
+	HostOrganizationName string   `json:"host_organization_name"`
+	Type                 string   `json:"type"`
+	Topics               []struct {
+		DisplayName string `json:"display_name"`
+	} `json:"topics"`
+}
+
+// OpenAlexSourcesResponse is the response wrapper from OpenAlex Sources API.
+type OpenAlexSourcesResponse struct {
+	Results []OpenAlexSourceItem `json:"results"`
+}
+
+// SearchSources queries the OpenAlex Sources API specifically for journal publications.
+// Filters by country_code:ID if the scope is indonesia.
+func (c *Client) SearchSources(query string, scope string, limit int) ([]models.AcademicSource, error) {
+	params := url.Values{}
+	params.Set("search", query)
+	params.Set("per-page", fmt.Sprintf("%d", limit))
+	params.Set("mailto", mailto)
+
+	// Filter by type:journal and optionally country_code:ID for Indonesian scope
+	if scope == "indonesia" {
+		params.Set("filter", "type:journal,country_code:ID")
+	} else {
+		params.Set("filter", "type:journal")
+	}
+
+	reqURL := fmt.Sprintf("https://api.openalex.org/sources?%s", params.Encode())
+
+	resp, err := c.httpClient.Get(reqURL)
+	if err != nil {
+		return nil, fmt.Errorf("openalex sources request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("openalex sources returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read sources response body: %w", err)
+	}
+
+	var sourcesResp OpenAlexSourcesResponse
+	if err := json.Unmarshal(body, &sourcesResp); err != nil {
+		return nil, fmt.Errorf("failed to parse sources response: %w", err)
+	}
+
+	var results []models.AcademicSource
+	for _, item := range sourcesResp.Results {
+		// Map topics to subject areas
+		var subjects []string
+		for _, t := range item.Topics {
+			if t.DisplayName != "" {
+				subjects = append(subjects, t.DisplayName)
+			}
+		}
+
+		subjectText := "Sektor Subjek: tidak ditentukan"
+		if len(subjects) > 0 {
+			subjectText = "Sektor Subjek: " + strings.Join(subjects, ", ")
+		}
+
+		publisher := item.HostOrganizationName
+		if publisher == "" {
+			publisher = "Penerbit Jurnal Global"
+		}
+
+		issnVal := "Tidak tersedia"
+		if len(item.ISSN) > 0 {
+			issnVal = strings.Join(item.ISSN, ", ")
+		}
+
+		abstractText := fmt.Sprintf("Jurnal terindeks global (%s). ISSN: %s. %s. Total publikasi: %d.", 
+			item.Type, issnVal, subjectText, item.WorksCount)
+
+		urlVal := item.HomepageURL
+		if urlVal == "" {
+			urlVal = item.ID
+		}
+
+		source := models.AcademicSource{
+			ID:          item.ID,
+			Title:       item.DisplayName,
+			Authors:     []string{}, // Journals have no author lists
+			Year:        2025,       // Database current reference year
+			Publisher:   publisher,
+			Abstract:    abstractText,
+			URL:         urlVal,
+			Indexes: []models.IndexEntry{
+				{Provider: "openalex", Tier: "Global"},
+			},
+			ContentType: "journal",
+		}
+
+		results = append(results, source)
+	}
+
+	return results, nil
+}
+

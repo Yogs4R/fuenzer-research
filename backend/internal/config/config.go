@@ -9,10 +9,10 @@ import (
 
 // Config holds all environment variables.
 type Config struct {
-	GeminiAPIKey    string
-	Port            string
-	Env             string
-	DemoBypassToken string
+	GeminiAPIKey      string
+	GoogleBooksAPIKey string
+	Port              string
+	Env               string
 }
 
 // Load reads environment variables from .env and returns a Config.
@@ -21,14 +21,17 @@ func Load() *Config {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		GeminiAPIKey:    getEnv("GEMINI_API_KEY", ""),
-		Port:            getEnv("PORT", "8080"),
-		Env:             getEnv("ENV", "development"),
-		DemoBypassToken: getEnv("DEMO_BYPASS_TOKEN", ""),
+		GeminiAPIKey:      getEnv("GEMINI_API_KEY", ""),
+		GoogleBooksAPIKey: getEnv("GOOGLE_BOOKS_API_KEY", ""),
+		Port:              getEnv("PORT", "8080"),
+		Env:               getEnv("ENV", "development"),
 	}
 
 	if cfg.GeminiAPIKey == "" {
 		log.Println("WARNING: GEMINI_API_KEY is not set. AI synthesis will fail.")
+	}
+	if cfg.GoogleBooksAPIKey == "" {
+		log.Println("WARNING: GOOGLE_BOOKS_API_KEY is not set. Google Books search will fail.")
 	}
 
 	return cfg

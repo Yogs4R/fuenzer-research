@@ -28,8 +28,8 @@ export function LibraryPage() {
     if (contentTypeFilter !== 'All') {
       const ct = s.content_type?.toLowerCase() || '';
       switch (contentTypeFilter) {
-        case 'Articles': if (ct !== 'article' && ct !== 'journal-article') return false; break;
-        case 'Journals': if (ct !== 'article' && ct !== 'journal-article') return false; break;
+        case 'Articles': if (ct !== 'article') return false; break;
+        case 'Journals': if (ct !== 'journal-article') return false; break;
         case 'Books': if (ct !== 'book' && ct !== 'book-chapter') return false; break;
       }
     }

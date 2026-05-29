@@ -27,6 +27,8 @@ export interface ResearchRequest {
   query: string;
   scope: 'global' | 'indonesia';
   type?: 'article' | 'book' | 'journal' | ''; // content type filter
+  index?: string;
+  sinta_rank?: string[];
 }
 
 export interface AutocompleteResponse {

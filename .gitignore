@@ -29,6 +29,7 @@ _bmad/
 
 # Go
 backend/vendor/
+backend/data/garuda_articles_data.db
 
 # Logs
 *.log

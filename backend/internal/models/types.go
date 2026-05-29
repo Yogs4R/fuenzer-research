@@ -2,9 +2,11 @@ package models
 
 // ResearchRequest represents the incoming search request from the frontend.
 type ResearchRequest struct {
-	Query string `json:"query" validate:"required,min=3,max=200"`
-	Scope string `json:"scope" validate:"required,oneof=global indonesia"`
-	Type  string `json:"type,omitempty"` // "article", "book", "journal", or "" for all
+	Query     string   `json:"query" validate:"required,min=3,max=200"`
+	Scope     string   `json:"scope" validate:"required,oneof=global indonesia"`
+	Type      string   `json:"type,omitempty"` // "article", "book", "journal", or "" for all
+	Index     string   `json:"index,omitempty"`
+	SintaRank []string `json:"sinta_rank,omitempty"`
 }
 
 // IndexEntry represents a single index/tier assignment for a journal.
@@ -54,6 +56,7 @@ type OpenAlexLocation struct {
 // OpenAlexSource represents the source (journal/publisher) of the work.
 type OpenAlexSource struct {
 	DisplayName string `json:"display_name"`
+	Type        string `json:"type"`
 }
 
 // OpenAlexAuthorship represents an authorship entry.
@@ -79,9 +82,12 @@ type OpenAlexSearchResponse struct {
 
 // SintaJournal represents a single entry in our local SINTA dictionary.
 type SintaJournal struct {
-	Publisher string `json:"publisher"`
-	Tier      string `json:"tier"`
-	Field     string `json:"field"`
+	Publisher   string `json:"publisher"`
+	Tier        string `json:"tier"`
+	Field       string `json:"field"` // maps to basic_info.institution
+	SubjectArea string `json:"subject_area"`
+	ISSN        string `json:"issn"`
+	URL         string `json:"url"`
 }
 
 // GeminiAbstract is the lean struct sent to Gemini (token economy).

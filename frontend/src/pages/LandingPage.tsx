@@ -57,6 +57,42 @@ function RotatingText() {
   );
 }
 
+// Robust offline-friendly check to detect obvious keyboard mashing / gibberish
+function checkIfGibberish(str: string): boolean {
+  const s = str.toLowerCase().trim();
+  if (s.length < 3) return true;
+
+  // 1. More than 4 consecutive consonants (excluding common Indonesian/English digraphs)
+  // Let's replace safe digraphs first: ng, ny, kh, sy, ch, sh, th
+  const cleanedConsonants = s
+    .replace(/ng/g, 'x')
+    .replace(/ny/g, 'x')
+    .replace(/kh/g, 'x')
+    .replace(/sy/g, 'x')
+    .replace(/ch/g, 'x')
+    .replace(/sh/g, 'x')
+    .replace(/th/g, 'x');
+
+  if (/[b-df-hj-np-tv-z]{4,}/i.test(cleanedConsonants)) {
+    return true; // e.g. "zxcv", "qwrt"
+  }
+
+  // 2. Single char repeated 4+ times (e.g. "aaaa", "zzzz")
+  if (/(.)\1{3,}/.test(s)) {
+    return true;
+  }
+
+  // 3. Common sequential keyboard mash clusters
+  const mashes = ['asd', 'asdf', 'qwer', 'zxc', 'qwe', 'iop', 'jkl', 'bnm', 'dfg', 'ghj', 'hjk'];
+  for (const m of mashes) {
+    if (s.includes(m + m) || (s.startsWith(m) && s.length > 8)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function LandingPage() {
   const navigate = useNavigate();
   const { 
@@ -91,31 +127,35 @@ export function LandingPage() {
       return;
     }
 
-    // Mark as valid initially (will be overridden by autocomplete if needed)
-    setIsValidKeyword(true);
-    setSuggestion(null);
+    // Local validation check: if obvious gibberish, mark invalid immediately
+    if (checkIfGibberish(extracted)) {
+      setIsValidKeyword(false);
+      setSuggestion(null);
+      return;
+    }
 
-    // Debounce autocomplete call (500ms)
+    // Default to valid for pronounceable/normal words (including Indonesian terms)
+    setIsValidKeyword(true);
+
+    // Debounce autocomplete call (500ms) only to populate "Did you mean?" suggestion
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       try {
         const suggestions = await fetchAutocomplete(extracted);
         if (suggestions.length > 0) {
           const topSuggestion = suggestions[0];
-          // If the suggestion differs significantly from input, show "Did you mean?"
-          if (topSuggestion.toLowerCase() !== extracted.toLowerCase() &&
-              !topSuggestion.toLowerCase().startsWith(extracted.toLowerCase()) &&
-              !extracted.toLowerCase().startsWith(topSuggestion.toLowerCase())) {
+          // If the suggestion differs from input, show "Did you mean?"
+          if (topSuggestion.toLowerCase() !== extracted.toLowerCase()) {
             setSuggestion(topSuggestion);
-            setIsValidKeyword(false);
           } else {
             setSuggestion(null);
-            setIsValidKeyword(true);
           }
+        } else {
+          setSuggestion(null);
         }
       } catch {
-        // Autocomplete failed — allow search anyway
-        setIsValidKeyword(true);
+        // Autocomplete failed or offline — preserve valid keyword state
+        setSuggestion(null);
       }
     }, 500);
 
@@ -167,13 +207,13 @@ export function LandingPage() {
   const { language } = useUiStore();
   const t = language === 'en' ? en : id;
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
     if (!canSearch) return;
     const extracted = extractKeywords(query);
     setQuery(extracted); // Clean query before searching
     initSession(extracted);
-    await executeSearch();
     navigate('/playground');
+    executeSearch();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -228,7 +268,7 @@ export function LandingPage() {
 
             {/* "Did you mean?" Suggestion */}
             {suggestion && (
-              <div className="w-full text-left px-4 mb-3 z-10 animate-in fade-in slide-in-from-top-2">
+              <div className="w-full text-left px-4 mb-3 z-10 animate-in fade-in">
                 <button
                   onClick={applySuggestion}
                   className="text-sm font-sans text-slate-gray dark:text-silver-mist hover:text-fuenzer-teal transition-colors cursor-pointer"
@@ -239,6 +279,13 @@ export function LandingPage() {
                   </span>
                   ?
                 </button>
+              </div>
+            )}
+
+            {/* Validation Feedback Warning (Gibberish) */}
+            {!isValidKeyword && !suggestion && query.trim().length >= 3 && (
+              <div className="w-full text-left px-4 mb-3 z-10 animate-in fade-in text-red-500 font-semibold dark:text-red-400 text-xs font-sans">
+                Topik riset tidak valid. Silakan masukkan kata kunci akademis yang benar (misal: "machine learning").
               </div>
             )}
 

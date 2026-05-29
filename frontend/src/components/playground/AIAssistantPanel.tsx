@@ -181,14 +181,27 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen }: AIAssistan
     setSessionTitle(query || t.newTopic);
   }, [currentSessionId, query, t.newTopic]);
 
+  const isMountedRef = useRef(false);
+
   // Auto-scroll chat container (NOT the window) on new messages
   useEffect(() => {
     const container = chatContainerRef.current;
-    if (container) {
+    if (!container) return;
+
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      container.scrollTop = 0;
+      return;
+    }
+
+    // Only auto-scroll to bottom if there's a conversation history (more than 1 user-AI turn, i.e., messages.length > 2)
+    if (messages.length > 2) {
       // Use requestAnimationFrame so layout is complete before scrolling
       requestAnimationFrame(() => {
         container.scrollTop = container.scrollHeight;
       });
+    } else {
+      container.scrollTop = 0;
     }
   }, [messages]);
 

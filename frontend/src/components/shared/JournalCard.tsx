@@ -12,7 +12,8 @@ interface JournalCardProps {
 
 // Basic citation generator
 function getCitation(source: AcademicSource, style: string) {
-  const authors = source.authors.join(', ');
+  const authorsArr = source.authors || [];
+  const authors = authorsArr.length > 0 ? authorsArr.join(', ') : 'Penulis tidak tersedia';
   const year = source.year > 0 ? source.year : 'n.d.';
   const title = source.title;
   const pub = source.publisher || 'Unknown Publisher';
@@ -32,6 +33,9 @@ function getCitation(source: AcademicSource, style: string) {
       return `${authors} (${year}). ${title}. ${pub}.`;
   }
 }
+
+
+
 
 export function JournalCard({ 
   source, 
@@ -65,7 +69,7 @@ export function JournalCard({
       <div className={`p-5 flex-1 flex flex-col min-w-0 ${onToggleSelect ? 'pl-3' : ''}`}>
         <div className="flex justify-between items-start gap-4 mb-2">
           <h3 className="text-lg font-bold text-ink-black dark:text-paper-white leading-snug line-clamp-2 font-serif">
-            {source.title}
+            {source.content_type === 'journal-article' ? (source.publisher || 'Unknown Journal') : source.title}
           </h3>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
             {isSinta && (
@@ -80,26 +84,35 @@ export function JournalCard({
             )}
             <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-cloud-canvas dark:bg-stone-gray text-slate-gray dark:text-cloud-canvas tracking-wide">
                Global
-            </span>
+             </span>
           </div>
         </div>
 
         <div className="text-xs text-stone-gray dark:text-silver-mist mb-3 flex flex-wrap gap-1 items-center font-sans">
-           <span className="font-medium text-ink-black dark:text-cloud-canvas">
-             {source.authors.slice(0, 3).join(', ')}
-             {source.authors.length > 3 && ` et al.`}
-           </span>
-           <span className="text-silver-mist mx-1">•</span>
-           <span>{source.publisher || 'Unknown Journal'}</span>
-           <span className="text-silver-mist mx-1">•</span>
-           <span>{source.year > 0 ? source.year : 'N/A'}</span>
+          {source.content_type === 'journal-article' ? (
+            <span>Year: {source.year > 0 ? source.year : 'N/A'}</span>
+          ) : (
+            <>
+              <span className="font-medium text-ink-black dark:text-cloud-canvas">
+                {(source.authors || []).length > 0 
+                  ? `${(source.authors || []).slice(0, 3).join(', ')}${(source.authors || []).length > 3 ? ' et al.' : ''}`
+                  : 'Penulis tidak tersedia'}
+              </span>
+              <span className="text-silver-mist mx-1">•</span>
+              <span>{source.publisher || 'Unknown Journal'}</span>
+              <span className="text-silver-mist mx-1">•</span>
+              <span>{source.year > 0 ? source.year : 'N/A'}</span>
+            </>
+          )}
         </div>
 
         {/* Citation text */}
-        <div className="text-[11px] text-slate-gray dark:text-silver-mist/80 bg-cloud-canvas/30 dark:bg-stone-gray/30 p-2.5 rounded-lg mb-4 font-sans leading-relaxed border border-cloud-canvas/50 dark:border-stone-gray/50">
-          <span className="font-semibold text-ink-black dark:text-cloud-canvas mb-1 block">{citationStyle} Citation:</span>
-          {getCitation(source, citationStyle)}
-        </div>
+        {source.content_type !== 'journal-article' && (
+          <div className="text-[11px] text-slate-gray dark:text-silver-mist/80 bg-cloud-canvas/30 dark:bg-stone-gray/30 p-2.5 rounded-lg mb-4 font-sans leading-relaxed border border-cloud-canvas/50 dark:border-stone-gray/50">
+            <span className="font-semibold text-ink-black dark:text-cloud-canvas mb-1 block">{citationStyle} Citation:</span>
+            {getCitation(source, citationStyle)}
+          </div>
+        )}
 
         <div className="mt-auto flex justify-between items-end font-sans">
           {source.url ? (

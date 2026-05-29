@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"log"
 	"strings"
 	"time"
 
 	"fuenzer-research/backend/internal/models"
+	"fuenzer-research/backend/internal/services/garuda"
 	"fuenzer-research/backend/internal/services/gemini"
+	"fuenzer-research/backend/internal/services/googlebooks"
 	"fuenzer-research/backend/internal/services/openalex"
 	"fuenzer-research/backend/internal/services/sinta"
 
@@ -14,17 +17,27 @@ import (
 
 // ResearchHandler holds dependencies for the research endpoint.
 type ResearchHandler struct {
-	openalexClient *openalex.Client
-	geminiClient   *gemini.Client
-	sintaMapper    *sinta.Mapper
+	openalexClient    *openalex.Client
+	geminiClient      *gemini.Client
+	sintaMapper       *sinta.Mapper
+	garudaClient      *garuda.Client
+	googleBooksClient *googlebooks.Client
 }
 
 // NewResearchHandler creates a new handler with all service dependencies.
-func NewResearchHandler(oc *openalex.Client, gc *gemini.Client, sm *sinta.Mapper) *ResearchHandler {
+func NewResearchHandler(
+	oc *openalex.Client,
+	gc *gemini.Client,
+	sm *sinta.Mapper,
+	gcLocal *garuda.Client,
+	gbc *googlebooks.Client,
+) *ResearchHandler {
 	return &ResearchHandler{
-		openalexClient: oc,
-		geminiClient:   gc,
-		sintaMapper:    sm,
+		openalexClient:    oc,
+		geminiClient:      gc,
+		sintaMapper:       sm,
+		garudaClient:      gcLocal,
+		googleBooksClient: gbc,
 	}
 }
 
@@ -35,6 +48,7 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 
 	var req models.ResearchRequest
 	if err := c.BodyParser(&req); err != nil {
+		log.Printf("ERROR: BodyParser failed: %v", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
@@ -64,64 +78,149 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 		req.Type = ""
 	}
 
-	// Step 1: Fetch works from OpenAlex (with type filter)
-	papers, err := h.openalexClient.Search(req.Query, req.Scope, req.Type)
-	if err != nil {
-		// Timeout or API failure — return 504
-		return c.Status(fiber.StatusGatewayTimeout).JSON(fiber.Map{
-			"error": "Database timeout. Please try again.",
-		})
+	var sources []models.AcademicSource
+	var err error
+
+	limit := 5
+	if req.Type == "" {
+		limit = 15
 	}
 
+	// Route based on Type and Index
+	if req.Index == "GARUDA" {
+		sources, err = h.garudaClient.Search(req.Query, req.Type)
+		if err != nil {
+			log.Printf("ERROR: Garuda SQLite search failed: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Query database lokal gagal.",
+			})
+		}
+	} else if req.Type == "journal" {
+		if req.Index == "SINTA" {
+			sources = h.sintaMapper.SearchJournals(req.Query, req.SintaRank, limit)
+		} else {
+			sources, err = h.openalexClient.SearchSources(req.Query, req.Scope, limit)
+			if err != nil {
+				log.Printf("ERROR: OpenAlex Sources search failed: %v", err)
+				return c.Status(fiber.StatusGatewayTimeout).JSON(fiber.Map{
+					"error": "Database timeout. Please try again.",
+				})
+			}
+		}
+	} else if req.Type == "book" || (req.Index == "Google Books" && req.Type == "") || (req.Type == "book" && req.Scope == "indonesia") {
+		// Use Google Books client for book searches
+		sources, err = h.googleBooksClient.Search(req.Query, req.Scope, limit)
+		if err != nil {
+			log.Printf("ERROR: Google Books search failed: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Pencarian Google Books gagal. Silakan coba lagi.",
+			})
+		}
+	} else {
+		// Default Works search (Articles/All) via OpenAlex
+		papers, err := h.openalexClient.Search(req.Query, req.Scope, req.Type)
+		if err != nil {
+			return c.Status(fiber.StatusGatewayTimeout).JSON(fiber.Map{
+				"error": "Database timeout. Please try again.",
+			})
+		}
+
+		// Convert OpenAlexWork → AcademicSource
+		sources = make([]models.AcademicSource, 0, len(papers))
+		for _, p := range papers {
+			publisher := "OpenAlex Resource"
+			url := p.ID // default URL
+			if p.PrimaryLocation != nil {
+				if p.PrimaryLocation.Source != nil && p.PrimaryLocation.Source.DisplayName != "" {
+					publisher = p.PrimaryLocation.Source.DisplayName
+				}
+				if p.PrimaryLocation.LandingPageURL != "" {
+					url = p.PrimaryLocation.LandingPageURL
+				}
+			}
+
+			authors := make([]string, 0, len(p.Authorships))
+			for _, a := range p.Authorships {
+				authors = append(authors, a.Author.DisplayName)
+			}
+
+			abstract := openalex.DecodeAbstract(p.AbstractInvertedIndex)
+
+			contentType := p.Type
+			// If p.Type is article and published in journal, label as "journal-article" only for combined (type == "")
+			// This ensures user requested "article" remains categorized under "article" in the frontend.
+			if p.Type == "article" {
+				if req.Type == "" && p.PrimaryLocation != nil && p.PrimaryLocation.Source != nil && p.PrimaryLocation.Source.Type == "journal" {
+					contentType = "journal-article"
+				} else {
+					contentType = "article"
+				}
+			}
+
+			source := models.AcademicSource{
+				ID:          p.ID,
+				Title:       p.Title,
+				Authors:     authors,
+				Year:        p.PublicationYear,
+				Publisher:   publisher,
+				Abstract:    abstract,
+				URL:         url,
+				Indexes:     []models.IndexEntry{},
+				ContentType: contentType,
+			}
+
+			sources = append(sources, source)
+		}
+
+		// Map SINTA dictionary (only for indonesia scope or if SINTA is requested)
+		if req.Scope == "indonesia" || req.Index == "SINTA" {
+			sources = h.sintaMapper.MapPapers(sources)
+		}
+
+		// Apply SINTA specific rank filtering
+		if req.Index == "SINTA" {
+			var filteredSources []models.AcademicSource
+			for _, src := range sources {
+				isSintaMatch := false
+				matchedTier := ""
+				for _, idx := range src.Indexes {
+					if strings.ToLower(idx.Provider) == "sinta" {
+						isSintaMatch = true
+						matchedTier = idx.Tier
+						break
+					}
+				}
+				if isSintaMatch {
+					if len(req.SintaRank) == 0 || containsAll(req.SintaRank) {
+						filteredSources = append(filteredSources, src)
+					} else {
+						normalizedTier := strings.TrimSpace(matchedTier)
+						matchTierFound := false
+						for _, rank := range req.SintaRank {
+							normRank := strings.TrimSpace(strings.ReplaceAll(strings.ToLower(rank), "sinta", ""))
+							if normRank == normalizedTier {
+								matchTierFound = true
+								break
+							}
+						}
+						if matchTierFound {
+							filteredSources = append(filteredSources, src)
+						}
+					}
+				}
+			}
+			sources = filteredSources
+		}
+	}
+
+
 	// Short-circuit: empty results — do NOT call Gemini
-	if len(papers) == 0 {
+	if len(sources) == 0 {
 		return c.Status(fiber.StatusOK).JSON(models.ResearchResponse{
 			Synthesis:  "Tidak ditemukan literatur yang relevan untuk topik ini.",
 			References: []models.AcademicSource{},
 			LatencyMs:  time.Since(start).Milliseconds(),
 		})
-	}
-
-	// Step 2: Convert OpenAlexWork → AcademicSource
-	sources := make([]models.AcademicSource, 0, len(papers))
-	for _, p := range papers {
-		publisher := "OpenAlex Resource"
-		url := p.ID // default URL
-		if p.PrimaryLocation != nil {
-			if p.PrimaryLocation.Source != nil && p.PrimaryLocation.Source.DisplayName != "" {
-				publisher = p.PrimaryLocation.Source.DisplayName
-			}
-			if p.PrimaryLocation.LandingPageURL != "" {
-				url = p.PrimaryLocation.LandingPageURL
-			}
-		}
-
-		authors := make([]string, 0, len(p.Authorships))
-		for _, a := range p.Authorships {
-			authors = append(authors, a.Author.DisplayName)
-		}
-
-		// Decode the abstract from inverted index
-		abstract := openalex.DecodeAbstract(p.AbstractInvertedIndex)
-
-		source := models.AcademicSource{
-			ID:          p.ID,
-			Title:       p.Title,
-			Authors:     authors,
-			Year:        p.PublicationYear,
-			Publisher:   publisher,
-			Abstract:    abstract,
-			URL:         url,
-			Indexes:     []models.IndexEntry{},
-			ContentType: p.Type,
-		}
-
-		sources = append(sources, source)
-	}
-
-	// Step 3: SINTA Dictionary Mapping (only for indonesia scope)
-	if req.Scope == "indonesia" {
-		sources = h.sintaMapper.MapPapers(sources)
 	}
 
 	// Step 4: AI Synthesis via Gemini
@@ -141,4 +240,14 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 		References: sources,
 		LatencyMs:  time.Since(start).Milliseconds(),
 	})
+}
+
+// containsAll checks if the rank selection contains "All" or "all" case insensitively.
+func containsAll(slice []string) bool {
+	for _, s := range slice {
+		if strings.ToLower(strings.TrimSpace(s)) == "all" {
+			return true
+		}
+	}
+	return false
 }

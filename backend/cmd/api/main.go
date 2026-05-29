@@ -7,7 +7,9 @@ import (
 
 	"fuenzer-research/backend/internal/config"
 	"fuenzer-research/backend/internal/handlers"
+	"fuenzer-research/backend/internal/services/garuda"
 	"fuenzer-research/backend/internal/services/gemini"
+	"fuenzer-research/backend/internal/services/googlebooks"
 	"fuenzer-research/backend/internal/services/openalex"
 	"fuenzer-research/backend/internal/services/sinta"
 
@@ -24,6 +26,13 @@ func main() {
 	// Initialize services
 	openalexClient := openalex.NewClient()
 	geminiClient := gemini.NewClient(cfg.GeminiAPIKey)
+	googleBooksClient := googlebooks.NewClient(cfg.GoogleBooksAPIKey)
+
+	// Initialize local Garuda SQLite database client
+	garudaClient, err := garuda.NewClient()
+	if err != nil {
+		log.Fatalf("Failed to load GARUDA SQLite client: %v", err)
+	}
 
 	// Resolve sinta_data.json path — check multiple locations
 	sintaDataPath := resolveSintaPath()
@@ -33,7 +42,7 @@ func main() {
 	}
 
 	// Initialize handler
-	researchHandler := handlers.NewResearchHandler(openalexClient, geminiClient, sintaMapper)
+	researchHandler := handlers.NewResearchHandler(openalexClient, geminiClient, sintaMapper, garudaClient, googleBooksClient)
 	autocompleteHandler := handlers.NewAutocompleteHandler(openalexClient)
 
 	// Create Fiber app
@@ -47,7 +56,7 @@ func main() {
 	// Middleware: CORS — strict per security-policy.md
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "http://localhost:5173, https://research.fuenzer.web.id",
-		AllowHeaders: "Origin, Content-Type, Accept, X-Demo-Token",
+		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
 	// Middleware: Rate Limiting — 50 req/min per IP (hackathon-safe)
@@ -55,13 +64,6 @@ func main() {
 		Max:        50,
 		Expiration: 1 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
-			// Allow demo bypass for hackathon judges
-			if cfg.DemoBypassToken != "" {
-				token := c.Get("X-Demo-Token")
-				if token == cfg.DemoBypassToken {
-					return "demo-bypass"
-				}
-			}
 			return c.IP()
 		},
 		LimitReached: func(c *fiber.Ctx) error {
@@ -97,12 +99,12 @@ func main() {
 	log.Fatal(app.Listen(":" + port))
 }
 
-// resolveSintaPath checks several locations for sinta_data.json.
+// resolveSintaPath checks several locations for sinta_journals_data.json.
 func resolveSintaPath() string {
 	paths := []string{
-		"data/sinta_data.json",    // relative to working directory (production Docker)
-		"../data/sinta_data.json", // relative to cmd/api/
-		"backend/data/sinta_data.json", // from project root
+		"data/sinta_journals_data.json",    // relative to working directory (production Docker)
+		"../data/sinta_journals_data.json", // relative to cmd/api/
+		"backend/data/sinta_journals_data.json", // from project root
 	}
 	for _, p := range paths {
 		if _, err := os.Stat(p); err == nil {
@@ -110,5 +112,5 @@ func resolveSintaPath() string {
 		}
 	}
 	// Default fallback
-	return "data/sinta_data.json"
+	return "data/sinta_journals_data.json"
 }
