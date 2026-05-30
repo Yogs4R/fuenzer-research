@@ -27,16 +27,12 @@ if [ $? -ne 0 ]; then
         --project=$PROJECT_ID
 fi
 
-# Build Docker Image secara lokal
-echo "[1/3] Membangun Docker Image..."
-docker build -t $IMAGE_URL .
-
-# Push/Kirim Docker Image ke Google Artifact Registry
-echo "[2/3] Mengunggah Image ke Google Cloud..."
-docker push $IMAGE_URL
+# Build & Push Docker Image via Cloud Build (karena Cloud Shell tidak punya internet saat docker build)
+echo "[1/2] Membangun & mengunggah Docker Image via Cloud Build..."
+gcloud builds submit --tag $IMAGE_URL .
 
 # Deploy ke Google Cloud Run
-echo "[3/3] Deploy aplikasi ke internet..."
+echo "[2/2] Deploy aplikasi ke internet..."
 gcloud run deploy $APP_NAME \
     --image $IMAGE_URL \
     --platform managed \
