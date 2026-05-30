@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # --- KONFIGURASI ---
 PROJECT_ID=$(gcloud config get-value project)
@@ -28,11 +29,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # Build Docker Image secara lokal
-echo "[1/2] Membangun Docker Image..."
+echo "[1/3] Membangun Docker Image..."
 docker build -t $IMAGE_URL .
 
 # Push Docker Image ke Google Artifact Registry
-echo "[2/2] Mengunggah Image & Deploy..."
+echo "[2/3] Mengunggah Image..."
 docker push $IMAGE_URL
 
 # Deploy ke Google Cloud Run
