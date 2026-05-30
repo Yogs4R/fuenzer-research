@@ -160,7 +160,7 @@ export function generatePdfDocument(source: AcademicSource, citationStyle: Citat
     doc.setDrawColor(226, 232, 240);
     doc.line(margin, 282, 210 - margin, 282);
     doc.text(`Page ${i} of ${totalPages}`, 210 - margin, 287, { align: 'right' });
-    doc.text('Synthesized via Fuenzer Research Engine', margin, 287);
+    doc.text('Synthesized via Fuenzer Research', margin, 287);
   }
 
   return doc;

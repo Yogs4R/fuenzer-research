@@ -17,8 +17,21 @@ import {
   clearAllHistory,
 } from '../lib/firestore';
 
-export const HISTORY_KEY = 'fuenzer_search_history';
-const BOOKMARKS_KEY = 'fuenzer_bookmarked_library';
+export function getCurrentHistoryKey(): string {
+  const user = useAuthStore.getState().user;
+  const userId = user?.uid || null;
+  const isAnonymous = user?.isAnonymous ?? true;
+  if (!userId) return 'fuenzer_search_history_guest';
+  return isAnonymous ? 'fuenzer_search_history_guest' : `fuenzer_search_history_${userId}`;
+}
+
+export function getCurrentBookmarksKey(): string {
+  const user = useAuthStore.getState().user;
+  const userId = user?.uid || null;
+  const isAnonymous = user?.isAnonymous ?? true;
+  if (!userId) return 'fuenzer_bookmarked_library_guest';
+  return isAnonymous ? 'fuenzer_bookmarked_library_guest' : `fuenzer_bookmarked_library_${userId}`;
+}
 
 export interface ChatMessage {
   id: string;
@@ -93,7 +106,8 @@ const syncCurrentSessionToLocalStorage = (state: ResearchState) => {
   const { currentSessionId } = state;
   if (!currentSessionId) return;
 
-  const stored = localStorage.getItem(HISTORY_KEY);
+  const historyKey = getCurrentHistoryKey();
+  const stored = localStorage.getItem(historyKey);
   if (!stored) return;
 
   try {
@@ -114,7 +128,7 @@ const syncCurrentSessionToLocalStorage = (state: ResearchState) => {
       }
       return entry;
     });
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    localStorage.setItem(historyKey, JSON.stringify(updated));
   } catch (e) {
     console.error('Failed to sync session to localStorage', e);
   }
@@ -125,7 +139,11 @@ const syncCurrentSessionToFirestore = (state: ResearchState) => {
   const userId = getCurrentUserId();
   if (!userId || !state.currentSessionId) return;
 
-  const stored = localStorage.getItem(HISTORY_KEY);
+  const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+  if (isAnonymous) return;
+
+  const historyKey = getCurrentHistoryKey();
+  const stored = localStorage.getItem(historyKey);
   if (!stored) return;
 
   try {
@@ -160,14 +178,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   loadingPhase: 'idle',
   response: null,
   error: null,
-  bookmarkedSources: (() => {
-    try {
-      const stored = localStorage.getItem(BOOKMARKS_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  })(),
+  bookmarkedSources: [],
   messages: [],
   currentSessionId: null,
 
@@ -181,12 +192,14 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       updated = [...current, source];
     }
     // Local cache
-    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(updated));
+    const bookmarksKey = getCurrentBookmarksKey();
+    localStorage.setItem(bookmarksKey, JSON.stringify(updated));
     set({ bookmarkedSources: updated });
 
     // Firestore sync (background)
     const userId = getCurrentUserId();
-    if (userId) {
+    const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+    if (userId && !isAnonymous) {
       if (exists) {
         removeBookmark(userId, source.id).catch((err) =>
           console.warn('Failed to remove bookmark from Firestore:', err)
@@ -211,8 +224,13 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
 
   initSession: (queryText: string) => {
     const sessionId = `h-${Date.now()}`;
-    const stored = localStorage.getItem(HISTORY_KEY);
-    const history: HistoryEntry[] = stored ? JSON.parse(stored) : [];
+    const historyKey = getCurrentHistoryKey();
+    
+    let history: HistoryEntry[] = [];
+    try {
+      const stored = localStorage.getItem(historyKey);
+      history = stored ? JSON.parse(stored) : [];
+    } catch {}
     
     const newEntry: HistoryEntry = {
       id: sessionId,
@@ -229,11 +247,12 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     };
 
     const updated = [newEntry, ...history].slice(0, 20);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    localStorage.setItem(historyKey, JSON.stringify(updated));
 
     // Firestore sync (background)
     const userId = getCurrentUserId();
-    if (userId) {
+    const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+    if (userId && !isAnonymous) {
       saveHistoryEntry(userId, newEntry).catch((err) =>
         console.warn('Failed to save history to Firestore:', err)
       );
@@ -252,7 +271,8 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   },
 
   loadSession: (sessionId: string) => {
-    const stored = localStorage.getItem(HISTORY_KEY);
+    const historyKey = getCurrentHistoryKey();
+    const stored = localStorage.getItem(historyKey);
     if (!stored) return;
 
     try {
@@ -282,16 +302,18 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     const { currentSessionId } = get();
     if (!currentSessionId) return;
 
-    const stored = localStorage.getItem(HISTORY_KEY);
+    const historyKey = getCurrentHistoryKey();
+    const stored = localStorage.getItem(historyKey);
     const history: HistoryEntry[] = stored ? JSON.parse(stored) : [];
     const updated = history.map((h) =>
       h.id === currentSessionId ? { ...h, title: title } : h
     );
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    localStorage.setItem(historyKey, JSON.stringify(updated));
 
     // Firestore sync
     const userId = getCurrentUserId();
-    if (userId) {
+    const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+    if (userId && !isAnonymous) {
       const entry = updated.find((h) => h.id === currentSessionId);
       if (entry) {
         saveHistoryEntry(userId, entry).catch(() => {});
@@ -300,15 +322,17 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   },
 
   deleteSession: (sessionId: string) => {
+    const historyKey = getCurrentHistoryKey();
     // Remove from localStorage
-    const stored = localStorage.getItem(HISTORY_KEY);
+    const stored = localStorage.getItem(historyKey);
     const history: HistoryEntry[] = stored ? JSON.parse(stored) : [];
     const updated = history.filter((h) => h.id !== sessionId);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    localStorage.setItem(historyKey, JSON.stringify(updated));
 
     // Remove from Firestore
     const userId = getCurrentUserId();
-    if (userId) {
+    const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+    if (userId && !isAnonymous) {
       deleteHistoryEntry(userId, sessionId).catch((err) =>
         console.warn('Failed to delete history from Firestore:', err)
       );
@@ -316,12 +340,14 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   },
 
   clearHistory: () => {
+    const historyKey = getCurrentHistoryKey();
     // Clear localStorage
-    localStorage.removeItem(HISTORY_KEY);
+    localStorage.removeItem(historyKey);
 
     // Clear Firestore
     const userId = getCurrentUserId();
-    if (userId) {
+    const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+    if (userId && !isAnonymous) {
       clearAllHistory(userId).catch((err) =>
         console.warn('Failed to clear history from Firestore:', err)
       );
@@ -335,62 +361,88 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
    */
   syncFromFirestore: async () => {
     const userId = getCurrentUserId();
-    if (!userId) return;
+    const historyKey = getCurrentHistoryKey();
+    const bookmarksKey = getCurrentBookmarksKey();
 
+    // 1. Load history from local storage specific to this user/guest
+    let localHistory: HistoryEntry[] = [];
     try {
-      // Load history from Firestore
-      const firestoreHistory = await loadHistory(userId);
-      const localStored = localStorage.getItem(HISTORY_KEY);
-      const localHistory: HistoryEntry[] = localStored ? JSON.parse(localStored) : [];
+      const stored = localStorage.getItem(historyKey);
+      localHistory = stored ? JSON.parse(stored) : [];
+    } catch {}
 
-      if (firestoreHistory.length > 0 || localHistory.length > 0) {
-        // Merge: Firestore wins for same IDs, keep unique locals
-        const firestoreIds = new Set(firestoreHistory.map((h) => h.id));
-        const uniqueLocal = localHistory.filter((h) => !firestoreIds.has(h.id));
-        const merged = [...firestoreHistory, ...uniqueLocal]
-          .sort((a, b) => b.timestamp - a.timestamp)
-          .slice(0, 30);
-        
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(merged));
+    // 2. Load bookmarks from local storage specific to this user/guest
+    let localBookmarks: AcademicSource[] = [];
+    try {
+      const stored = localStorage.getItem(bookmarksKey);
+      localBookmarks = stored ? JSON.parse(stored) : [];
+    } catch {}
 
-        // Upload local-only entries to Firestore so they sync to other devices
-        if (uniqueLocal.length > 0) {
-          await Promise.all(
-            uniqueLocal.map((entry) =>
-              saveHistoryEntry(userId, entry).catch((err) =>
-                console.warn('Failed to upload local history:', err)
+    // 3. Update the state with these local values first
+    // Also, when context is loaded/reloaded, clear any active session states to prevent leaks!
+    set({
+      bookmarkedSources: localBookmarks,
+      messages: [],
+      currentSessionId: null,
+      response: null,
+      error: null,
+      loadingPhase: 'idle',
+      query: '',
+    });
+
+    // 4. If we have a real user (not anonymous), sync with Firestore in the background
+    const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+    if (userId && !isAnonymous) {
+      try {
+        // Load history from Firestore
+        const firestoreHistory = await loadHistory(userId);
+        if (firestoreHistory.length > 0 || localHistory.length > 0) {
+          // Merge: Firestore wins for same IDs, keep unique locals
+          const firestoreIds = new Set(firestoreHistory.map((h) => h.id));
+          const uniqueLocal = localHistory.filter((h) => !firestoreIds.has(h.id));
+          const merged = [...firestoreHistory, ...uniqueLocal]
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, 30);
+          
+          localStorage.setItem(historyKey, JSON.stringify(merged));
+
+          // Upload local-only entries to Firestore so they sync to other devices
+          if (uniqueLocal.length > 0) {
+            await Promise.all(
+              uniqueLocal.map((entry) =>
+                saveHistoryEntry(userId, entry).catch((err) =>
+                  console.warn('Failed to upload local history:', err)
+                )
               )
-            )
-          );
+            );
+          }
         }
-      }
 
-      // Load bookmarks from Firestore
-      const firestoreBookmarks = await loadBookmarks(userId);
-      const localBookmarks = get().bookmarkedSources;
+        // Load bookmarks from Firestore
+        const firestoreBookmarks = await loadBookmarks(userId);
+        if (firestoreBookmarks.length > 0 || localBookmarks.length > 0) {
+          // Merge: Firestore + unique locals
+          const firestoreIds = new Set(firestoreBookmarks.map((b) => b.id));
+          const uniqueLocal = localBookmarks.filter((b) => !firestoreIds.has(b.id));
+          const merged = [...firestoreBookmarks, ...uniqueLocal];
 
-      if (firestoreBookmarks.length > 0 || localBookmarks.length > 0) {
-        // Merge: Firestore + unique locals
-        const firestoreIds = new Set(firestoreBookmarks.map((b) => b.id));
-        const uniqueLocal = localBookmarks.filter((b) => !firestoreIds.has(b.id));
-        const merged = [...firestoreBookmarks, ...uniqueLocal];
+          localStorage.setItem(bookmarksKey, JSON.stringify(merged));
+          set({ bookmarkedSources: merged });
 
-        localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(merged));
-        set({ bookmarkedSources: merged });
-
-        // Upload local-only bookmarks to Firestore so they sync to other devices
-        if (uniqueLocal.length > 0) {
-          await Promise.all(
-            uniqueLocal.map((source) =>
-              saveBookmark(userId, source).catch((err) =>
-                console.warn('Failed to upload local bookmark:', err)
+          // Upload local-only bookmarks to Firestore so they sync to other devices
+          if (uniqueLocal.length > 0) {
+            await Promise.all(
+              uniqueLocal.map((source) =>
+                saveBookmark(userId, source).catch((err) =>
+                  console.warn('Failed to upload local bookmark:', err)
+                )
               )
-            )
-          );
+            );
+          }
         }
+      } catch (err) {
+        console.warn('Failed to sync from Firestore:', err);
       }
-    } catch (err) {
-      console.warn('Failed to sync from Firestore:', err);
     }
   },
 

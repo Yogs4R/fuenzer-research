@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export function SignUpPage() {
   const navigate = useNavigate();
@@ -15,6 +15,35 @@ export function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState('');
+
+  // Validation & Touched states
+  const [displayNameTouched, setDisplayNameTouched] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+
+  const isDisplayNameValid = (val: string) => {
+    return val.trim().length > 0;
+  };
+
+  const isEmailValid = (val: string) => {
+    if (!val) return true;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+  };
+
+  const isPasswordValid = (val: string) => {
+    if (!val) return true;
+    return val.length >= 6;
+  };
+
+  const doPasswordsMatch = () => {
+    return password === confirmPassword;
+  };
+
+  const displayNameError = displayNameTouched && !isDisplayNameValid(displayName);
+  const emailError = emailTouched && !isEmailValid(email);
+  const passwordError = passwordTouched && !isPasswordValid(password);
+  const confirmPasswordError = confirmPasswordTouched && !doPasswordsMatch();
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +95,15 @@ export function SignUpPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-paper-white dark:bg-ink-black rounded-2xl shadow-xl border border-cloud-canvas dark:border-stone-gray p-8">
+        <div className="bg-paper-white dark:bg-ink-black rounded-2xl shadow-xl border border-cloud-canvas dark:border-stone-gray p-8 relative">
+          {/* Back to Home floating arrow button inside the card */}
+          <button
+            onClick={() => navigate('/')}
+            className="absolute top-6 left-6 flex items-center justify-center w-8 h-8 rounded-full border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-ink-black hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/30 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-all shadow-sm cursor-pointer"
+            title="Back to Home"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif mb-2">
               Create Account
@@ -124,61 +161,121 @@ export function SignUpPage() {
 
           {/* Email/Password Form */}
           <form onSubmit={handleEmailSignUp} className="space-y-4">
-            <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Full name"
-                required
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:border-fuenzer-teal focus:ring-1 focus:ring-fuenzer-teal/30 transition-colors font-sans"
-              />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-gray dark:text-silver-mist pl-1 font-sans">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  onBlur={() => setDisplayNameTouched(true)}
+                  placeholder="Full name"
+                  required
+                  className={`w-full h-11 pl-10 pr-4 rounded-xl border bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:ring-1 transition-colors font-sans ${
+                    displayNameError
+                      ? 'border-red-500 dark:border-red-500/50 focus:border-red-500 focus:ring-red-500/30'
+                      : 'border-cloud-canvas dark:border-stone-gray focus:border-fuenzer-teal focus:ring-fuenzer-teal/30'
+                  }`}
+                />
+              </div>
+              {displayNameError && (
+                <p className="text-[10px] text-red-500 dark:text-red-400 mt-1 font-sans pl-1">
+                  Name cannot be empty.
+                </p>
+              )}
             </div>
 
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
-                required
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:border-fuenzer-teal focus:ring-1 focus:ring-fuenzer-teal/30 transition-colors font-sans"
-              />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-gray dark:text-silver-mist pl-1 font-sans">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmailTouched(true)}
+                  placeholder="Email address"
+                  required
+                  className={`w-full h-11 pl-10 pr-4 rounded-xl border bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:ring-1 transition-colors font-sans ${
+                    emailError
+                      ? 'border-red-500 dark:border-red-500/50 focus:border-red-500 focus:ring-red-500/30'
+                      : 'border-cloud-canvas dark:border-stone-gray focus:border-fuenzer-teal focus:ring-fuenzer-teal/30'
+                  }`}
+                />
+              </div>
+              {emailError && (
+                <p className="text-[10px] text-red-500 dark:text-red-400 mt-1 font-sans pl-1">
+                  Please enter a valid email address.
+                </p>
+              )}
             </div>
 
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password (min 6 characters)"
-                required
-                minLength={6}
-                className="w-full h-11 pl-10 pr-11 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:border-fuenzer-teal focus:ring-1 focus:ring-fuenzer-teal/30 transition-colors font-sans"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-silver-mist hover:text-ink-black dark:hover:text-paper-white transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-gray dark:text-silver-mist pl-1 font-sans">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => setPasswordTouched(true)}
+                  placeholder="Password (min 6 characters)"
+                  required
+                  minLength={6}
+                  className={`w-full h-11 pl-10 pr-11 rounded-xl border bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:ring-1 transition-colors font-sans ${
+                    passwordError
+                      ? 'border-red-500 dark:border-red-500/50 focus:border-red-500 focus:ring-red-500/30'
+                      : 'border-cloud-canvas dark:border-stone-gray focus:border-fuenzer-teal focus:ring-fuenzer-teal/30'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-silver-mist hover:text-ink-black dark:hover:text-paper-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {passwordError && (
+                <p className="text-[10px] text-red-500 dark:text-red-400 mt-1 font-sans pl-1">
+                  Password must be at least 6 characters.
+                </p>
+              )}
             </div>
 
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm password"
-                required
-                minLength={6}
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:border-fuenzer-teal focus:ring-1 focus:ring-fuenzer-teal/30 transition-colors font-sans"
-              />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-gray dark:text-silver-mist pl-1 font-sans">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onBlur={() => setConfirmPasswordTouched(true)}
+                  placeholder="Confirm password"
+                  required
+                  minLength={6}
+                  className={`w-full h-11 pl-10 pr-4 rounded-xl border bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:ring-1 transition-colors font-sans ${
+                    confirmPasswordError
+                      ? 'border-red-500 dark:border-red-500/50 focus:border-red-500 focus:ring-red-500/30'
+                      : 'border-cloud-canvas dark:border-stone-gray focus:border-fuenzer-teal focus:ring-fuenzer-teal/30'
+                  }`}
+                />
+              </div>
+              {confirmPasswordError && (
+                <p className="text-[10px] text-red-500 dark:text-red-400 mt-1 font-sans pl-1">
+                  Passwords do not match.
+                </p>
+              )}
             </div>
 
             <button

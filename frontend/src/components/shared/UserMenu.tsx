@@ -28,17 +28,17 @@ export function UserMenu() {
   if (!user || user.isAnonymous) return null;
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative flex items-center" ref={menuRef}>
       {/* Avatar Button — toggles dropdown */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="cursor-pointer"
+        className="cursor-pointer flex items-center justify-center focus:outline-none"
       >
         {user.photoURL ? (
           <img
             src={user.photoURL}
             alt={user.displayName || 'User'}
-            className={`w-8 h-8 rounded-full border-2 transition-colors ${isOpen ? 'border-fuenzer-teal' : 'border-cloud-canvas dark:border-stone-gray hover:border-fuenzer-teal'}`}
+            className={`w-8 h-8 rounded-full border-2 transition-colors object-cover ${isOpen ? 'border-fuenzer-teal' : 'border-cloud-canvas dark:border-stone-gray hover:border-fuenzer-teal'}`}
             referrerPolicy="no-referrer"
           />
         ) : (

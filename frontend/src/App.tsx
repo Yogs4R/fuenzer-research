@@ -31,9 +31,9 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, [initAuth]);
 
-  // Sync from Firestore when user becomes available
+  // Sync context (localStorage + Firestore) when auth initializes or user ID changes
   useEffect(() => {
-    if (initialized && user) {
+    if (initialized) {
       syncFromFirestore();
     }
   }, [initialized, user?.uid, syncFromFirestore]);

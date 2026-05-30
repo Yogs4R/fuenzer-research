@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Moon, Sun, Bell, History, Globe, Menu, X } from 'lucide-react';
 import { useUiStore } from '../../store/uiStore';
-import { useResearchStore } from '../../store/researchStore';
+import { useResearchStore, getCurrentHistoryKey } from '../../store/researchStore';
 import { useAuthStore } from '../../store/authStore';
 import { en } from '../../locales/en';
 import { id } from '../../locales/id';
@@ -34,7 +34,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
   // Load history from localStorage when dropdown opens
   useEffect(() => {
     if (isHistoryOpen) {
-      const stored = localStorage.getItem('fuenzer_search_history');
+      const stored = localStorage.getItem(getCurrentHistoryKey());
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
@@ -241,7 +241,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
           </div>
           
           
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
             {(() => {
               const { user } = useAuthStore();
               const isAuthenticated = user && !user.isAnonymous;
@@ -250,29 +250,29 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
                 return <UserMenu />;
               }
 
-              // Not authenticated (anonymous or no user)
+              // Not authenticated (anonymous or no user) - Centered & shrinkable layout
               return (
-                <>
+                <div className="flex items-center gap-2 sm:gap-3">
                   <button
                     onClick={() => navigate('/login')}
-                    className="text-xs md:text-sm font-semibold text-fuenzer-teal-dark dark:text-fuenzer-teal hover:text-fuenzer-teal cursor-pointer"
+                    className="text-xs md:text-sm font-semibold text-fuenzer-teal-dark dark:text-fuenzer-teal hover:text-fuenzer-teal cursor-pointer h-9 flex items-center"
                   >
                     {t.login}
                   </button>
                   <button
                     onClick={() => navigate('/signup')}
-                    className="px-3 py-1.5 md:px-5 md:py-2 rounded-lg bg-fuenzer-teal-dark text-white text-xs md:text-sm font-bold tracking-wide hover:bg-fuenzer-teal hover:text-white transition-all cursor-pointer"
+                    className="px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-fuenzer-teal-dark text-white text-xs md:text-sm font-bold tracking-wide hover:bg-fuenzer-teal hover:text-white transition-all cursor-pointer h-9 flex items-center justify-center shrink-0"
                   >
                     {t.signup}
                   </button>
-                </>
+                </div>
               );
             })()}
           </div>
 
           {/* Mobile Menu Hamburger */}
           <button 
-            className="xl:hidden p-2 text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray transition-colors"
+            className="xl:hidden p-2 text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray transition-colors flex items-center justify-center"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle mobile menu"
           >

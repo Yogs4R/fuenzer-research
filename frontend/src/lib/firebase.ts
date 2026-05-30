@@ -15,9 +15,6 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  linkWithCredential,
-  linkWithPopup,
-  EmailAuthProvider,
   updateProfile,
   type User,
 } from 'firebase/auth';
@@ -59,27 +56,14 @@ export async function signInAsGuest(): Promise<User> {
  * If current user is anonymous, links the anonymous account to Google (preserves UID).
  */
 export async function signInWithGoogle(): Promise<User> {
-  const currentUser = auth.currentUser;
-  if (currentUser?.isAnonymous) {
-    // Link anonymous account to Google — preserves UID and Firestore data
-    const result = await linkWithPopup(currentUser, googleProvider);
-    return result.user;
-  }
   const result = await signInWithPopup(auth, googleProvider);
   return result.user;
 }
 
 /** 
  * Sign in with Microsoft popup.
- * If current user is anonymous, links the anonymous account to Microsoft (preserves UID).
  */
 export async function signInWithMicrosoft(): Promise<User> {
-  const currentUser = auth.currentUser;
-  if (currentUser?.isAnonymous) {
-    // Link anonymous account to Microsoft — preserves UID and Firestore data
-    const result = await linkWithPopup(currentUser, microsoftProvider);
-    return result.user;
-  }
   const result = await signInWithPopup(auth, microsoftProvider);
   return result.user;
 }
@@ -92,19 +76,8 @@ export async function signInWithEmail(email: string, password: string): Promise<
 
 /** 
  * Create account with email and password.
- * If current user is anonymous, links the credential to preserve UID and Firestore data.
- * Otherwise creates a new account.
  */
 export async function signUpWithEmail(email: string, password: string, displayName: string): Promise<User> {
-  const currentUser = auth.currentUser;
-  if (currentUser?.isAnonymous) {
-    // Link anonymous account to email — preserves UID and Firestore data
-    const credential = EmailAuthProvider.credential(email, password);
-    const result = await linkWithCredential(currentUser, credential);
-    await updateProfile(result.user, { displayName });
-    return result.user;
-  }
-  // No anonymous user — create fresh account
   const result = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(result.user, { displayName });
   return result.user;

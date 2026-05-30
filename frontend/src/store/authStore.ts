@@ -44,11 +44,23 @@ interface AuthState {
 
 /** Convert Firebase User to our lean AuthUser type */
 function mapUser(user: User): AuthUser {
+  let photoURL = user.photoURL;
+  let displayName = user.displayName;
+  let email = user.email;
+
+  if (!photoURL || !displayName || !email) {
+    for (const profile of user.providerData) {
+      if (!photoURL && profile.photoURL) photoURL = profile.photoURL;
+      if (!displayName && profile.displayName) displayName = profile.displayName;
+      if (!email && profile.email) email = profile.email;
+    }
+  }
+
   return {
     uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    photoURL: user.photoURL,
+    email: email,
+    displayName: displayName,
+    photoURL: photoURL,
     isAnonymous: user.isAnonymous,
     providerId: user.providerData[0]?.providerId || (user.isAnonymous ? 'anonymous' : 'unknown'),
   };
@@ -70,6 +82,25 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     const unsubscribe = onAuthChange(async (firebaseUser) => {
       if (firebaseUser) {
+        // Auto-cleanup anonymous accounts older than 30 days
+        if (firebaseUser.isAnonymous && firebaseUser.metadata.creationTime) {
+          const createdMs = new Date(firebaseUser.metadata.creationTime).getTime();
+          const ageDays = (Date.now() - createdMs) / (1000 * 60 * 60 * 24);
+          if (ageDays > 30) {
+            console.log(`[Auth] Anonymous user is ${ageDays.toFixed(1)} days old. Auto-cleaning up...`);
+            try {
+              const { deleteUser } = await import('firebase/auth');
+              await deleteUser(firebaseUser);
+              
+              // Clear stale local guest data
+              localStorage.removeItem('fuenzer_search_history_guest');
+              localStorage.removeItem('fuenzer_bookmarked_library_guest');
+              return; // exit early; onAuthChange will fire again with null, creating a new guest
+            } catch (err) {
+              console.warn('[Auth] Failed to auto-delete expired anonymous user:', err);
+            }
+          }
+        }
         set({ user: mapUser(firebaseUser), loading: false, initialized: true });
       } else {
         // No user — auto sign in as anonymous guest

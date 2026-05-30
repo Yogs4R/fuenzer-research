@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import DOMPurify from 'dompurify';
-import { useResearchStore } from '../../store/researchStore';
+import { useResearchStore, getCurrentHistoryKey } from '../../store/researchStore';
 import type { ChatMessage } from '../../store/researchStore';
 import { NarrativeSkeletonLoader } from '../shared/NarrativeSkeletonLoader';
 import { useUiStore } from '../../store/uiStore';
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { marked } from 'marked';
 
-const HISTORY_KEY = 'fuenzer_search_history';
+
 
 interface HistoryEntry {
   id: string;
@@ -165,7 +165,8 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen }: AIAssistan
       setSessionTitle(t.newTopic);
       return;
     }
-    const stored = localStorage.getItem(HISTORY_KEY);
+    const historyKey = getCurrentHistoryKey();
+    const stored = localStorage.getItem(historyKey);
     if (stored) {
       try {
         const history: HistoryEntry[] = JSON.parse(stored);

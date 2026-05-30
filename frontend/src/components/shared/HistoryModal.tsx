@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, History, Trash2, Clock } from 'lucide-react';
-import { useResearchStore } from '../../store/researchStore';
+import { useResearchStore, getCurrentHistoryKey } from '../../store/researchStore';
 import { useUiStore } from '../../store/uiStore';
 import { en } from '../../locales/en';
 import { id } from '../../locales/id';
-
-const HISTORY_KEY = 'fuenzer_search_history';
 
 interface HistoryEntry {
   id: string;
@@ -29,7 +27,8 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
 
   useEffect(() => {
     if (isOpen) {
-      const stored = localStorage.getItem(HISTORY_KEY);
+      const historyKey = getCurrentHistoryKey();
+      const stored = localStorage.getItem(historyKey);
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
@@ -48,7 +47,7 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
               searchAccreditation: 'Any',
               sintaRank: ['All']
             }));
-            localStorage.setItem(HISTORY_KEY, JSON.stringify(migrated));
+            localStorage.setItem(historyKey, JSON.stringify(migrated));
             setHistory(migrated);
           } else {
             setHistory(parsed);
@@ -63,11 +62,12 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
   }, [isOpen]);
 
   const handleSelect = async (entry: HistoryEntry) => {
+    const historyKey = getCurrentHistoryKey();
     // Move selected to top of history
-    const stored = localStorage.getItem(HISTORY_KEY);
+    const stored = localStorage.getItem(historyKey);
     const h: HistoryEntry[] = stored ? JSON.parse(stored) : [];
     const updated = [entry, ...h.filter((x) => x.id !== entry.id)].slice(0, 20);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    localStorage.setItem(historyKey, JSON.stringify(updated));
     
     // Load full session state
     loadSession(entry.id);
@@ -77,8 +77,9 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const historyKey = getCurrentHistoryKey();
     const updated = history.filter((h) => h.id !== id);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    localStorage.setItem(historyKey, JSON.stringify(updated));
     setHistory(updated);
     if (currentSessionId === id) {
       reset();
@@ -86,7 +87,8 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
   };
 
   const handleClearAll = () => {
-    localStorage.removeItem(HISTORY_KEY);
+    const historyKey = getCurrentHistoryKey();
+    localStorage.removeItem(historyKey);
     setHistory([]);
     reset();
   };
