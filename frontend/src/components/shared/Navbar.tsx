@@ -3,10 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Moon, Sun, Bell, History, Globe, Menu, X } from 'lucide-react';
 import { useUiStore } from '../../store/uiStore';
 import { useResearchStore } from '../../store/researchStore';
+import { useAuthStore } from '../../store/authStore';
 import { en } from '../../locales/en';
 import { id } from '../../locales/id';
 import { UpdateLogModal } from './UpdateLogModal';
 import { HistoryModal } from './HistoryModal';
+import { UserMenu } from './UserMenu';
 
 interface NavbarProps {
   mode?: 'landing' | 'playground';
@@ -240,12 +242,32 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
           
           
           <div className="flex items-center gap-3 md:gap-4">
-            <button className="text-xs md:text-sm font-semibold text-fuenzer-teal-dark dark:text-fuenzer-teal hover:text-fuenzer-teal">
-              {t.login}
-            </button>
-            <button className="px-3 py-1.5 md:px-5 md:py-2 rounded-lg bg-fuenzer-teal-dark text-white text-xs md:text-sm font-bold tracking-wide hover:bg-fuenzer-teal hover:text-white transition-all">
-              {t.signup}
-            </button>
+            {(() => {
+              const { user } = useAuthStore();
+              const isAuthenticated = user && !user.isAnonymous;
+
+              if (isAuthenticated) {
+                return <UserMenu />;
+              }
+
+              // Not authenticated (anonymous or no user)
+              return (
+                <>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="text-xs md:text-sm font-semibold text-fuenzer-teal-dark dark:text-fuenzer-teal hover:text-fuenzer-teal cursor-pointer"
+                  >
+                    {t.login}
+                  </button>
+                  <button
+                    onClick={() => navigate('/signup')}
+                    className="px-3 py-1.5 md:px-5 md:py-2 rounded-lg bg-fuenzer-teal-dark text-white text-xs md:text-sm font-bold tracking-wide hover:bg-fuenzer-teal hover:text-white transition-all cursor-pointer"
+                  >
+                    {t.signup}
+                  </button>
+                </>
+              );
+            })()}
           </div>
 
           {/* Mobile Menu Hamburger */}
