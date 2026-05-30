@@ -21,7 +21,7 @@ interface HistoryModalProps {
 export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const navigate = useNavigate();
-  const { loadSession, currentSessionId, reset } = useResearchStore();
+  const { loadSession, deleteSession, clearHistory } = useResearchStore();
   const { language } = useUiStore();
   const t = language === 'en' ? en.nav : id.nav;
 
@@ -77,20 +77,13 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const historyKey = getCurrentHistoryKey();
-    const updated = history.filter((h) => h.id !== id);
-    localStorage.setItem(historyKey, JSON.stringify(updated));
-    setHistory(updated);
-    if (currentSessionId === id) {
-      reset();
-    }
+    deleteSession(id);
+    setHistory((prev) => prev.filter((h) => h.id !== id));
   };
 
   const handleClearAll = () => {
-    const historyKey = getCurrentHistoryKey();
-    localStorage.removeItem(historyKey);
+    clearHistory();
     setHistory([]);
-    reset();
   };
 
   const formatTime = (ts: number) => {
