@@ -6,8 +6,17 @@ import type {
   AcademicSource,
 } from '../types/research';
 import { searchResearch } from '../services/api';
+import { useAuthStore } from './authStore';
+import {
+  saveHistoryEntry,
+  loadHistory,
+  saveBookmark,
+  removeBookmark,
+  loadBookmarks,
+} from '../lib/firestore';
 
 export const HISTORY_KEY = 'fuenzer_search_history';
+const BOOKMARKS_KEY = 'fuenzer_bookmarked_library';
 
 export interface ChatMessage {
   id: string;
@@ -63,8 +72,19 @@ interface ResearchState {
   initSession: (queryText: string) => string;
   loadSession: (sessionId: string) => void;
   updateSessionTitle: (title: string) => void;
+
+  // Firestore sync
+  syncFromFirestore: () => Promise<void>;
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Get current authenticated user ID (or null) */
+function getCurrentUserId(): string | null {
+  return useAuthStore.getState().user?.uid || null;
+}
+
+/** Sync current session to localStorage (fast local cache) */
 const syncCurrentSessionToLocalStorage = (state: ResearchState) => {
   const { currentSessionId } = state;
   if (!currentSessionId) return;
@@ -96,6 +116,36 @@ const syncCurrentSessionToLocalStorage = (state: ResearchState) => {
   }
 };
 
+/** Sync current session to Firestore (background, non-blocking) */
+const syncCurrentSessionToFirestore = (state: ResearchState) => {
+  const userId = getCurrentUserId();
+  if (!userId || !state.currentSessionId) return;
+
+  const stored = localStorage.getItem(HISTORY_KEY);
+  if (!stored) return;
+
+  try {
+    const history: HistoryEntry[] = JSON.parse(stored);
+    const entry = history.find((h) => h.id === state.currentSessionId);
+    if (entry) {
+      // Fire and forget — don't await
+      saveHistoryEntry(userId, entry).catch((err) =>
+        console.warn('Firestore sync failed:', err)
+      );
+    }
+  } catch {
+    // Silent fail
+  }
+};
+
+/** Combined sync: localStorage + Firestore */
+const syncSession = (state: ResearchState) => {
+  syncCurrentSessionToLocalStorage(state);
+  syncCurrentSessionToFirestore(state);
+};
+
+// ─── Store ────────────────────────────────────────────────────────────────────
+
 export const useResearchStore = create<ResearchState>((set, get) => ({
   query: '',
   scope: 'global',
@@ -108,7 +158,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   error: null,
   bookmarkedSources: (() => {
     try {
-      const stored = localStorage.getItem('fuenzer_bookmarked_library');
+      const stored = localStorage.getItem(BOOKMARKS_KEY);
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -126,8 +176,23 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     } else {
       updated = [...current, source];
     }
-    localStorage.setItem('fuenzer_bookmarked_library', JSON.stringify(updated));
+    // Local cache
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(updated));
     set({ bookmarkedSources: updated });
+
+    // Firestore sync (background)
+    const userId = getCurrentUserId();
+    if (userId) {
+      if (exists) {
+        removeBookmark(userId, source.id).catch((err) =>
+          console.warn('Failed to remove bookmark from Firestore:', err)
+        );
+      } else {
+        saveBookmark(userId, source).catch((err) =>
+          console.warn('Failed to save bookmark to Firestore:', err)
+        );
+      }
+    }
   },
 
   setQuery: (query: string) => set({ query }),
@@ -161,6 +226,14 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
 
     const updated = [newEntry, ...history].slice(0, 20);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+
+    // Firestore sync (background)
+    const userId = getCurrentUserId();
+    if (userId) {
+      saveHistoryEntry(userId, newEntry).catch((err) =>
+        console.warn('Failed to save history to Firestore:', err)
+      );
+    }
 
     set({
       currentSessionId: sessionId,
@@ -211,6 +284,58 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       h.id === currentSessionId ? { ...h, title: title } : h
     );
     localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+
+    // Firestore sync
+    const userId = getCurrentUserId();
+    if (userId) {
+      const entry = updated.find((h) => h.id === currentSessionId);
+      if (entry) {
+        saveHistoryEntry(userId, entry).catch(() => {});
+      }
+    }
+  },
+
+  /**
+   * Sync data from Firestore into local state.
+   * Called once after auth is initialized / user changes.
+   * Merges Firestore data with any existing localStorage data.
+   */
+  syncFromFirestore: async () => {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    try {
+      // Load history from Firestore
+      const firestoreHistory = await loadHistory(userId);
+      if (firestoreHistory.length > 0) {
+        // Merge with local (Firestore wins for same IDs, keep unique locals)
+        const localStored = localStorage.getItem(HISTORY_KEY);
+        const localHistory: HistoryEntry[] = localStored ? JSON.parse(localStored) : [];
+        
+        const firestoreIds = new Set(firestoreHistory.map((h) => h.id));
+        const uniqueLocal = localHistory.filter((h) => !firestoreIds.has(h.id));
+        const merged = [...firestoreHistory, ...uniqueLocal]
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .slice(0, 30);
+        
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(merged));
+      }
+
+      // Load bookmarks from Firestore
+      const firestoreBookmarks = await loadBookmarks(userId);
+      if (firestoreBookmarks.length > 0) {
+        // Merge with local bookmarks
+        const localBookmarks = get().bookmarkedSources;
+        const firestoreIds = new Set(firestoreBookmarks.map((b) => b.id));
+        const uniqueLocal = localBookmarks.filter((b) => !firestoreIds.has(b.id));
+        const merged = [...firestoreBookmarks, ...uniqueLocal];
+
+        localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(merged));
+        set({ bookmarkedSources: merged });
+      }
+    } catch (err) {
+      console.warn('Failed to sync from Firestore:', err);
+    }
   },
 
   executeSearch: async () => {
@@ -246,7 +371,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         },
       ],
     }));
-    syncCurrentSessionToLocalStorage(get());
+    syncSession(get());
 
     // Simulate narrative phases for UX
     const phaseTimer = setTimeout(() => {
@@ -298,7 +423,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
             : m
         ),
       }));
-      syncCurrentSessionToLocalStorage(get());
+      syncSession(get());
     } catch (err: unknown) {
       clearTimeout(phaseTimer);
       clearTimeout(synthTimer);
@@ -313,7 +438,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
             : m
         ),
       }));
-      syncCurrentSessionToLocalStorage(get());
+      syncSession(get());
     }
   },
 
@@ -324,9 +449,8 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       response: null,
       error: null,
     });
-    syncCurrentSessionToLocalStorage(get());
+    syncSession(get());
   },
-
 
   reset: () =>
     set({

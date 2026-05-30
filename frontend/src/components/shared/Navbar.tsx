@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Moon, Sun, Bell, History, Globe, Menu, X } from 'lucide-react';
+import { Moon, Sun, Bell, History, Globe, Menu, X, LogOut, User } from 'lucide-react';
 import { useUiStore } from '../../store/uiStore';
 import { useResearchStore } from '../../store/researchStore';
+import { useAuthStore } from '../../store/authStore';
 import { en } from '../../locales/en';
 import { id } from '../../locales/id';
 import { UpdateLogModal } from './UpdateLogModal';
@@ -240,12 +241,64 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
           
           
           <div className="flex items-center gap-3 md:gap-4">
-            <button className="text-xs md:text-sm font-semibold text-fuenzer-teal-dark dark:text-fuenzer-teal hover:text-fuenzer-teal">
-              {t.login}
-            </button>
-            <button className="px-3 py-1.5 md:px-5 md:py-2 rounded-lg bg-fuenzer-teal-dark text-white text-xs md:text-sm font-bold tracking-wide hover:bg-fuenzer-teal hover:text-white transition-all">
-              {t.signup}
-            </button>
+            {(() => {
+              const { user, logout } = useAuthStore();
+              const isAuthenticated = user && !user.isAnonymous;
+
+              if (isAuthenticated) {
+                return (
+                  <div className="relative flex items-center gap-2">
+                    {/* User Avatar */}
+                    <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate('/library')}>
+                      {user.photoURL ? (
+                        <img
+                          src={user.photoURL}
+                          alt={user.displayName || 'User'}
+                          className="w-8 h-8 rounded-full border-2 border-cloud-canvas dark:border-stone-gray group-hover:border-fuenzer-teal transition-colors"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-fuenzer-teal/10 border-2 border-cloud-canvas dark:border-stone-gray flex items-center justify-center group-hover:border-fuenzer-teal transition-colors">
+                          <User className="w-4 h-4 text-fuenzer-teal" />
+                        </div>
+                      )}
+                      <span className="hidden md:block text-xs font-semibold text-ink-black dark:text-paper-white max-w-[100px] truncate">
+                        {user.displayName || user.email?.split('@')[0] || 'User'}
+                      </span>
+                    </div>
+                    {/* Logout Button */}
+                    <button
+                      onClick={async () => {
+                        await logout();
+                        navigate('/');
+                      }}
+                      className="p-2 text-slate-gray hover:text-red-500 dark:text-silver-mist dark:hover:text-red-400 transition-colors rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray"
+                      title="Sign Out"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              }
+
+              // Not authenticated (anonymous or no user)
+              return (
+                <>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="text-xs md:text-sm font-semibold text-fuenzer-teal-dark dark:text-fuenzer-teal hover:text-fuenzer-teal cursor-pointer"
+                  >
+                    {t.login}
+                  </button>
+                  <button
+                    onClick={() => navigate('/signup')}
+                    className="px-3 py-1.5 md:px-5 md:py-2 rounded-lg bg-fuenzer-teal-dark text-white text-xs md:text-sm font-bold tracking-wide hover:bg-fuenzer-teal hover:text-white transition-all cursor-pointer"
+                  >
+                    {t.signup}
+                  </button>
+                </>
+              );
+            })()}
           </div>
 
           {/* Mobile Menu Hamburger */}
