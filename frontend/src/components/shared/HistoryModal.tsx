@@ -149,7 +149,7 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                   </div>
                   <button
                     onClick={(e) => handleDelete(item.id, e)}
-                    className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-silver-mist hover:text-red-500 transition-all shrink-0 ml-2"
+                    className="p-1.5 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-silver-mist hover:text-red-500 transition-all shrink-0 ml-2"
                     aria-label="Delete"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
