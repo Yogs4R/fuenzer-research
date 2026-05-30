@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { ResearchRequest, ResearchResponse, AutocompleteResponse, AskResponse, AcademicSource } from '../types/research';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8080' : ''),
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
