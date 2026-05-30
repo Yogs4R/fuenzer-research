@@ -43,7 +43,8 @@ gcloud run deploy $APP_NAME \
     --region $REGION \
     --allow-unauthenticated \
     --memory 1Gi \
-    --max-instances=1
+    --max-instances=1 \
+    --env-vars-file=env.yaml
 
 # Pembersihan otomatis Image lama (Untagged)
 echo "Membersihkan image lama agar storage aman..."
