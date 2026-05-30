@@ -32,6 +32,7 @@ interface HistoryEntry {
 interface AIAssistantPanelProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (isOpen: boolean) => void;
+  selectedRefs: Set<string>;
 }
 
 function AIChatBubble({ message }: { message: ChatMessage }) {
@@ -60,7 +61,7 @@ function AIChatBubble({ message }: { message: ChatMessage }) {
       {message.phase === 'complete' && message.response && (
         <div className="flex flex-col gap-1.5 w-full">
           {/* Text Box */}
-          <div className="bg-cloud-canvas dark:bg-stone-gray/60 rounded-2xl rounded-tl-sm p-3 max-h-48 overflow-y-auto shadow-sm border border-cloud-canvas/50 dark:border-stone-gray/30">
+          <div className="bg-cloud-canvas dark:bg-stone-gray/60 rounded-2xl rounded-tl-sm p-3 shadow-sm border border-cloud-canvas/50 dark:border-stone-gray/30">
             <div
               className="prose prose-xs prose-slate dark:prose-invert max-w-none text-ink-black dark:text-slate-100 leading-relaxed text-xs [&>p]:mb-2 [&>ul]:mt-1 [&>ul]:mb-2 [&>ol]:mt-1 [&>ol]:mb-2"
               dangerouslySetInnerHTML={{
@@ -137,7 +138,7 @@ function AIChatBubble({ message }: { message: ChatMessage }) {
   );
 }
 
-export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen }: AIAssistantPanelProps) {
+export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs }: AIAssistantPanelProps) {
   const [inputVal, setInputVal] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -155,7 +156,13 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen }: AIAssistan
     clearMessages,
     currentSessionId,
     updateSessionTitle,
+    aiMode,
+    setAiMode,
+    executeAsk,
+    response,
   } = useResearchStore();
+
+  const allRefs = response?.references ?? [];
 
   const [sessionTitle, setSessionTitle] = useState(t.newTopic);
 
@@ -223,15 +230,24 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen }: AIAssistan
     updateSessionTitle(newTitle);
   };
 
-  const handleSearch = async () => {
+  const handleSend = async () => {
     if (inputVal.trim().length < 3) return;
-    setQuery(inputVal.trim());
-    setInputVal('');
-    await executeSearch();
+    
+    if (aiMode === 'search') {
+      setQuery(inputVal.trim());
+      setInputVal('');
+      await executeSearch();
+    } else {
+      if (selectedRefs.size === 0) return;
+      const question = inputVal.trim();
+      setInputVal('');
+      const selectedSourcesList = allRefs.filter((ref) => selectedRefs.has(ref.id));
+      await executeAsk(question, selectedSourcesList);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSearch();
+    if (e.key === 'Enter') handleSend();
   };
 
   const isAnythingLoading = messages.some(
@@ -323,6 +339,32 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen }: AIAssistan
           </div>
         </div>
 
+        {/* Mode Selector Segmented Control */}
+        <div className="px-5 pb-3 shrink-0">
+          <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray justify-between select-none">
+            <button
+              onClick={() => setAiMode('search')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex-1 text-center ${
+                aiMode === 'search'
+                  ? 'bg-fuenzer-teal/10 text-fuenzer-teal shadow-sm border border-fuenzer-teal/30'
+                  : 'text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
+              }`}
+            >
+              {language === 'en' ? 'Search Mode' : 'Mode Search'}
+            </button>
+            <button
+              onClick={() => setAiMode('ask')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex-1 text-center ${
+                aiMode === 'ask'
+                  ? 'bg-fuenzer-teal/10 text-fuenzer-teal shadow-sm border border-fuenzer-teal/30'
+                  : 'text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
+              }`}
+            >
+              {language === 'en' ? 'Ask Mode' : 'Mode Ask'}
+            </button>
+          </div>
+        </div>
+
         {/* Chat Messages Area — ref-based scroll, NOT scrollIntoView */}
         <div
           ref={chatContainerRef}
@@ -357,19 +399,35 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen }: AIAssistan
 
         {/* Input Area */}
         <div className="px-5 pb-5 pt-3 shrink-0 border-t border-cloud-canvas dark:border-stone-gray">
+          {aiMode === 'ask' && (
+            <div className="mb-2 px-2 flex justify-between items-center text-xs animate-in fade-in slide-in-from-top-1 select-none">
+              <span className="font-semibold text-fuenzer-teal">
+                {selectedRefs.size} {language === 'en' ? `${selectedRefs.size === 1 ? 'Source' : 'Sources'} Selected` : `${selectedRefs.size} Referensi Terpilih`}
+              </span>
+              {selectedRefs.size === 0 && (
+                <span className="text-[10px] text-red-500 font-semibold animate-pulse">
+                  {language === 'en' ? '*Select reference(s) to Ask' : '*Pilih referensi untuk bertanya'}
+                </span>
+              )}
+            </div>
+          )}
           <div className="bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-lg rounded-xl p-2 flex items-center gap-2">
             <input
               type="text"
-              placeholder={t.inputPlaceholder}
+              placeholder={aiMode === 'search' ? t.inputPlaceholder : (language === 'en' ? 'Ask a question about selected sources...' : 'Tanyakan tentang referensi terpilih...')}
               className="flex-1 min-w-0 h-10 px-3 bg-transparent text-sm outline-none text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray"
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               onKeyDown={handleKeyDown}
             />
             <button
-              onClick={handleSearch}
-              disabled={inputVal.trim().length < 3 || isAnythingLoading}
-              className="w-8 h-8 shrink-0 rounded-full bg-fuenzer-teal text-white flex items-center justify-center hover:bg-fuenzer-teal-dark disabled:opacity-50 transition-colors"
+              onClick={handleSend}
+              disabled={
+                inputVal.trim().length < 3 || 
+                isAnythingLoading || 
+                (aiMode === 'ask' && selectedRefs.size === 0)
+              }
+              className="w-8 h-8 shrink-0 rounded-full bg-fuenzer-teal text-white flex items-center justify-center hover:bg-fuenzer-teal-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               <ArrowRight className="w-4 h-4 -rotate-90" strokeWidth={2} />
             </button>

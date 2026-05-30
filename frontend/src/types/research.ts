@@ -47,3 +47,8 @@ export type LoadingPhase =
   | 'synthesizing'
   | 'complete'
   | 'error';
+
+export interface AskResponse {
+  answer: string;
+  latency_ms: number;
+}

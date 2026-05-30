@@ -148,12 +148,12 @@ export function PlaygroundPage() {
 
   // Latest complete AI response for the references panel
   const latestAiMsg = [...messages].reverse().find(
-    (m) => m.role === 'ai' && m.phase === 'complete' && m.response
+    (m) => m.role === 'ai' && m.type === 'search' && m.phase === 'complete' && m.response
   );
   const latestResponse = latestAiMsg?.response ?? null;
 
   const isLoading = messages.some(
-    (m) => m.role === 'ai' && (m.phase === 'searching' || m.phase === 'filtering' || m.phase === 'synthesizing')
+    (m) => m.role === 'ai' && m.type === 'search' && (m.phase === 'searching' || m.phase === 'filtering' || m.phase === 'synthesizing')
   );
 
   // Toggle single selection
@@ -306,6 +306,7 @@ export function PlaygroundPage() {
         <AIAssistantPanel
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
+          selectedRefs={selectedRefs}
         />
 
         {/* Right Panel: References — scrolls naturally with content */}
@@ -501,6 +502,34 @@ export function PlaygroundPage() {
               {/* Reference cards */}
               {displayedRefs.length > 0 && (
                 <div className="space-y-4 max-w-4xl mx-auto w-full">
+                  {/* Select All Checkbox Header Bar */}
+                  <div className="flex items-center gap-3 px-5 py-3 bg-paper-white dark:bg-ink-black rounded-xl border border-cloud-canvas dark:border-stone-gray shadow-sm hover:shadow-md transition-all select-none">
+                    <input
+                      type="checkbox"
+                      id="select-all-references"
+                      checked={displayedRefs.length > 0 && displayedRefs.every((r) => selectedRefs.has(r.id))}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSelectedRefs((prev) => {
+                          const next = new Set(prev);
+                          if (checked) {
+                            displayedRefs.forEach((r) => next.add(r.id));
+                          } else {
+                            displayedRefs.forEach((r) => next.delete(r.id));
+                          }
+                          return next;
+                        });
+                      }}
+                      className="w-4 h-4 rounded border-cloud-canvas text-fuenzer-teal focus:ring-fuenzer-teal focus:ring-offset-0 cursor-pointer"
+                    />
+                    <label
+                      htmlFor="select-all-references"
+                      className="text-xs font-bold text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white cursor-pointer transition-colors"
+                    >
+                      {language === 'en' ? 'Select All references on page' : 'Pilih Semua referensi di halaman ini'} ({displayedRefs.length})
+                    </label>
+                  </div>
+
                   {displayedRefs.map((source) => (
                     <div key={source.id} className="relative group">
                       <JournalCard 

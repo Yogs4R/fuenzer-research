@@ -96,3 +96,15 @@ type GeminiAbstract struct {
 	Abstract string `json:"abstract"`
 	Year     int    `json:"year"`
 }
+
+// AskRequest represents the incoming Q&A query about selected references.
+type AskRequest struct {
+	Question   string           `json:"question" validate:"required"`
+	References []AcademicSource `json:"references" validate:"required,min=1"`
+}
+
+// AskResponse represents the response containing the AI Q&A answer.
+type AskResponse struct {
+	Answer    string `json:"answer"`
+	LatencyMs int64  `json:"latency_ms"`
+}

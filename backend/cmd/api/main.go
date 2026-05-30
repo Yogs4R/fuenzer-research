@@ -81,6 +81,7 @@ func main() {
 	// API Routes
 	api := app.Group("/api/v1")
 	api.Post("/research", researchHandler.Handle)
+	api.Post("/ask", researchHandler.HandleAsk)
 	api.Get("/autocomplete", autocompleteHandler.Handle)
 
 	// Serve static frontend files (production mode)

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ResearchRequest, ResearchResponse, AutocompleteResponse } from '../types/research';
+import type { ResearchRequest, ResearchResponse, AutocompleteResponse, AskResponse, AcademicSource } from '../types/research';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
@@ -15,6 +15,17 @@ export async function searchResearch(
   const response = await api.post<ResearchResponse>(
     '/api/v1/research',
     request
+  );
+  return response.data;
+}
+
+export async function askResearch(
+  question: string,
+  references: AcademicSource[]
+): Promise<AskResponse> {
+  const response = await api.post<AskResponse>(
+    '/api/v1/ask',
+    { question, references }
   );
   return response.data;
 }

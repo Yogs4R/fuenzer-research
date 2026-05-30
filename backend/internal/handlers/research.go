@@ -287,3 +287,92 @@ func containsAll(slice []string) bool {
 	}
 	return false
 }
+
+// isGibberish checks if a string is a keyboard smash, gibberish, or random repetition.
+func isGibberish(s string) bool {
+	s = strings.ToLower(strings.TrimSpace(s))
+	if len(s) < 3 {
+		return true
+	}
+
+	// 1. Check for lack of vowels in words of reasonable length
+	isVowel := func(r rune) bool {
+		return strings.ContainsRune("aeiouy", r)
+	}
+
+	words := strings.Fields(s)
+	for _, word := range words {
+		// Clean punctuation
+		wordCleaned := strings.Map(func(r rune) rune {
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+				return r
+			}
+			return -1
+		}, word)
+
+		if len(wordCleaned) >= 5 {
+			vowelCount := 0
+			for _, r := range wordCleaned {
+				if isVowel(r) {
+					vowelCount++
+				}
+			}
+			if vowelCount == 0 {
+				return true
+			}
+		}
+	}
+
+	// 2. Keyboard sweeps and repetitions
+	gibberishPatterns := []string{
+		"asdf", "sdfg", "dfgh", "fghj", "ghjk", "hjkl",
+		"qwer", "wert", "erty", "rtyu", "tyui", "yuio", "uiop",
+		"zxcv", "xcvb", "cvbn", "vbnm",
+		"asasas", "aaaaaa", "bbbbbb", "cccccc", "dddddd",
+	}
+	for _, p := range gibberishPatterns {
+		if strings.Contains(s, p) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// HandleAsk handles asking a question about selected academic references.
+func (h *ResearchHandler) HandleAsk(c *fiber.Ctx) error {
+	start := time.Now()
+
+	var req models.AskRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Format request tidak valid",
+		})
+	}
+
+	req.Question = strings.TrimSpace(req.Question)
+
+	// User comments: Return static template for gibberish/short inputs without calling Gemini
+	if isGibberish(req.Question) {
+		return c.Status(fiber.StatusOK).JSON(models.AskResponse{
+			Answer:    "Pertanyaan Anda tidak dikenali atau berupa teks acak. Silakan ajukan pertanyaan yang valid, spesifik, dan akademis mengenai referensi yang Anda pilih (misalnya: menanyakan kontribusi utama, metodologi, temuan hasil, atau perbandingan abstrak dari artikel yang terpilih).",
+			LatencyMs: time.Since(start).Milliseconds(),
+		})
+	}
+
+	if len(req.References) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Pilih setidaknya satu referensi sebelum mengajukan pertanyaan.",
+		})
+	}
+
+	answer, err := h.geminiClient.Ask(req.Question, req.References)
+	if err != nil {
+		answer = "Sistem Tanya Jawab AI sedang tidak tersedia saat ini. Silakan coba beberapa saat lagi."
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.AskResponse{
+		Answer:    answer,
+		LatencyMs: time.Since(start).Milliseconds(),
+	})
+}

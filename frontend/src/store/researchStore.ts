@@ -5,7 +5,7 @@ import type {
   ResearchResponse,
   AcademicSource,
 } from '../types/research';
-import { searchResearch } from '../services/api';
+import { searchResearch, askResearch } from '../services/api';
 import { useAuthStore } from './authStore';
 import {
   saveHistoryEntry,
@@ -36,6 +36,7 @@ export function getCurrentBookmarksKey(): string {
 export interface ChatMessage {
   id: string;
   role: 'user' | 'ai';
+  type?: 'search' | 'ask';
   query?: string;
   response?: ResearchResponse;
   error?: string;
@@ -69,6 +70,7 @@ interface ResearchState {
   error: string | null;
   messages: ChatMessage[];
   currentSessionId: string | null;
+  aiMode: 'search' | 'ask';
 
   bookmarkedSources: AcademicSource[];
   toggleBookmark: (source: AcademicSource) => void;
@@ -79,7 +81,9 @@ interface ResearchState {
   setSearchLocation: (location: string) => void;
   setSearchAccreditation: (accreditation: string) => void;
   setSintaRank: (rank: string[]) => void;
+  setAiMode: (mode: 'search' | 'ask') => void;
   executeSearch: () => Promise<void>;
+  executeAsk: (question: string, selectedRefs: AcademicSource[]) => Promise<void>;
   clearMessages: () => void;
   reset: () => void;
 
@@ -181,6 +185,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   bookmarkedSources: [],
   messages: [],
   currentSessionId: null,
+  aiMode: 'search',
 
   toggleBookmark: (source: AcademicSource) => {
     const current = get().bookmarkedSources;
@@ -221,6 +226,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   }),
   setSearchAccreditation: (accreditation: string) => set({ searchAccreditation: accreditation }),
   setSintaRank: (rank: string[]) => set({ sintaRank: rank }),
+  setAiMode: (mode: 'search' | 'ask') => set({ aiMode: mode }),
 
   initSession: (queryText: string) => {
     const sessionId = `h-${Date.now()}`;
@@ -467,6 +473,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         {
           id: msgId,
           role: 'user' as const,
+          type: 'search',
           query: query.trim(),
           phase: 'searching' as LoadingPhase,
           timestamp: Date.now(),
@@ -474,6 +481,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         {
           id: `${msgId}-ai`,
           role: 'ai' as const,
+          type: 'search',
           phase: 'searching' as LoadingPhase,
           timestamp: Date.now() + 1,
         },
@@ -550,6 +558,76 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     }
   },
 
+  executeAsk: async (question: string, selectedRefs: AcademicSource[]) => {
+    if (question.trim().length < 3) return;
+    if (selectedRefs.length === 0) return;
+
+    let sessionId = get().currentSessionId;
+    if (!sessionId) {
+      sessionId = get().initSession(question.trim());
+    }
+
+    const msgId = `msg-${Date.now()}`;
+
+    // Add user message immediately
+    set((state) => ({
+      loadingPhase: 'synthesizing',
+      error: null,
+      messages: [
+        ...state.messages,
+        {
+          id: msgId,
+          role: 'user' as const,
+          type: 'ask',
+          query: question.trim(),
+          phase: 'synthesizing' as LoadingPhase,
+          timestamp: Date.now(),
+        },
+        {
+          id: `${msgId}-ai`,
+          role: 'ai' as const,
+          type: 'ask',
+          phase: 'synthesizing' as LoadingPhase,
+          timestamp: Date.now() + 1,
+        },
+      ],
+    }));
+    syncSession(get());
+
+    try {
+      const response = await askResearch(question.trim(), selectedRefs);
+
+      const res: ResearchResponse = {
+        synthesis: response.answer,
+        references: selectedRefs,
+        latency_ms: response.latency_ms,
+      };
+
+      set((state) => ({
+        loadingPhase: 'complete',
+        messages: state.messages.map((m) =>
+          m.id === `${msgId}-ai`
+            ? { ...m, response: res, phase: 'complete' as LoadingPhase }
+            : m
+        ),
+      }));
+      syncSession(get());
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.';
+      set((state) => ({
+        error: message,
+        loadingPhase: 'error',
+        messages: state.messages.map((m) =>
+          m.id === `${msgId}-ai`
+            ? { ...m, error: message, phase: 'error' as LoadingPhase }
+            : m
+        ),
+      }));
+      syncSession(get());
+    }
+  },
+
   clearMessages: () => {
     set({
       messages: [],
@@ -573,5 +651,6 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       error: null,
       messages: [],
       currentSessionId: null,
+      aiMode: 'search',
     }),
 }));
