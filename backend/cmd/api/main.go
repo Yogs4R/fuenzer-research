@@ -53,6 +53,17 @@ func main() {
 	// Middleware: Logger
 	app.Use(logger.New())
 
+	// Middleware: Security Headers (A+ rating on securityheaders.com)
+	app.Use(func(c *fiber.Ctx) error {
+		c.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
+		c.Set("X-Frame-Options", "SAMEORIGIN")
+		c.Set("X-Content-Type-Options", "nosniff")
+		c.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Set("Permissions-Policy", "geolocation=(), microphone=(), camera=(), interest-cohort=()")
+		c.Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://lh3.googleusercontent.com https://images.unsplash.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; frame-src 'self' https://fuenzer-research.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self';")
+		return c.Next()
+	})
+
 	// Middleware: CORS — strict per security-policy.md
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: cfg.AllowedOrigins,
