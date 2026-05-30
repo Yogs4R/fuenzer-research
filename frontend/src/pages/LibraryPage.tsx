@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResearchStore } from '../store/researchStore';
 import { useUiStore } from '../store/uiStore';
+import { useAuthStore } from '../store/authStore';
 import { en } from '../locales/en';
 import { id } from '../locales/id';
 import { JournalCard } from '../components/shared/JournalCard';
@@ -17,7 +18,17 @@ import {
   Square,
   Filter,
   ChevronDown,
+  Send,
+  Copy,
+  Check,
+  Clock,
+  MessageSquare,
+  BookOpen,
+  Trash2,
 } from 'lucide-react';
+import DOMPurify from 'dompurify';
+import { marked } from 'marked';
+import { askResearch } from '../services/api';
 
 type SortOption = 'relevance' | 'newest' | 'oldest' | 'title';
 type FilterIndex = 'All' | 'SINTA 1' | 'SINTA 2' | 'SINTA 3' | 'SINTA 4' | 'SINTA 5' | 'SINTA 6' | 'Scopus' | 'Garuda';
@@ -110,6 +121,25 @@ function DropdownItem({
   );
 }
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } catch {}
+      }}
+      className="p-1.5 rounded-lg hover:bg-cloud-canvas dark:hover:bg-stone-gray/50 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-all cursor-pointer"
+      title="Copy answer"
+    >
+      {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+    </button>
+  );
+}
+
 export function LibraryPage() {
   const navigate = useNavigate();
   const { bookmarkedSources, toggleBookmark } = useResearchStore();
@@ -120,6 +150,102 @@ export function LibraryPage() {
   const [showFilters, setShowFilters] = useState(false);
   const { language } = useUiStore();
   const t = language === 'en' ? en.library : id.library;
+
+  const { user } = useAuthStore();
+  const storageKey = user
+    ? (user.isAnonymous ? 'fuenzer_library_compare_chat_guest' : `fuenzer_library_compare_chat_${user.uid}`)
+    : 'fuenzer_library_compare_chat_guest';
+
+  const [viewMode, setViewMode] = useState<'list' | 'compare'>('list');
+  const [selectedCompareRefs, setSelectedCompareRefs] = useState<Set<string>>(new Set());
+  const [compareMessages, setCompareMessages] = useState<any[]>([]);
+  const [compareInput, setCompareInput] = useState('');
+  const [isCompareLoading, setIsCompareLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Load chat messages on mount/user change
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        setCompareMessages(JSON.parse(stored));
+      } else {
+        setCompareMessages([]);
+      }
+    } catch {
+      setCompareMessages([]);
+    }
+  }, [storageKey]);
+
+  // Synchronized state & localStorage updater
+  const updateCompareMessages = (newMsgsOrFn: any[] | ((prev: any[]) => any[])) => {
+    setCompareMessages((prev) => {
+      const next = typeof newMsgsOrFn === 'function' ? newMsgsOrFn(prev) : newMsgsOrFn;
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // Auto scroll compare chat
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [compareMessages]);
+
+  const handleSendCompare = async (promptText: string) => {
+    if (promptText.trim().length < 3) return;
+    if (selectedCompareRefs.size === 0) return;
+    if (isCompareLoading) return;
+
+    setCompareInput('');
+    setIsCompareLoading(true);
+
+    const userMsgId = `c-user-${Date.now()}`;
+    const aiMsgId = `c-ai-${Date.now()}`;
+
+    // Add user message & loading AI message immediately
+    updateCompareMessages((prev) => [
+      ...prev,
+      { id: userMsgId, role: 'user', content: promptText.trim() },
+      { id: aiMsgId, role: 'ai', content: '', isLoading: true },
+    ]);
+
+    try {
+      const sourcesToCompare = bookmarkedSources.filter((s) => selectedCompareRefs.has(s.id));
+      const response = await askResearch(promptText.trim(), sourcesToCompare);
+
+      updateCompareMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMsgId
+            ? {
+                ...msg,
+                content: response.answer,
+                latencyMs: response.latency_ms,
+                isLoading: false,
+              }
+            : msg
+        )
+      );
+    } catch (err) {
+      updateCompareMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMsgId
+            ? {
+                ...msg,
+                content: t.failedCompare,
+                isError: true,
+                isLoading: false,
+              }
+            : msg
+        )
+      );
+    } finally {
+      setIsCompareLoading(false);
+    }
+  };
 
   // Toggle single index filter selection
   const toggleIndexFilter = (f: FilterIndex) => {
@@ -198,17 +324,46 @@ export function LibraryPage() {
             </p>
           </div>
 
-          {/* Search bar */}
+          {/* View Toggle + Search Bar */}
           {bookmarkedSources.length > 0 && (
-            <div className="flex items-center border border-cloud-canvas dark:border-stone-gray rounded-xl px-4 h-12 hover:border-silver-mist focus-within:border-fuenzer-teal bg-cloud-canvas/30 dark:bg-stone-gray/30 transition-colors w-full md:w-80 font-sans">
-              <Search className="w-4 h-4 text-silver-mist shrink-0 mr-2.5" />
-              <input
-                type="text"
-                placeholder={t.searchPlaceholder}
-                className="flex-1 h-full text-sm outline-none bg-transparent dark:text-cloud-canvas placeholder:text-silver-mist"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0 font-sans">
+              {/* Segmented Control */}
+              <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray select-none w-fit shrink-0">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-center whitespace-nowrap cursor-pointer ${
+                    viewMode === 'list'
+                      ? 'bg-fuenzer-teal/10 text-fuenzer-teal shadow-sm border border-fuenzer-teal/30'
+                      : 'text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
+                  }`}
+                >
+                  {t.tabMyLibrary}
+                </button>
+                <button
+                  onClick={() => setViewMode('compare')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-center whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                    viewMode === 'compare'
+                      ? 'bg-fuenzer-teal/10 text-fuenzer-teal shadow-sm border border-fuenzer-teal/30'
+                      : 'text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
+                  }`}
+                >
+                  <Sparkles className="w-3 h-3 text-fuenzer-teal shrink-0" />
+                  {t.tabAiCompare}
+                </button>
+              </div>
+
+              {viewMode === 'list' && (
+                <div className="flex items-center border border-cloud-canvas dark:border-stone-gray rounded-xl px-4 h-12 hover:border-silver-mist focus-within:border-fuenzer-teal bg-cloud-canvas/30 dark:bg-stone-gray/30 transition-colors w-full md:w-64 font-sans">
+                  <Search className="w-4 h-4 text-silver-mist shrink-0 mr-2.5" />
+                  <input
+                    type="text"
+                    placeholder={t.searchPlaceholder}
+                    className="flex-1 h-full text-sm outline-none bg-transparent dark:text-cloud-canvas placeholder:text-silver-mist min-w-0"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -238,6 +393,240 @@ export function LibraryPage() {
               {t.searchButton}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
+          </div>
+        ) : viewMode === 'compare' ? (
+          /* AI Compare Q&A centered layout */
+          <div className="flex-1 flex flex-col w-full max-w-3xl mx-auto relative font-sans">
+            {/* Center Hero title */}
+            <div className="text-center mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold bg-linear-to-r from-fuenzer-teal via-code-blue to-purple-600 bg-clip-text text-transparent leading-normal font-serif select-none">
+                {t.compareTitle}
+              </h2>
+              <p className="text-xs text-slate-gray dark:text-silver-mist mt-2 max-w-md mx-auto leading-relaxed select-none">
+                {t.compareDesc}
+              </p>
+            </div>
+
+            {/* Reference selection cards grid */}
+            <div className="bg-paper-white dark:bg-ink-black rounded-2xl border border-cloud-canvas dark:border-stone-gray p-4 mb-6 shadow-sm flex flex-col shrink-0">
+              <div className="flex justify-between items-center mb-3 select-none">
+                <span className="text-[11px] font-bold text-slate-gray dark:text-silver-mist uppercase tracking-wider flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5 text-fuenzer-teal" />
+                  {t.selectSourcesToCompare}
+                  <span className="px-1.5 py-0.5 rounded bg-fuenzer-teal/10 text-fuenzer-teal font-sans text-[10px] font-bold">
+                    {selectedCompareRefs.size} / {bookmarkedSources.length}
+                  </span>
+                </span>
+                <button
+                  onClick={() => {
+                    if (selectedCompareRefs.size === bookmarkedSources.length) {
+                      setSelectedCompareRefs(new Set());
+                    } else {
+                      setSelectedCompareRefs(new Set(bookmarkedSources.map((s) => s.id)));
+                    }
+                  }}
+                  className="text-xs font-bold text-fuenzer-teal hover:text-fuenzer-teal-dark hover:underline cursor-pointer"
+                >
+                  {selectedCompareRefs.size === bookmarkedSources.length
+                    ? t.clearSelection
+                    : t.selectAll}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-40 overflow-y-auto pr-1">
+                {bookmarkedSources.map((source) => {
+                  const isChecked = selectedCompareRefs.has(source.id);
+                  return (
+                    <div
+                      key={source.id}
+                      onClick={() => {
+                        setSelectedCompareRefs((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(source.id)) next.delete(source.id);
+                          else next.add(source.id);
+                          return next;
+                        });
+                      }}
+                      className={`p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none flex gap-2.5 items-start ${
+                        isChecked
+                          ? 'bg-fuenzer-teal/5 border-fuenzer-teal ring-1 ring-fuenzer-teal/20'
+                          : 'bg-cloud-canvas/30 hover:bg-cloud-canvas/60 dark:bg-stone-gray/10 dark:hover:bg-stone-gray/25 border-cloud-canvas dark:border-stone-gray'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {}}
+                        className="w-3.5 h-3.5 mt-0.5 rounded border-cloud-canvas text-fuenzer-teal focus:ring-fuenzer-teal focus:ring-offset-0 pointer-events-none"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-ink-black dark:text-paper-white truncate font-serif leading-snug">
+                          {source.title}
+                        </p>
+                        <p className="text-[10px] text-slate-gray dark:text-silver-mist/70 truncate mt-1">
+                          {(source.authors || []).slice(0, 2).join(', ')} • {source.year}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Chat Timeline / Messages */}
+            <div className="flex-1 min-h-[300px] border border-cloud-canvas dark:border-stone-gray/60 bg-cloud-canvas/10 dark:bg-[#121212]/30 rounded-2xl p-5 overflow-y-auto flex flex-col gap-6 mb-28 shadow-inner">
+              {compareMessages.length === 0 && (
+                <div className="flex-1 flex flex-col items-center justify-center text-center gap-6 py-8">
+                  <div className="flex flex-col items-center gap-2 select-none">
+                    <MessageSquare className="w-10 h-10 text-slate-gray/60 dark:text-stone-gray animate-bounce" strokeWidth={1.5} />
+                    <p className="text-sm font-semibold text-silver-mist">
+                      {t.askEmptyPlaceholder}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl px-2">
+                    {[
+                      {
+                        title: t.titleMethodology,
+                        prompt: t.promptMethodology,
+                        desc: t.descMethodology,
+                      },
+                      {
+                        title: t.titleFindings,
+                        prompt: t.promptFindings,
+                        desc: t.descFindings,
+                      },
+                      {
+                        title: t.titleLimitations,
+                        prompt: t.promptLimitations,
+                        desc: t.descLimitations,
+                      },
+                    ].map((card, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSendCompare(card.prompt)}
+                        disabled={selectedCompareRefs.size === 0 || isCompareLoading}
+                        className="p-4 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-ink-black hover:border-fuenzer-teal hover:shadow-md text-left transition-all group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:border-cloud-canvas select-none"
+                      >
+                        <h4 className="text-xs font-bold text-ink-black dark:text-paper-white group-hover:text-fuenzer-teal transition-colors">
+                          {card.title}
+                        </h4>
+                        <p className="text-[10px] text-slate-gray dark:text-silver-mist mt-1 leading-relaxed">
+                          {card.desc}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {compareMessages.map((msg) => {
+                if (msg.role === 'user') {
+                  return (
+                    <div key={msg.id} className="flex justify-end">
+                      <div className="max-w-[85%] bg-fuenzer-teal text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-xs leading-relaxed shadow-sm wrap-break-word select-text font-sans">
+                        {msg.content}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={msg.id} className="flex flex-col gap-1 w-full max-w-[92%] select-text animate-in fade-in duration-200">
+                    <div className="flex items-center gap-1.5 mb-0.5 select-none">
+                      <Sparkles className="w-3 h-3 text-fuenzer-teal shrink-0 animate-pulse" />
+                      <span className="text-[9px] font-bold text-fuenzer-teal tracking-wide uppercase">Fuenzer AI</span>
+                    </div>
+
+                    {msg.isLoading ? (
+                      <div className="bg-paper-white dark:bg-ink-black border border-cloud-canvas/50 dark:border-stone-gray/30 rounded-2xl rounded-tl-sm p-4 w-full shadow-sm">
+                        <div className="space-y-2 animate-pulse">
+                          <div className="h-3.5 bg-cloud-canvas dark:bg-stone-gray rounded w-3/4" />
+                          <div className="h-3.5 bg-cloud-canvas dark:bg-stone-gray rounded w-5/6" />
+                          <div className="h-3.5 bg-cloud-canvas dark:bg-stone-gray rounded w-2/3" />
+                        </div>
+                      </div>
+                    ) : msg.isError ? (
+                      <div className="p-3.5 rounded-2xl rounded-tl-sm bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-400 text-xs border-l-4 border-red-500 leading-relaxed font-sans shadow-sm">
+                        {msg.content}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1.5 w-full animate-in fade-in duration-350">
+                        <div className="bg-paper-white dark:bg-ink-black rounded-2xl rounded-tl-sm p-4 shadow-sm border border-cloud-canvas/50 dark:border-stone-gray/30">
+                          <div
+                            className="prose prose-xs prose-slate dark:prose-invert max-w-none text-ink-black dark:text-slate-100 leading-relaxed text-xs [&>p]:mb-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:mb-2 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:mb-2 [&>ul>li]:mb-1 [&>ol>li]:mb-1"
+                            dangerouslySetInnerHTML={{
+                              __html: DOMPurify.sanitize(
+                                marked.parse(msg.content, { async: false }) as string
+                              ),
+                            }}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between px-1 text-[10px] text-slate-gray/70 dark:text-silver-mist/50 font-sans select-none">
+                          <div className="flex items-center gap-1 font-medium text-[9px] uppercase tracking-wider dark:text-slate-400">
+                            <Clock className="w-2.5 h-2.5 text-silver-mist shrink-0" strokeWidth={2.5} />
+                            <span>{msg.latencyMs ? (msg.latencyMs / 1000).toFixed(1) : '0.0'}s</span>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <CopyButton text={msg.content} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Bottom floating pill input bar */}
+            <div className="absolute bottom-4 left-0 right-0 w-full max-w-3xl px-2 shrink-0 select-none">
+              {selectedCompareRefs.size === 0 && (
+                <div className="mb-2 text-center text-[10px] text-red-500 font-bold animate-pulse">
+                  {t.selectRefsToAsk}
+                </div>
+              )}
+              {selectedCompareRefs.size > 0 && (
+                <div className="mb-2 px-2 flex justify-between items-center text-[10px] text-slate-gray dark:text-silver-mist font-semibold">
+                  <span>
+                    {selectedCompareRefs.size} {t.sourcesSelectedForAnalysis}
+                  </span>
+                  {compareMessages.length > 0 && (
+                    <button
+                      onClick={() => updateCompareMessages([])}
+                      className="flex items-center gap-1 text-red-500 hover:text-red-600 hover:underline cursor-pointer font-bold transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      {t.clearConversation}
+                    </button>
+                  )}
+                </div>
+              )}
+              <div className="bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-full p-2 pl-4 flex items-center gap-2 focus-within:ring-2 focus-within:ring-fuenzer-teal/20 transition-all">
+                <input
+                  type="text"
+                  placeholder={
+                    selectedCompareRefs.size === 0
+                      ? t.placeholderRefsLocked
+                      : t.placeholderRefsUnlocked
+                  }
+                  className="flex-1 min-w-0 bg-transparent text-xs outline-none text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray h-9 animate-none"
+                  value={compareInput}
+                  onChange={(e) => setCompareInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendCompare(compareInput)}
+                  disabled={selectedCompareRefs.size === 0 || isCompareLoading}
+                />
+                <button
+                  onClick={() => handleSendCompare(compareInput)}
+                  disabled={compareInput.trim().length < 3 || selectedCompareRefs.size === 0 || isCompareLoading}
+                  className="w-9 h-9 shrink-0 rounded-full bg-fuenzer-teal text-white flex items-center justify-center hover:bg-fuenzer-teal-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-md"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
           /* Cards list */
@@ -299,7 +688,7 @@ export function LibraryPage() {
                   </button>
 
                   <span className="text-xs font-bold text-slate-gray dark:text-silver-mist uppercase tracking-wider font-sans ml-auto sm:ml-2 whitespace-nowrap">
-                    {filtered.length} sources
+                    {filtered.length} {t.sourcesCount}
                   </span>
                 </div>
               </div>
@@ -346,7 +735,7 @@ export function LibraryPage() {
 
             {filtered.length === 0 ? (
               <div className="text-center py-16 text-silver-mist text-sm bg-paper-white dark:bg-ink-black rounded-xl border border-cloud-canvas dark:border-stone-gray shadow-sm">
-                No references match your search and filter criteria.
+                {t.noResultsFound}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4">
