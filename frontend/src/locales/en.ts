@@ -49,7 +49,11 @@ export const en = {
     sec3Title: '3. API Usage and Limitations',
     sec3Desc: 'We query open-access and national databases (such as SINTA and OpenAlex) in real-time. Fuenzer Research does not guarantee uninterrupted access, nor the absolute completeness of the databases, as we rely on third-party API availability.',
     sec4Title: '4. Disclaimer',
-    sec4Desc: "The materials on Fuenzer Research's website are provided on an 'as is' basis. While we strive to ensure our AI produces highly accurate and non-hallucinated syntheses, you are solely responsible for fact-checking and verifying the claims against the primary literature."
+    sec4Desc: "The materials on Fuenzer Research's website are provided on an 'as is' basis. While we strive to ensure our AI produces highly accurate and non-hallucinated syntheses, you are solely responsible for fact-checking and verifying the claims against the primary literature.",
+    sec5Title: '5. User Accounts and Authentication',
+    sec5Desc: 'Fuenzer Research integrates Firebase Authentication to provide secure user registration and login services. You are responsible for keeping your credentials confidential and ensuring all activities under your account adhere to our academic terms.',
+    sec6Title: '6. Analytics and Tracking',
+    sec6Desc: 'We utilize Google Analytics to understand platform performance and user engagement. By using this service, you agree to our anonymous tracking and standard telemetry to help us improve the system.'
   },
   privacy: {
     back: 'Back',
@@ -62,7 +66,11 @@ export const en = {
     sec2List1: 'Your personal research queries and synthesized outputs are never used to train our public generative AI models.',
     sec2List2: 'Data is processed statelessly where possible, meaning your queries are processed to generate results and are not persistently stored for training purposes.',
     sec3Title: '3. Data Security',
-    sec3Desc: 'We implement industry-standard security measures, including encryption in transit and at rest, to maintain the safety of your personal information and research data against unauthorized access or disclosure.'
+    sec3Desc: 'We implement industry-standard security measures, including encryption in transit and at rest, to maintain the safety of your personal information and research data against unauthorized access or disclosure.',
+    sec4Title: '4. User Authentication & Login Session',
+    sec4Desc: 'We use Firebase Authentication to securely handle user signup and logins. Your login credentials and authentication state are stored statefully in encrypted web storage to keep your session secure.',
+    sec5Title: '5. Google Analytics & Cookies',
+    sec5Desc: 'Fuenzer Research implements Google Analytics to collect anonymous traffic statistics (such as page views, search volumes, and device types). We use cookies to enable these analytics, which helps us optimize application speed and visual layouts. You can opt-out of cookie tracking through your browser settings.'
   },
   library: {
     badge: 'Personal Workspace',

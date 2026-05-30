@@ -13,6 +13,7 @@ type Config struct {
 	GoogleBooksAPIKey string
 	Port              string
 	Env               string
+	AllowedOrigins    string
 }
 
 // Load reads environment variables from .env and returns a Config.
@@ -25,6 +26,7 @@ func Load() *Config {
 		GoogleBooksAPIKey: getEnv("GOOGLE_BOOKS_API_KEY", ""),
 		Port:              getEnv("PORT", "8080"),
 		Env:               getEnv("ENV", "development"),
+		AllowedOrigins:    getEnv("ALLOWED_ORIGINS", "http://localhost:5173, https://research.fuenzer.web.id"),
 	}
 
 	if cfg.GeminiAPIKey == "" {

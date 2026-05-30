@@ -59,7 +59,23 @@ Built for **JuaraVibeCoding** Hackathon by Google.
    npm install
    ```
 
-3. **Jalankan dalam Mode Development**:
+3. **Konfigurasi Environment**:
+   Salin berkas `.env.example` sebagai `.env` dan sesuaikan nilainya:
+   ```bash
+   cp .env.example .env
+   ```
+   Isi konfigurasi dalam berkas `.env`:
+   ```env
+   VITE_API_URL=http://localhost:8080
+   VITE_FIREBASE_API_KEY=your_firebase_api_key_here
+   VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your-project-id
+   VITE_FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app
+   VITE_FIREBASE_MESSAGING_SENDER_ID=123456789012
+   VITE_FIREBASE_APP_ID=1:123456789012:web:abcdef1234567890
+   ```
+
+4. **Jalankan dalam Mode Development**:
    ```bash
    npm run dev
    ```

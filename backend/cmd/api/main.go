@@ -55,7 +55,7 @@ func main() {
 
 	// Middleware: CORS — strict per security-policy.md
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:5173, https://research.fuenzer.web.id",
+		AllowOrigins: cfg.AllowedOrigins,
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 

@@ -49,7 +49,11 @@ export const id = {
     sec3Title: '3. Penggunaan dan Batasan API',
     sec3Desc: 'Kami meminta data ke database akses-terbuka dan nasional (seperti SINTA dan OpenAlex) secara real-time. Fuenzer Research tidak menjamin akses tanpa gangguan, maupun kelengkapan mutlak dari database tersebut, karena kami bergantung pada ketersediaan API pihak ketiga.',
     sec4Title: '4. Penafian',
-    sec4Desc: 'Materi di situs web Fuenzer Research disediakan atas dasar apa adanya. Meskipun kami berusaha memastikan AI kami menghasilkan sintesis yang sangat akurat dan bebas dari halusinasi, Anda bertanggung jawab penuh untuk memeriksa fakta dan memverifikasi klaim terhadap literatur primer.'
+    sec4Desc: 'Materi di situs web Fuenzer Research disediakan atas dasar apa adanya. Meskipun kami berusaha memastikan AI kami menghasilkan sintesis yang sangat akurat dan bebas dari halusinasi, Anda bertanggung jawab penuh untuk memeriksa fakta dan memverifikasi klaim terhadap literatur primer.',
+    sec5Title: '5. Akun Pengguna dan Autentikasi',
+    sec5Desc: 'Fuenzer Research mengintegrasikan Firebase Authentication untuk menyediakan layanan pendaftaran dan login pengguna secara aman. Anda bertanggung jawab untuk menjaga kerahasiaan kredensial Anda dan memastikan seluruh aktivitas di bawah akun Anda mematuhi ketentuan akademis kami.',
+    sec6Title: '6. Analisis dan Pelacakan',
+    sec6Desc: 'Kami menggunakan Google Analytics untuk memahami kinerja platform dan interaksi pengguna. Dengan menggunakan layanan ini, Anda menyetujui pelacakan anonim dan telemetri standar kami untuk membantu kami meningkatkan sistem.'
   },
   privacy: {
     back: 'Kembali',
@@ -62,7 +66,11 @@ export const id = {
     sec2List1: 'Pertanyaan riset pribadi Anda dan hasil sintesis tidak akan pernah digunakan untuk melatih model AI generatif publik kami.',
     sec2List2: 'Data diproses secara stateless jika memungkinkan, yang berarti pertanyaan Anda diproses untuk menghasilkan hasil dan tidak disimpan secara permanen untuk tujuan pelatihan.',
     sec3Title: '3. Keamanan Data',
-    sec3Desc: 'Kami menerapkan langkah-langkah keamanan standar industri, termasuk enkripsi dalam transit dan saat tidak aktif, untuk menjaga keamanan informasi pribadi dan data riset Anda dari akses atau pengungkapan yang tidak sah.'
+    sec3Desc: 'Kami menerapkan langkah-langkah keamanan standar industri, termasuk enkripsi dalam transit dan saat tidak aktif, untuk menjaga keamanan informasi pribadi dan data riset Anda dari akses atau pengungkapan yang tidak sah.',
+    sec4Title: '4. Autentikasi Pengguna & Sesi Login',
+    sec4Desc: 'Kami menggunakan Firebase Authentication untuk mengelola pendaftaran dan login pengguna secara aman. Kredensial masuk dan status autentikasi Anda disimpan secara stateful di penyimpanan web terenkripsi untuk menjaga keamanan sesi Anda.',
+    sec5Title: '5. Google Analytics & Cookie',
+    sec5Desc: 'Fuenzer Research menerapkan Google Analytics untuk mengumpulkan statistik lalu lintas anonim (seperti tayangan halaman, volume pencarian, dan tipe perangkat). Kami menggunakan cookie untuk mengaktifkan analitik ini guna membantu kami mengoptimalkan kecepatan aplikasi dan tata letak visual. Anda dapat menonaktifkan pelacakan cookie melalui pengaturan browser Anda.'
   },
   library: {
     badge: 'Ruang Kerja Pribadi',

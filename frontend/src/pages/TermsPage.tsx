@@ -46,6 +46,14 @@ export function TermsPage() {
             <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white mb-4 mt-8">{t.sec4Title}</h2>
             <p>{t.sec4Desc}</p>
           </section>
+          <section>
+            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white mb-4 mt-8">{t.sec5Title}</h2>
+            <p>{t.sec5Desc}</p>
+          </section>
+          <section>
+            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white mb-4 mt-8">{t.sec6Title}</h2>
+            <p>{t.sec6Desc}</p>
+          </section>
         </div>
       </main>
       <Footer />

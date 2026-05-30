@@ -55,11 +55,13 @@ Built for **JuaraVibeCoding** Hackathon by Google.
    ```
 
 3. **Konfigurasi Environment**:
-   Buka berkas `.env` dan tambahkan kunci API Anda:
+   Buka berkas `.env` dan sesuaikan nilainya:
    ```env
-   GEMINI_API_KEY=your_actual_google_ai_studio_api_key
+   GEMINI_API_KEY=your_gemini_api_key_here
+   GOOGLE_BOOKS_API_KEY=your_google_books_api_key_here
    PORT=8080
    ENV=development
+   ALLOWED_ORIGINS=http://localhost:5173,https://research.fuenzer.web.id
    ```
 
 4. **Instalasi Dependensi & Jalankan Server**:
