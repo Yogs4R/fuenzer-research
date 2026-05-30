@@ -106,6 +106,7 @@ export async function loadBookmarks(userId: string): Promise<AcademicSource[]> {
       authors: data.authors || [],
       year: data.year || 0,
       publisher: data.publisher || '',
+      abstract: data.abstract || undefined,
       indexes: data.indexes || [],
       url: data.url || '',
       content_type: data.content_type || '',
