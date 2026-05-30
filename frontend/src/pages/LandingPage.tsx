@@ -191,9 +191,6 @@ export function LandingPage() {
       return ['OpenAlex', 'Google Books'];
     }
     if (searchLocation === 'Indonesia') {
-      if (searchType === 'Articles') {
-        return ['Global', 'GARUDA'];
-      }
       return ['Global', 'SINTA', 'GARUDA'];
     }
     return ['Global'];

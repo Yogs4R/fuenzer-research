@@ -95,17 +95,28 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 				"error": "Query database lokal gagal.",
 			})
 		}
-	} else if req.Type == "journal" {
-		if req.Index == "SINTA" {
+	} else if req.Index == "SINTA" {
+		switch req.Type {
+		case "journal":
 			sources = h.sintaMapper.SearchJournals(req.Query, req.SintaRank, limit)
-		} else {
-			sources, err = h.openalexClient.SearchSources(req.Query, req.Scope, limit)
-			if err != nil {
-				log.Printf("ERROR: OpenAlex Sources search failed: %v", err)
-				return c.Status(fiber.StatusGatewayTimeout).JSON(fiber.Map{
-					"error": "Database timeout. Please try again.",
-				})
+		case "article":
+			sources = h.sintaMapper.SearchArticles(req.Query, req.SintaRank, limit)
+		default:
+			// All: combine journals and articles
+			journals := h.sintaMapper.SearchJournals(req.Query, req.SintaRank, limit)
+			articles := h.sintaMapper.SearchArticles(req.Query, req.SintaRank, limit)
+			sources = append(journals, articles...)
+			if len(sources) > limit {
+				sources = sources[:limit]
 			}
+		}
+	} else if req.Type == "journal" {
+		sources, err = h.openalexClient.SearchSources(req.Query, req.Scope, limit)
+		if err != nil {
+			log.Printf("ERROR: OpenAlex Sources search failed: %v", err)
+			return c.Status(fiber.StatusGatewayTimeout).JSON(fiber.Map{
+				"error": "Database timeout. Please try again.",
+			})
 		}
 	} else if (req.Type == "book" && req.Index == "Google Books") || (req.Index == "Google Books" && req.Type == "") {
 		// Use Google Books client for book searches

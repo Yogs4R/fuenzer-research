@@ -5,29 +5,39 @@
 ![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge&logo=react)
 ![Gemini AI](https://img.shields.io/badge/AI-Google_Gemini-8E75B2?style=for-the-badge)
 
-> **Riset Akademis, Disintesis AI** — Tool riset akademis berbasis AI yang membantu peneliti menemukan dan menyintesis literatur ilmiah.
+![Fuenzer Research Banner](frontend/public/og-image.png)
+
+> **Riset Akademis, Disintesis AI** — Asisten riset akademis bertenaga kecerdasan buatan kelas premium untuk membantu akademisi mencari, memetakan, dan menyintesis literatur ilmiah skala nasional dan global secara instan.
 
 Built for **JuaraVibeCoding** Hackathon by Google.
 
+---
+
 ## ✨ Features
 
-- 🔍 **Pencarian Global** — Akses 200M+ paper dari OpenAlex
-- 🇮🇩 **Filter SINTA** — Identifikasi otomatis tier jurnal Indonesia (SINTA 1-6)
-- 🤖 **Sintesis AI** — Google Gemini 2.5 Flash menganalisis abstrak & menghasilkan ringkasan akademis
-- ⚡ **Real-time** — Dari query ke sintesis dalam <5 detik
-- 📱 **Responsive** — UI premium untuk desktop dan mobile
+- 🔍 **Pencarian Global & Lintas Disiplin** — Akses 200M+ publikasi dari **OpenAlex API** (grafik publikasi dunia) dan **Google Books API** (referensi buku akademis berdensitas tinggi).
+- 🇮🇩 **Integrasi Indeks SINTA Lokal** — Pemetaan otomatis tier jurnal Indonesia (**SINTA 1-6**). Mengindeks secara lokal **~700 jurnal** (dari total 15.456 jurnal di situs resmi SINTA) dan **~7.000 artikel**.
+- 📚 **Database Garuda SQLite** — Pencarian presisi terhadap **652.144 artikel Garuda** lokal (dibersihkan secara efisien dari file asli berukuran 3.621.712 artikel dengan melakukan pembersihan data mulai tahun 2024 untuk optimasi ukuran berkas).
+- 🤖 **Sintesis AI Berdensitas Tinggi** — Didukung oleh model **Google Gemini 3.1 Flash Lite** dengan pembatasan suhu (*temperature* 0.3) dan parameter prompt akademis yang ketat untuk sintesis literatur bebas halusinasi.
+- 📂 **Ekspor Referensi & Sitasi** — Dukungan ekspor hasil riset ke format berkas **PDF** dan daftar pustaka standar **BibTeX (.bib)** untuk LaTeX.
+- ⚡ **Kecepatan & Responsivitas** — Hasil pencarian, pemetaan indeks lokal, dan sintesis literatur diselesaikan dalam waktu kurang dari 5 detik dengan antarmuka premium split-screen.
+
+---
 
 ## 🏗️ Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS |
-| UI Components | shadcn/ui, Lucide React |
-| State | Zustand, React Query |
-| Backend | Golang 1.22+, Fiber |
-| AI Engine | Google Gemini 2.5 Flash |
-| Data Source | OpenAlex API |
+| UI Components | shadcn/ui, Lucide React, Glassmorphism |
+| State Management | Zustand, React Query |
+| Backend API | Golang 1.22+, Fiber (REST API Berkinerja Tinggi) |
+| AI Engine | Google Gemini 3.1 Flash Lite |
+| Data Sources (Global) | OpenAlex API, Google Books API |
+| Data Sources (Lokal) | SINTA JSON (~700 jurnal), Garuda SQLite (652K+ artikel) |
 | Deployment | Docker, Google Cloud Run |
+
+---
 
 ## 🚀 Getting Started
 
@@ -35,9 +45,9 @@ Built for **JuaraVibeCoding** Hackathon by Google.
 
 - Node.js 20+
 - Go 1.22+
-- Google AI Studio API Key
+- Google AI Studio API Key (Gemini)
 
-### Frontend
+### Frontend Installation
 
 ```bash
 cd frontend
@@ -45,26 +55,28 @@ npm install
 npm run dev
 ```
 
-Frontend runs at `http://localhost:5173`
+Frontend berjalan secara default di `http://localhost:5173`
 
-### Backend
+### Backend Installation
 
 ```bash
 cd backend
 cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
+# Edit .env dan tambahkan GEMINI_API_KEY Anda
 go mod tidy
 go run ./cmd/api
 ```
 
-Backend runs at `http://localhost:8080`
+Backend berjalan secara default di `http://localhost:8080`
 
-### Docker (Production)
+### Docker (Production Setup)
 
 ```bash
 docker build -t fuenzer-research .
 docker run -p 8080:8080 -e GEMINI_API_KEY=your_key fuenzer-research
 ```
+
+---
 
 ## 📁 Project Structure
 
@@ -99,14 +111,18 @@ docker run -p 8080:8080 -e GEMINI_API_KEY=your_key fuenzer-research
 └── README.md           # [Info] Panduan pengenalan & instalasi proyek ini
 ```
 
+---
+
 ## 🔒 Security
 
-- API keys never exposed to frontend
-- CORS strictly configured
-- Rate limiting: 50 req/min per IP
-- XSS prevention via DOMPurify
-- Input sanitization (3-200 chars)
+- Kunci API Google AI Studio disimpan aman di backend, tidak pernah bocor ke frontend.
+- Kebijakan CORS dikonfigurasi secara ketat dan aman.
+- Pembatasan laju lalu lintas (*Rate Limiting*) aktif: maks 50 req/menit per IP.
+- Pencegahan XSS diaktifkan di frontend menggunakan pustaka DOMPurify.
+- Sanitasi input ketat (panjang karakter query 3-200 karakter).
+
+---
 
 ## 📄 License
 
-[MIT](LICENSE)
+Dilindungi di bawah lisensi [MIT](LICENSE).

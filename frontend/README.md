@@ -1,73 +1,110 @@
-# React + TypeScript + Vite
+# Fuenzer Research Frontend 🔬
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?style=for-the-badge&logo=typescript)
+![Vite](https://img.shields.io/badge/Bundler-Vite-646CFF?style=for-the-badge&logo=vite)
+![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css)
 
-Currently, two official plugins are available:
+![Fuenzer Research Preview](public/og-image.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> **Riset Akademis, Disintesis AI** — Antarmuka web akademik kelas dunia berbasis React, TypeScript, dan Tailwind CSS. Menyajikan visualisasi split-screen interaktif, perbandingan pustaka multi-dokumen bertenaga AI, dan generator sitasi otomatis secara instan.
 
-## React Compiler
+Built for **JuaraVibeCoding** Hackathon by Google.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## ✨ Features (Frontend Spec)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- 🖥️ **Premium Split-Screen Playground** — Area kerja berdensitas tinggi yang membagi porsi antara Asisten Tanya-Jawab AI di sebelah kiri dan daftar referensi interaktif di sebelah kanan secara mulus.
+- 🎨 **Rich Aesthetics & Dark Mode** — Desain modern bersertifikasi kenyamanan mata menggunakan warna latar belakang Alabaster (`#FAFAFA`), Glassmorphism, efek transisi halus, dan dukungan penuh tema gelap (*Dark Mode*).
+- 🇮🇩 **Bilingual Localization** — Dukungan penuh untuk bahasa Inggris dan bahasa Indonesia yang disesuaikan secara akademis untuk seluruh label, deskripsi, FAQ, dan modal riwayat.
+- 📚 **Library & AI Compare** — Area kerja pribadi untuk menyimpan paper favorit dan membandingkan metodologi, temuan utama, atau limitasi antardokumen menggunakan AI.
+- 🎓 **Bibliography & Citations Generator** — Menyalin sitasi secara instan atau mengekspor bibliografi lengkap ke berkas standar **BibTeX (.bib)** untuk diintegrasikan dengan referensi manager.
+- 📄 **PDF Document Exporter** — Mengekspor hasil sintesis akademis beserta daftar pustaka lengkap secara langsung menjadi berkas dokumen PDF siap cetak.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🏗️ Tech Stack (Frontend)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Component | Technology |
+|-----------|------------|
+| Library Core | React 18 (Vite Bundler) |
+| Language | TypeScript (Strict Mode) |
+| Styling | Tailwind CSS |
+| UI Framework | shadcn/ui |
+| Icons | Lucide React |
+| State Store | Zustand |
+| Server Cache | React Query (TanStack Query) |
+| Sanitizer | DOMPurify (Pencegahan XSS) |
+| Build Tool | Rolldown / Vite Production |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- npm atau yarn
+
+### Installation & Run
+
+1. **Masuk ke folder frontend**:
+   ```bash
+   cd frontend
+   ```
+
+2. **Instalasi Dependensi**:
+   ```bash
+   npm install
+   ```
+
+3. **Jalankan dalam Mode Development**:
+   ```bash
+   npm run dev
+   ```
+
+Aplikasi frontend akan berjalan dan dapat diakses di `http://localhost:5173`
+
+4. **Kompilasi Produksi**:
+   ```bash
+   npm run build
+   ```
+Hasil kompilasi akan dimasukkan ke folder `/dist` siap saji.
+
+---
+
+## 📁 Project Structure (Frontend)
+
+```text
+/frontend
+├── /public             # Aset statis publik (ikon, gambar OG)
+├── /src
+│   ├── /assets         # Logo basis data (SINTA, Garuda, Scopus, dll.)
+│   ├── /components     # Komponen UI modular
+│   │   ├── /home       # Komponen halaman beranda
+│   │   ├── /playground # Panel playground riset & asisten AI
+│   │   └── /shared     # Komponen navbar, footer, modal, dropdown
+│   ├── /locales        # Manajemen lokalisasi (en.ts & id.ts)
+│   ├── /pages          # Halaman utama (Landing, Playground, Citations, Library)
+│   ├── /services       # Klien komunikasi API backend
+│   ├── /store          # Pengelola state global aplikasi (Zustand)
+│   ├── /types          # Definisi tipe TypeScript
+│   └── /utils          # Fungsi pembantu (keyword extractor, dll.)
+├── package.json        # Dependensi dan skrip eksekusi
+└── vite.config.ts      # Konfigurasi bundler Vite
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🔒 Security Specifications
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **XSS Mitigation**: Seluruh hasil keluaran teks kaya (Markdown) dari kecerdasan buatan disaring secara statis menggunakan **DOMPurify** sebelum dirender lewat `dangerouslySetInnerHTML`.
+- **Stateless Session**: Data sitasi dan status login perpustakaan pengguna disimpan secara aman di dalam memory state lokal dan sesi enkripsi browser.
+- **Client Shielding**: Frontend tidak pernah menyimpan atau mengirim kueri langsung ke Google Gemini. Seluruh panggilan dilewatkan secara aman lewat Gateway API Backend.
+
+---
+
+## 📄 License
+
+Dilindungi di bawah lisensi [MIT](../LICENSE).

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -13,6 +14,7 @@ import (
 // Mapper handles the local SINTA journal dictionary lookup.
 type Mapper struct {
 	journals map[string]models.SintaJournal // key: lowercased publisher name
+	articles []models.AcademicSource
 	mu       sync.RWMutex
 }
 
@@ -56,6 +58,19 @@ func (m *Mapper) loadData(path string) error {
 					PIssn string `json:"p_issn"`
 				} `json:"identifiers"`
 			} `json:"basic_info"`
+			Articles []struct {
+				Title       string `json:"title"`
+				Url         string `json:"url"`
+				Institution string `json:"institution"`
+				Publication struct {
+					FullDetails string `json:"full_details"`
+					Volume      string `json:"volume"`
+					Issue       string `json:"issue"`
+					Month       string `json:"month"`
+					Year        string `json:"year"`
+					Pages       string `json:"pages"`
+				} `json:"publication"`
+			} `json:"articles"`
 		} `json:"journals"`
 	}
 
@@ -66,6 +81,10 @@ func (m *Mapper) loadData(path string) error {
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	m.articles = make([]models.AcademicSource, 0)
+	articleIDCounter := 1
+
 	for _, j := range root.Journals {
 		name := strings.TrimSpace(j.BasicInfo.Name)
 		if name == "" {
@@ -90,6 +109,43 @@ func (m *Mapper) loadData(path string) error {
 			SubjectArea: j.BasicInfo.SubjectArea,
 			ISSN:        j.BasicInfo.Identifiers.PIssn,
 			URL:         j.BasicInfo.Url,
+		}
+
+		// Load articles inside this journal
+		for _, art := range j.Articles {
+			title := strings.TrimSpace(art.Title)
+			if title == "" {
+				continue
+			}
+
+			yearVal := 2024
+			if art.Publication.Year != "" {
+				if y, err := strconv.Atoi(art.Publication.Year); err == nil {
+					yearVal = y
+				}
+			}
+
+			abstractText := fmt.Sprintf("Artikel ilmiah terakreditasi Sinta %s. Diterbitkan oleh %s pada %s.", tier, art.Institution, name)
+			if art.Publication.FullDetails != "" {
+				abstractText = fmt.Sprintf("Artikel ilmiah terakreditasi Sinta %s. Detail publikasi: %s. Diterbitkan oleh %s.", tier, art.Publication.FullDetails, art.Institution)
+			}
+
+			idVal := fmt.Sprintf("sinta-art-%d", articleIDCounter)
+			articleIDCounter++
+
+			m.articles = append(m.articles, models.AcademicSource{
+				ID:          idVal,
+				Title:       title,
+				Authors:     []string{}, // SINTA articles data doesn't contain authors
+				Year:        yearVal,
+				Publisher:   name, // parent journal name
+				Abstract:    abstractText,
+				URL:         art.Url,
+				Indexes: []models.IndexEntry{
+					{Provider: "SINTA", Tier: tier},
+				},
+				ContentType: "article",
+			})
 		}
 	}
 	return nil
@@ -229,5 +285,47 @@ func (m *Mapper) MapPapers(sources []models.AcademicSource) []models.AcademicSou
 		sources[i].Indexes = []models.IndexEntry{tier}
 	}
 	return sources
+}
+
+// SearchArticles searches local SINTA articles by matching keywords in their titles or parent journal publisher names.
+func (m *Mapper) SearchArticles(query string, sintaRanks []string, limit int) []models.AcademicSource {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	queryLower := strings.ToLower(strings.TrimSpace(query))
+	var results []models.AcademicSource
+
+	// Filter rank helpers
+	hasRankFilter := len(sintaRanks) > 0 && !containsAll(sintaRanks)
+
+	for _, art := range m.articles {
+		// Keyword matching against Title or parent journal publisher name
+		titleMatch := strings.Contains(strings.ToLower(art.Title), queryLower)
+		publisherMatch := strings.Contains(strings.ToLower(art.Publisher), queryLower)
+
+		if titleMatch || publisherMatch {
+			// Apply tier filter if requested
+			if hasRankFilter {
+				matchTierFound := false
+				for _, rank := range sintaRanks {
+					normRank := strings.TrimSpace(strings.ReplaceAll(strings.ToLower(rank), "sinta", ""))
+					if len(art.Indexes) > 0 && normRank == art.Indexes[0].Tier {
+						matchTierFound = true
+						break
+					}
+				}
+				if !matchTierFound {
+					continue
+				}
+			}
+
+			results = append(results, art)
+			if len(results) >= limit {
+				break
+			}
+		}
+	}
+
+	return results
 }
 

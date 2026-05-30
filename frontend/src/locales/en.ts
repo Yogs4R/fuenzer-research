@@ -18,7 +18,7 @@ export const en = {
     noHistoryYet: 'No History Yet',
     noHistoryDesc: 'Your recent searches will appear here.',
     notifications: 'Notifications',
-    notifDesc: 'Version 1.2 is out! New AI models and localized indexing are now live.',
+    notifDesc: 'Fuenzer Research Alpha is live! Powered by Gemini 3.1 Flash Lite with global OpenAlex/Google Books and local SINTA/Garuda search.',
     viewDetails: 'View Details',
     clearAllHistory: 'Clear All History'
   },
@@ -187,24 +187,26 @@ export const en = {
     },
     faq: {
       title: 'Frequently Asked Questions',
-      q1: 'What is Fuenzer Research?',
-      a1: 'Fuenzer Research is an AI-powered scientific discovery engine that bridges traditional research methodologies with advanced artificial intelligence, helping scholars navigate massive academic datasets and synthesize complex papers.',
-      q2: 'How does the SINTA integration work?',
-      a2: 'We provide direct integration with recognized national databases like SINTA and GARUDA, ensuring your sources meet institutional standards while also accessing global repositories like Scopus and Google Scholar.',
-      q3: 'Can the AI synthesize findings accurately?',
-      a3: 'Yes, our AI models are specifically tuned for academic rigor. They connect dots across disparate papers and summarize findings rapidly without losing critical academic context or hallucinating facts.',
-      q4: 'Is my data and research secure?',
-      a4: 'Absolutely. All your queries and generated literature reviews are private. We use industry-standard encryption and guarantee that your personal research data is never used to train our public models.',
-      q5: 'In what formats can I export my synthesis?',
-      a5: 'You can export your structured literature reviews, citations, and summaries in Word, PDF, and standard BibTeX formats, which seamlessly integrate into LaTeX workflows and reference managers.'
+      q1: 'What is Fuenzer Research and what AI does it use?',
+      a1: 'Fuenzer Research is an AI-powered scientific discovery engine designed to bridge traditional research methodologies with advanced artificial intelligence. It uses the Gemini 3.1 Flash Lite model to synthesize academic literature with high rigor, speed, and accuracy, tailored specifically to user queries.',
+      q2: 'What global databases does Fuenzer Research query?',
+      a2: 'We query leading global academic repositories in real-time, specifically leveraging the OpenAlex API for comprehensive academic publication graphs and the Google Books API for high-density book references.',
+      q3: 'How does the local database integration work?',
+      a3: 'Fuenzer Research integrates two scraped Kaggle datasets: a SINTA repository of ~700 journals (out of 15,456 total journals on the official SINTA website) and ~7,000 articles, and a sqlite database (garuda_articles_data.db) containing 652,144 Garuda articles (cleaned down from the original 3,621,712 articles by restricting from year 2024 onwards to optimize file size). This allows precise searching across both national and global scales.',
+      q4: 'Can the AI synthesize findings without hallucination?',
+      a4: 'Yes, our backend operates under strict temperature constraints (0.3) and prompt rules that force the Gemini 3.1 Flash Lite model to synthesize findings strictly from the provided abstracts, preventing external hallucinations and maintaining academic integrity.',
+      q5: 'How can I export my research, citations, and bibliography?',
+      a5: 'Currently, you can export your academic summaries and literature reviews as PDF files. For citations, you can copy them instantly or export them as standard BibTeX (.bib) files, which seamlessly integrate with LaTeX and other reference managers.'
     }
   },
   updates: {
     title: 'Update Logs',
     logs: [
-      { date: '25 May 2026', title: 'Dark Mode & Localization', desc: 'Added support for dark mode theme, English/Indonesian localization, and interactive Navbar.' },
-      { date: '24 May 2026', title: 'Playground Redesign', desc: 'Introduced an advanced split-screen AI Assistant playground with citation filters.' },
-      { date: '20 May 2026', title: 'Initial Alpha Release', desc: 'Fuenzer Research launched its initial proof of concept with SINTA integrations.' }
+      {
+        date: '30 May 2026',
+        title: 'Alpha Release',
+        desc: 'Fuenzer Research launched its Alpha phase featuring a comprehensive scientific discovery platform. Powered by Gemini 3.1 Flash Lite, it integrates global search (OpenAlex & Google Books API) with a local repository of SINTA-indexed journals (~700 journals, ~7,000 articles) and SQLite Garuda database (years 2024-2025). Features dark mode, split-screen playground, and PDF & BibTeX export support.'
+      }
     ]
   }
 };

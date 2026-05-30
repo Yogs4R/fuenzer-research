@@ -18,7 +18,7 @@ export const id = {
     noHistoryYet: 'Belum Ada Riwayat',
     noHistoryDesc: 'Riwayat pencarian terbaru Anda akan muncul di sini.',
     notifications: 'Notifikasi',
-    notifDesc: 'Versi 1.2 telah dirilis! Model AI baru dan indeks lokal telah aktif.',
+    notifDesc: 'Fuenzer Research Alpha telah aktif! Ditenagai Gemini 3.1 Flash Lite dengan pencarian global OpenAlex/Google Books & lokal SINTA/Garuda.',
     viewDetails: 'Lihat Detail',
     clearAllHistory: 'Hapus Semua Riwayat'
   },
@@ -187,24 +187,26 @@ export const id = {
     },
     faq: {
       title: 'Pertanyaan yang Sering Diajukan',
-      q1: 'Apa itu Fuenzer Research?',
-      a1: 'Fuenzer Research adalah mesin penemuan ilmiah bertenaga AI yang menjembatani metodologi riset tradisional dengan kecerdasan buatan tingkat lanjut, membantu akademisi menavigasi kumpulan data akademis yang besar dan mensintesis paper yang kompleks.',
-      q2: 'Bagaimana cara kerja integrasi SINTA?',
-      a2: 'Kami menyediakan integrasi langsung dengan database nasional yang diakui seperti SINTA dan GARUDA, memastikan sumber Anda memenuhi standar institusional sekaligus mengakses repositori global seperti Scopus dan Google Scholar.',
-      q3: 'Dapatkah AI mensintesis temuan dengan akurat?',
-      a3: 'Ya, model AI kami disetel secara khusus untuk ketelitian akademis. Model ini menghubungkan poin-poin di berbagai paper dan merangkum temuan dengan cepat tanpa kehilangan konteks akademis yang penting atau menghasilkan fakta halusinasi.',
-      q4: 'Apakah data dan riset saya aman?',
-      a4: 'Tentu saja. Semua pertanyaan Anda dan tinjauan literatur yang dihasilkan bersifat pribadi. Kami menggunakan enkripsi standar industri dan menjamin bahwa data riset pribadi Anda tidak akan pernah digunakan untuk melatih model publik kami.',
-      q5: 'Dalam format apa saya dapat mengekspor hasil sintesis?',
-      a5: 'Anda dapat mengekspor tinjauan literatur terstruktur, sitasi, dan ringkasan dalam format Word, PDF, dan BibTeX standar, yang terintegrasi secara mulus ke dalam alur kerja LaTeX dan manajer referensi.'
+      q1: 'Apa itu Fuenzer Research dan AI apa yang digunakannya?',
+      a1: 'Fuenzer Research adalah mesin penemuan ilmiah bertenaga AI yang dirancang untuk menjembatani metodologi riset tradisional dengan kecerdasan buatan tingkat lanjut. Platform ini menggunakan model Gemini 3.1 Flash Lite untuk mensintesis literatur akademis dengan ketelitian, kecepatan, dan akurasi tinggi sesuai dengan query pengguna.',
+      q2: 'Database global apa saja yang diakses oleh Fuenzer Research?',
+      a2: 'Kami melakukan pencarian real-time pada repositori akademis terkemuka dunia, khususnya memanfaatkan OpenAlex API untuk grafik publikasi akademis yang komprehensif dan Google Books API untuk referensi buku berdensitas tinggi.',
+      q3: 'Bagaimana cara kerja integrasi database jurnal lokal (SINTA & Garuda)?',
+      a3: 'Fuenzer Research mengintegrasikan dua dataset hasil scraping Kaggle: repositori SINTA yang mencakup ~700 jurnal (dari total 15.456 jurnal di situs web resmi SINTA) dan ~7.000 artikel, serta database sqlite (garuda_articles_data.db) berisi 652.144 artikel Garuda (yang dibersihkan dari ukuran berkas asli sebanyak 3.621.712 artikel dengan melakukan pembersihan data mulai tahun 2024 untuk efisiensi ukuran file). Hal ini memungkinkan pencarian presisi baik skala nasional maupun global.',
+      q4: 'Apakah sintesis AI ini dapat dipercaya bebas dari halusinasi?',
+      a4: 'Ya, sistem backend kami menerapkan pembatasan suhu (temperature 0.3) dan aturan prompt ketat yang memaksa Gemini 3.1 Flash Lite hanya mensintesis temuan berdasarkan abstrak yang disediakan, mencegah halusinasi eksternal, serta menjaga integritas akademis.',
+      q5: 'Format ekspor apa saja yang saat ini didukung?',
+      a5: 'Saat ini, Anda dapat mengekspor ringkasan akademis dan tinjauan literatur dalam format PDF. Untuk sitasi dan bibliografi, Anda dapat menyalinnya secara instan atau mengekspornya dalam file BibTeX (.bib) standar yang terintegrasi dengan LaTeX dan manajer referensi.'
     }
   },
   updates: {
     title: 'Catatan Pembaruan',
     logs: [
-      { date: '25 Mei 2026', title: 'Mode Gelap & Lokalisasi', desc: 'Menambahkan dukungan untuk tema mode gelap, lokalisasi bahasa Inggris/Indonesia, dan Navbar interaktif.' },
-      { date: '24 Mei 2026', title: 'Desain Ulang Playground', desc: 'Memperkenalkan playground asisten AI split-screen canggih dengan filter kutipan.' },
-      { date: '20 Mei 2026', title: 'Rilis Alpha Awal', desc: 'Fuenzer Research meluncurkan bukti konsep awalnya dengan integrasi SINTA.' }
+      {
+        date: '30 Mei 2026',
+        title: 'Rilis Alpha',
+        desc: 'Fuenzer Research meluncurkan fase Alpha dengan platform penemuan ilmiah komprehensif. Ditenagai oleh Gemini 3.1 Flash Lite, menyatukan pencarian global (OpenAlex & Google Books API) dengan repositori lokal jurnal terindeks SINTA (~700 jurnal, ~7,000 artikel) serta database SQLite Garuda (artikel tahun 2024-2025). Dilengkapi mode gelap, playground layar terpisah, dan dukungan ekspor PDF & BibTeX.'
+      }
     ]
   }
 };
