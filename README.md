@@ -341,23 +341,48 @@ User types "machine learning"
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Frontend | React + TypeScript | 19.2 + TS 6.0 |
-| Bundler | Vite | 8.0 |
-| Styling | Tailwind CSS | 4.3 |
-| Icons | Lucide React | 1.16 |
-| State Management | Zustand | 5.0 |
-| Server State | TanStack React Query | 5.100 |
-| Authentication | Firebase Auth | 12.14 |
-| Cloud Storage | Firebase Firestore | 12.14 |
-| PDF Generation | jsPDF + JSZip | 4.2 / 3.10 |
-| Backend Framework | Go Fiber | Latest |
-| AI Engine | Google Gemini 3.1 Flash Lite | Via Gen AI SDK |
-| Data: Global | OpenAlex API (200M+ publications) | — |
-| Data: Books | Google Books API | — |
-| Data: Indonesia | SINTA JSON (~700 journals) + Garuda SQLite (652K articles) | — |
-| Deployment | Docker Multi-Stage + Google Cloud Run | Alpine 3.19 |
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, TypeScript 6, Vite 8 |
+| Styling | Tailwind CSS 4.3, Custom Design Token System |
+| UI Components | Lucide React, Glassmorphism, Custom Animations |
+| State Management | Zustand 5 (global state), TanStack React Query 5 (server cache) |
+| Authentication | Firebase Auth 12 (Google, Microsoft, Email) |
+| Cloud Storage | Firebase Firestore (history & bookmark sync) |
+| PDF & Export | jsPDF 4.2, JSZip 3.10, BibTeX generator |
+| Markdown Rendering | Marked 18 + DOMPurify 3 (XSS-safe) |
+| Backend API | Golang 1.25, Fiber (REST API berkinerja tinggi) |
+| AI Engine | Google Gemini 3.1 Flash Lite (temperature 0.3) |
+| Data Sources (Global) | OpenAlex API (200M+ publications), Google Books API |
+| Data Sources (Lokal) | SINTA JSON (~700 jurnal, tier 1-6), Garuda SQLite (652K+ artikel) |
+| Deployment | Docker Multi-Stage, Google Cloud Run, Alpine 3.19 |
+| Security | CORS strict, Rate Limiting 50/min, CSP Headers, HSTS |
+
+### Detailed Dependency Versions
+
+| Package | Version | Role |
+|---------|---------|------|
+| `react` | 19.2.6 | UI library |
+| `react-dom` | 19.2.6 | DOM rendering |
+| `react-router-dom` | 7.15.1 | Client-side SPA routing |
+| `typescript` | 6.0.2 | Type safety |
+| `vite` | 8.0.12 | Build tool & dev server |
+| `@vitejs/plugin-react` | 6.0.1 | React Fast Refresh |
+| `tailwindcss` | 4.3.0 | Utility-first CSS |
+| `zustand` | 5.0.13 | Lightweight state management |
+| `@tanstack/react-query` | 5.100.14 | Server state & caching |
+| `firebase` | 12.14.0 | Auth + Firestore |
+| `axios` | 1.16.1 | HTTP client |
+| `lucide-react` | 1.16.0 | Icon library |
+| `marked` | 18.0.4 | Markdown parser |
+| `dompurify` | 3.4.5 | XSS sanitization |
+| `jspdf` | 4.2.1 | PDF generation |
+| `jszip` | 3.10.1 | ZIP packaging |
+| `go` | 1.25 | Backend language |
+| `gofiber/fiber` | v2 | HTTP framework |
+| `gofiber/limiter` | v2 | Rate limiting middleware |
+| `gofiber/cors` | v2 | CORS middleware |
+| `joho/godotenv` | latest | Environment loader |
 
 ---
 
