@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export function Footer() {
   return (
     <footer className="bg-paper-white dark:bg-ink-black border-t border-cloud-canvas dark:border-stone-gray text-stone-gray dark:text-silver-mist py-12 text-xs transition-colors">
@@ -15,10 +17,10 @@ export function Footer() {
           />
         </div>
         <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6 uppercase tracking-widest font-semibold font-sans text-[10px] md:text-xs">
-          <a href="https://github.com/Yogs4R/fuenzer-research" className="hover:text-ink-black dark:hover:text-paper-white transition-colors">GITHUB</a>
+          <a href="https://github.com/Yogs4R/fuenzer-research" target="_blank" rel="noopener noreferrer" className="hover:text-ink-black dark:hover:text-paper-white transition-colors">GITHUB</a>
           <a href="mailto:fuenzerofficial@gmail.com" className="hover:text-ink-black dark:hover:text-paper-white transition-colors">CONTACT</a>
-          <a href="/terms" className="hover:text-ink-black dark:hover:text-paper-white transition-colors">TERMS OF SERVICE</a>
-          <a href="/privacy" className="hover:text-ink-black dark:hover:text-paper-white transition-colors">PRIVACY POLICY</a>
+          <Link to="/terms" className="hover:text-ink-black dark:hover:text-paper-white transition-colors">TERMS OF SERVICE</Link>
+          <Link to="/privacy" className="hover:text-ink-black dark:hover:text-paper-white transition-colors">PRIVACY POLICY</Link>
         </div>
       </div>
       <div className="text-center mt-12 text-silver-mist dark:text-stone-gray font-sans">
