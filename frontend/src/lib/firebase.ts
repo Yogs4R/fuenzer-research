@@ -16,6 +16,8 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   type User,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -76,11 +78,27 @@ export async function signInWithEmail(email: string, password: string): Promise<
 
 /** 
  * Create account with email and password.
+ * Updates display name and triggers initial email verification.
  */
 export async function signUpWithEmail(email: string, password: string, displayName: string): Promise<User> {
   const result = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(result.user, { displayName });
+  try {
+    await sendEmailVerification(result.user);
+  } catch (err) {
+    console.error('[Auth] Failed to send verification email on registration:', err);
+  }
   return result.user;
+}
+
+/** Send password reset email */
+export async function resetPassword(email: string): Promise<void> {
+  await sendPasswordResetEmail(auth, email);
+}
+
+/** Manually send verification email to current user */
+export async function sendVerificationManual(user: User): Promise<void> {
+  await sendEmailVerification(user);
 }
 
 /** Sign out the current user */

@@ -13,8 +13,13 @@ import {
   signInWithEmail,
   signUpWithEmail,
   logOut,
+  resetPassword,
+  sendVerificationManual,
+  auth,
   type User,
 } from '../lib/firebase';
+import { getFriendlyErrorMessage } from '../utils/authErrors';
+import { useUiStore } from './uiStore';
 
 export interface AuthUser {
   uid: string;
@@ -23,6 +28,7 @@ export interface AuthUser {
   photoURL: string | null;
   isAnonymous: boolean;
   providerId: string;
+  emailVerified: boolean;
 }
 
 interface AuthState {
@@ -40,6 +46,9 @@ interface AuthState {
   loginAsGuest: () => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
+  sendResetEmail: (email: string) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
+  reloadUser: () => Promise<void>;
 }
 
 /** Convert Firebase User to our lean AuthUser type */
@@ -63,6 +72,7 @@ function mapUser(user: User): AuthUser {
     photoURL: photoURL,
     isAnonymous: user.isAnonymous,
     providerId: user.providerData[0]?.providerId || (user.isAnonymous ? 'anonymous' : 'unknown'),
+    emailVerified: user.emailVerified,
   };
 }
 
@@ -122,7 +132,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await signInWithGoogle();
       set({ user: mapUser(user), loading: false });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Google login failed';
+      const lang = useUiStore.getState().language;
+      const message = getFriendlyErrorMessage(err, lang);
       set({ error: message, loading: false });
     }
   },
@@ -133,7 +144,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await signInWithMicrosoft();
       set({ user: mapUser(user), loading: false });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Microsoft login failed';
+      const lang = useUiStore.getState().language;
+      const message = getFriendlyErrorMessage(err, lang);
       set({ error: message, loading: false });
     }
   },
@@ -144,7 +156,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await signInWithEmail(email, password);
       set({ user: mapUser(user), loading: false });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
+      const lang = useUiStore.getState().language;
+      const message = getFriendlyErrorMessage(err, lang);
       set({ error: message, loading: false });
     }
   },
@@ -155,7 +168,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await signUpWithEmail(email, password, displayName);
       set({ user: mapUser(user), loading: false });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Registration failed';
+      const lang = useUiStore.getState().language;
+      const message = getFriendlyErrorMessage(err, lang);
       set({ error: message, loading: false });
     }
   },
@@ -166,7 +180,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await signInAsGuest();
       set({ user: mapUser(user), loading: false });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Guest login failed';
+      const lang = useUiStore.getState().language;
+      const message = getFriendlyErrorMessage(err, lang);
       set({ error: message, loading: false });
     }
   },
@@ -178,10 +193,56 @@ export const useAuthStore = create<AuthState>((set) => ({
       // After logout, onAuthChange will trigger and auto-sign in as anonymous
       set({ loading: false });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Logout failed';
+      const lang = useUiStore.getState().language;
+      const message = getFriendlyErrorMessage(err, lang);
       set({ error: message, loading: false });
     }
   },
 
   clearError: () => set({ error: null }),
+
+  sendResetEmail: async (email: string) => {
+    set({ loading: true, error: null });
+    try {
+      await resetPassword(email);
+      set({ loading: false });
+    } catch (err: unknown) {
+      const lang = useUiStore.getState().language;
+      const message = getFriendlyErrorMessage(err, lang);
+      set({ error: message, loading: false });
+      throw err;
+    }
+  },
+
+  sendVerificationEmail: async () => {
+    set({ loading: true, error: null });
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('No user is currently signed in.');
+      await sendVerificationManual(currentUser);
+      set({ loading: false });
+    } catch (err: unknown) {
+      const lang = useUiStore.getState().language;
+      const message = getFriendlyErrorMessage(err, lang);
+      set({ error: message, loading: false });
+      throw err;
+    }
+  },
+
+  reloadUser: async () => {
+    set({ loading: true, error: null });
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await currentUser.reload();
+        set({ user: mapUser(currentUser), loading: false });
+      } else {
+        set({ loading: false });
+      }
+    } catch (err: unknown) {
+      const lang = useUiStore.getState().language;
+      const message = getFriendlyErrorMessage(err, lang);
+      set({ error: message, loading: false });
+    }
+  },
 }));

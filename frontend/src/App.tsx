@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './store/authStore';
 import { useResearchStore } from './store/researchStore';
@@ -11,6 +11,7 @@ import { LibraryPage } from './pages/LibraryPage';
 import { CitationsPage } from './pages/CitationsPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignUpPage } from './pages/auth/SignUpPage';
+import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +26,8 @@ const queryClient = new QueryClient({
 function AuthInitializer({ children }: { children: React.ReactNode }) {
   const { initAuth, initialized, user } = useAuthStore();
   const { syncFromFirestore } = useResearchStore();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const unsubscribe = initAuth();
@@ -37,6 +40,23 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
       syncFromFirestore();
     }
   }, [initialized, user?.uid, syncFromFirestore]);
+
+  // Redirection guard for unverified email users
+  useEffect(() => {
+    if (!initialized) return;
+
+    const isUnverified = user && !user.isAnonymous && user.providerId === 'password' && !user.emailVerified;
+
+    if (isUnverified) {
+      if (location.pathname !== '/verify-email') {
+        navigate('/verify-email', { replace: true });
+      }
+    } else {
+      if (location.pathname === '/verify-email') {
+        navigate('/', { replace: true });
+      }
+    }
+  }, [initialized, user, location.pathname, navigate]);
 
   // Show nothing while auth is initializing (prevents flash)
   if (!initialized) {
@@ -67,6 +87,7 @@ function App() {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
           </Routes>
         </AuthInitializer>
       </BrowserRouter>
