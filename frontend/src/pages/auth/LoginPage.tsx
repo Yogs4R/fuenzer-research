@@ -15,7 +15,8 @@ export function LoginPage() {
     error, 
     clearError 
   } = useAuthStore();
-  const { theme } = useUiStore();
+  const { theme, language } = useUiStore();
+  const isEn = language === 'en';
 
   const [view, setView] = useState<'login' | 'forgot-password'>('login');
   const [email, setEmail] = useState('');
@@ -104,19 +105,19 @@ export function LoginPage() {
               }
             }}
             className="absolute top-6 left-6 flex items-center justify-center w-8 h-8 rounded-full border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-ink-black hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/30 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-all shadow-sm cursor-pointer"
-            title={view === 'forgot-password' ? 'Kembali ke Login' : 'Back to Home'}
+            title={view === 'forgot-password' ? (isEn ? 'Back to Login' : 'Kembali ke Login') : 'Back to Home'}
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
 
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif mb-2">
-              {view === 'login' ? 'Welcome Back' : 'Lupa Password'}
+              {view === 'login' ? 'Welcome Back' : (isEn ? 'Forgot Password' : 'Lupa Password')}
             </h1>
             <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">
               {view === 'login' 
                 ? 'Sign in to access your research workspace' 
-                : 'Masukkan email Anda untuk menerima tautan reset password'}
+                : (isEn ? 'Enter your email to receive a password reset link' : 'Masukkan email Anda untuk menerima tautan reset password')}
             </p>
           </div>
 
@@ -124,14 +125,18 @@ export function LoginPage() {
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400 text-xs font-sans flex items-center justify-between">
               <span className="flex-1">{error}</span>
-              <button onClick={clearError} className="ml-2 underline text-[10px] cursor-pointer shrink-0 font-semibold">Tutup</button>
+              <button onClick={clearError} className="ml-2 underline text-[10px] cursor-pointer shrink-0 font-semibold">
+                {isEn ? 'Dismiss' : 'Tutup'}
+              </button>
             </div>
           )}
 
           {/* Reset Success Message */}
           {view === 'forgot-password' && resetSuccess && (
             <div className="mb-4 p-3 rounded-xl bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800/30 text-teal-600 dark:text-teal-400 text-xs font-sans">
-              Tautan reset password telah dikirim ke email Anda. Silakan periksa folder masuk atau spam.
+              {isEn 
+                ? 'A password reset link has been sent to your email. Please check your inbox or spam folder.'
+                : 'Tautan reset password telah dikirim ke email Anda. Silakan periksa folder masuk atau spam.'}
             </div>
           )}
 
@@ -199,7 +204,7 @@ export function LoginPage() {
                   </div>
                   {emailError && (
                     <p className="text-[10px] text-red-500 dark:text-red-400 mt-1 font-sans pl-1">
-                      Masukkan format email yang valid.
+                      {isEn ? 'Please enter a valid email address.' : 'Masukkan format email yang valid.'}
                     </p>
                   )}
                 </div>
@@ -214,7 +219,7 @@ export function LoginPage() {
                       onClick={() => { setView('forgot-password'); clearError(); setResetSuccess(false); }}
                       className="text-[11px] text-fuenzer-teal hover:text-fuenzer-teal-dark font-semibold hover:underline cursor-pointer font-sans"
                     >
-                      Lupa Password?
+                      {isEn ? 'Forgot Password?' : 'Lupa Password?'}
                     </button>
                   </div>
                   <div className="relative">
@@ -243,7 +248,7 @@ export function LoginPage() {
                   </div>
                   {passwordError && (
                     <p className="text-[10px] text-red-500 dark:text-red-400 mt-1 font-sans pl-1">
-                      Password minimal harus 6 karakter.
+                      {isEn ? 'Password must be at least 6 characters.' : 'Password minimal harus 6 karakter.'}
                     </p>
                   )}
                 </div>
@@ -302,7 +307,7 @@ export function LoginPage() {
                 </div>
                 {emailError && (
                   <p className="text-[10px] text-red-500 dark:text-red-400 mt-1 font-sans pl-1">
-                    Masukkan format email yang valid.
+                    {isEn ? 'Please enter a valid email address.' : 'Masukkan format email yang valid.'}
                   </p>
                 )}
               </div>
@@ -316,7 +321,7 @@ export function LoginPage() {
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
-                    Kirim Tautan Reset
+                    {isEn ? 'Send Reset Link' : 'Kirim Tautan Reset'}
                     <Send className="w-4 h-4" />
                   </>
                 )}
@@ -328,7 +333,7 @@ export function LoginPage() {
                   onClick={() => { setView('login'); clearError(); setResetSuccess(false); }}
                   className="text-sm text-fuenzer-teal font-semibold hover:underline cursor-pointer"
                 >
-                  Kembali ke Login
+                  {isEn ? 'Back to Login' : 'Kembali ke Login'}
                 </button>
               </div>
             </form>
