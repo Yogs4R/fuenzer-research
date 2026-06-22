@@ -119,6 +119,8 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+import { CookieConsent } from './components/shared/CookieConsent';
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -137,6 +139,7 @@ function App() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+          <CookieConsent />
         </AuthInitializer>
       </BrowserRouter>
     </QueryClientProvider>

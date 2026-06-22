@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResearchStore } from '../store/researchStore';
 import { useUiStore } from '../store/uiStore';
+import { useSEO } from '../hooks/useSEO';
 import { en } from '../locales/en';
 import { id } from '../locales/id';
 import { Navbar } from '../components/shared/Navbar';
@@ -90,6 +91,7 @@ function checkIfGibberish(str: string): boolean {
     }
   }
 
+  // 4. Return false if normal
   return false;
 }
 
@@ -105,6 +107,18 @@ export function LandingPage() {
     reset
   } = useResearchStore();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  useSEO({
+    canonical: 'https://research.fuenzer.web.id/',
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Fuenzer Research",
+      "alternateName": "Fuenzer Scientific Research Assistant",
+      "url": "https://research.fuenzer.web.id/",
+      "description": "Fuenzer Research is a tool that helps researchers find scientific journal, articles, books references and get instant synthesis with Google Gemini!"
+    }
+  });
 
   // "Did you mean?" state
   const [suggestion, setSuggestion] = useState<string | null>(null);

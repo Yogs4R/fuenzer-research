@@ -1,8 +1,12 @@
 import { useLocation, Link } from 'react-router-dom';
 import { useUiStore } from '../store/uiStore';
 import { ArrowLeft, Home } from 'lucide-react';
+import { useSEO } from '../hooks/useSEO';
 
 export function NotFoundPage() {
+  useSEO({
+    canonical: 'https://research.fuenzer.web.id/',
+  });
   const { theme, language } = useUiStore();
   const location = useLocation();
   const isEn = language === 'en';

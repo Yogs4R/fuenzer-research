@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useResearchStore } from '../store/researchStore';
 import { useUiStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
+import { useSEO } from '../hooks/useSEO';
 import { en } from '../locales/en';
 import { id } from '../locales/id';
 import { JournalCard } from '../components/shared/JournalCard';
@@ -141,6 +142,9 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export function LibraryPage() {
+  useSEO({
+    canonical: 'https://research.fuenzer.web.id/library/',
+  });
   const navigate = useNavigate();
   const { bookmarkedSources, toggleBookmark } = useResearchStore();
   const [searchQuery, setSearchQuery] = useState('');

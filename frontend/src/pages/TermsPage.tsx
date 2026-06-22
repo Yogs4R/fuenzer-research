@@ -3,6 +3,7 @@ import { Footer } from '../components/shared/Footer';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { useUiStore } from '../store/uiStore';
+import { useSEO } from '../hooks/useSEO';
 import { en } from '../locales/en';
 import { id } from '../locales/id';
 
@@ -10,6 +11,22 @@ export function TermsPage() {
   const navigate = useNavigate();
   const { language } = useUiStore();
   const t = language === 'en' ? en.terms : id.terms;
+
+  useSEO({
+    canonical: 'https://research.fuenzer.web.id/terms/',
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "TermsOfService",
+      "name": "Terms of Service - Fuenzer Research",
+      "url": "https://research.fuenzer.web.id/terms/",
+      "description": "Read the terms of service governing the usage of Fuenzer Research, search functionalities, and AI synthesis features.",
+      "about": {
+        "@type": "Organization",
+        "name": "Fuenzer Research",
+        "url": "https://research.fuenzer.web.id/"
+      }
+    }
+  });
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#121212] transition-colors overflow-hidden font-serif selection:bg-fuenzer-teal/30 selection:text-ink-black dark:selection:text-paper-white">

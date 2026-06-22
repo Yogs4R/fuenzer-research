@@ -5,8 +5,12 @@ import { useUiStore } from '../../store/uiStore';
 import { Mail, RefreshCw, Send, LogOut, CheckCircle2, AlertCircle } from 'lucide-react';
 import { applyActionCode } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
+import { useSEO } from '../../hooks/useSEO';
 
 export function VerifyEmailPage() {
+  useSEO({
+    canonical: 'https://research.fuenzer.web.id/verify-email/',
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const { user, reloadUser, sendVerificationEmail, logout, loading, error, clearError } = useAuthStore();

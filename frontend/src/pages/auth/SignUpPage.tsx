@@ -3,9 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, ArrowLeft } from 'lucide-react';
+import { useSEO } from '../../hooks/useSEO';
 import zxcvbn from 'zxcvbn';
 
 export function SignUpPage() {
+  useSEO({
+    canonical: 'https://research.fuenzer.web.id/signup/',
+  });
   const navigate = useNavigate();
   const { loginWithGoogle, loginWithMicrosoft, registerWithEmail, loading, error, clearError } = useAuthStore();
   const { theme, language } = useUiStore();

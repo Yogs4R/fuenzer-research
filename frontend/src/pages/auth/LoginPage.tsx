@@ -3,8 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, ArrowLeft, Send } from 'lucide-react';
+import { useSEO } from '../../hooks/useSEO';
 
 export function LoginPage() {
+  useSEO({
+    canonical: 'https://research.fuenzer.web.id/login/',
+  });
   const navigate = useNavigate();
   const { 
     loginWithGoogle, 

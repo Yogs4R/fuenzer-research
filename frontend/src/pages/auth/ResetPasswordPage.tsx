@@ -4,8 +4,12 @@ import { verifyPasswordResetCode, confirmPasswordReset } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { useUiStore } from '../../store/uiStore';
 import { Eye, EyeOff, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useSEO } from '../../hooks/useSEO';
 
 export function ResetPasswordPage() {
+  useSEO({
+    canonical: 'https://research.fuenzer.web.id/reset-password/',
+  });
   const location = useLocation();
   const { theme, language } = useUiStore();
   const isEn = language === 'en';

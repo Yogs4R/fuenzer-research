@@ -7,6 +7,7 @@ import { id } from '../locales/id';
 import type { AcademicSource } from '../types/research';
 import { Navbar } from '../components/shared/Navbar';
 import { Footer } from '../components/shared/Footer';
+import { useSEO } from '../hooks/useSEO';
 import {
   FileText,
   Copy,
@@ -153,6 +154,9 @@ function DropdownItem({
 }
 
 export function CitationsPage() {
+  useSEO({
+    canonical: 'https://research.fuenzer.web.id/citations/',
+  });
   const navigate = useNavigate();
   const { bookmarkedSources } = useResearchStore();
   const [selectedStyle, setSelectedStyle] = useState<CitationStyle>('APA');

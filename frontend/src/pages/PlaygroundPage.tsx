@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResearchStore } from '../store/researchStore';
 import { useUiStore } from '../store/uiStore';
+import { useSEO } from '../hooks/useSEO';
 import { en } from '../locales/en';
 import { id } from '../locales/id';
 import { JournalCard } from '../components/shared/JournalCard';
@@ -138,6 +139,10 @@ export function PlaygroundPage() {
   const { query, messages, bookmarkedSources, toggleBookmark } = useResearchStore();
   const { language } = useUiStore();
   const t = language === 'en' ? en.playground : id.playground;
+
+  useSEO({
+    canonical: 'https://research.fuenzer.web.id/playground/'
+  });
 
   // Redirect only if neither query nor messages (handles history navigation with empty messages)
   useEffect(() => {
