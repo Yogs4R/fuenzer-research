@@ -16,7 +16,6 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
-  sendEmailVerification,
   type User,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -83,7 +82,7 @@ export async function signUpWithEmail(email: string, password: string, displayNa
   const result = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(result.user, { displayName });
   try {
-    await sendEmailVerification(result.user);
+    await sendVerificationManual(email);
   } catch (err) {
     console.error('[Auth] Failed to send verification email on registration:', err);
   }
@@ -98,8 +97,8 @@ export async function resetPassword(email: string): Promise<void> {
 }
 
 /** Manually send verification email to current user */
-export async function sendVerificationManual(user: User): Promise<void> {
-  await sendEmailVerification(user);
+export async function sendVerificationManual(email: string): Promise<void> {
+  await api.post('/api/v1/auth/send-verification', { email });
 }
 
 /** Sign out the current user */

@@ -1,17 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
-import { Mail, RefreshCw, Send, LogOut } from 'lucide-react';
+import { Mail, RefreshCw, Send, LogOut, CheckCircle2, AlertCircle } from 'lucide-react';
+import { applyActionCode } from 'firebase/auth';
+import { auth } from '../../lib/firebase';
 
 export function VerifyEmailPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, reloadUser, sendVerificationEmail, logout, loading, error, clearError } = useAuthStore();
   const { theme } = useUiStore();
   
   const [cooldown, setCooldown] = useState(0);
   const [successMsg, setSuccessMsg] = useState('');
   const [statusMsg, setStatusMsg] = useState('');
+
+  // Auto-verification states
+  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
 
   // Handle countdown cooldown for resend button
   useEffect(() => {
@@ -21,8 +29,11 @@ export function VerifyEmailPage() {
     }
   }, [cooldown]);
 
-  // Protect page: if no user is signed in, or if user is anonymous, or if email is verified: redirect away
+  // Protect normal page view: redirect if user verified or not signed in (unless processing link)
   useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.get('oobCode')) return; // bypass protection during auto-verification
+
     if (!user) {
       navigate('/login');
     } else if (user.isAnonymous) {
@@ -30,7 +41,35 @@ export function VerifyEmailPage() {
     } else if (user.emailVerified) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, navigate, location.search]);
+
+  // Process oobCode on mount if present
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const code = queryParams.get('oobCode');
+    if (code) {
+      setVerifyingCode(true);
+      setVerificationError(null);
+
+      applyActionCode(auth, code)
+        .then(async () => {
+          setVerificationSuccess(true);
+          setVerifyingCode(false);
+          // Sync with the local auth store if logged in
+          if (auth.currentUser) {
+            await reloadUser();
+            setTimeout(() => {
+              navigate('/');
+            }, 3000);
+          }
+        })
+        .catch((err) => {
+          console.error('[Auth] Email verification failed:', err);
+          setVerificationError('Tautan verifikasi salah, kedaluwarsa, atau telah digunakan. / The verification link is invalid, expired, or already used.');
+          setVerifyingCode(false);
+        });
+    }
+  }, [location.search, reloadUser, navigate]);
 
   const handleCheckVerification = async () => {
     clearError();
@@ -68,10 +107,75 @@ export function VerifyEmailPage() {
     navigate('/login');
   };
 
-  if (!user || user.isAnonymous || user.emailVerified) {
-    return null; // let redirect run
+  // Render verifying state
+  if (verifyingCode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cloud-canvas dark:bg-[#121212] px-4 transition-colors">
+        <div className="w-full max-w-md bg-paper-white dark:bg-ink-black rounded-2xl shadow-xl border border-cloud-canvas dark:border-stone-gray p-8 text-center transition-all duration-300">
+          <div className="w-8 h-8 border-3 border-fuenzer-teal/30 border-t-fuenzer-teal rounded-full animate-spin mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-ink-black dark:text-paper-white font-serif mb-2">Memverifikasi Email Anda</h2>
+          <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">Verifying your email address, please wait...</p>
+        </div>
+      </div>
+    );
   }
 
+  // Render verification success state
+  if (verificationSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cloud-canvas dark:bg-[#121212] px-4 transition-colors">
+        <div className="w-full max-w-md bg-paper-white dark:bg-ink-black rounded-2xl shadow-xl border border-cloud-canvas dark:border-stone-gray p-8 text-center transition-all duration-300 space-y-6">
+          <div className="mx-auto w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center">
+            <CheckCircle2 className="w-10 h-10 text-teal-500 animate-bounce" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif">Email Terverifikasi!</h2>
+            <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">Email verified successfully! Your account is now active.</p>
+          </div>
+          {auth.currentUser ? (
+            <p className="text-xs text-silver-mist font-sans animate-pulse">Mengalihkan ke halaman utama... / Redirecting to homepage...</p>
+          ) : (
+            <button
+              onClick={() => navigate('/login')}
+              className="w-full h-11 rounded-xl bg-fuenzer-teal-dark text-white text-sm font-bold hover:bg-fuenzer-teal transition-colors flex items-center justify-center font-sans cursor-pointer"
+            >
+              Masuk ke Aplikasi / Log In
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Render verification error state
+  if (verificationError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cloud-canvas dark:bg-[#121212] px-4 transition-colors">
+        <div className="w-full max-w-md bg-paper-white dark:bg-ink-black rounded-2xl shadow-xl border border-cloud-canvas dark:border-stone-gray p-8 text-center transition-all duration-300 space-y-6">
+          <div className="mx-auto w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center">
+            <AlertCircle className="w-10 h-10 text-red-500" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif">Verifikasi Gagal</h2>
+            <p className="text-sm text-red-500 font-sans">{verificationError}</p>
+          </div>
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full h-11 rounded-xl bg-fuenzer-teal-dark text-white text-sm font-bold hover:bg-fuenzer-teal transition-colors flex items-center justify-center font-sans cursor-pointer"
+          >
+            Kembali ke Halaman Masuk / Back to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Render fallback protection check
+  if (!user || user.isAnonymous || user.emailVerified) {
+    return null; // let redirects process
+  }
+
+  // Render normal manual verification page
   return (
     <div className="min-h-screen flex items-center justify-center bg-cloud-canvas dark:bg-[#121212] px-4 transition-colors">
       <div className="w-full max-w-md">
@@ -128,7 +232,7 @@ export function VerifyEmailPage() {
               className="w-full h-11 rounded-xl bg-fuenzer-teal dark:bg-fuenzer-teal-dark hover:bg-fuenzer-teal/95 text-white text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Saya Sudah Verifikasi
+              Saya Sudah Verifikasi / I Have Verified
             </button>
 
             <button
@@ -137,7 +241,7 @@ export function VerifyEmailPage() {
               className="w-full h-11 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-[#1A1A1A] hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/30 transition-colors text-sm font-semibold text-ink-black dark:text-paper-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-4 h-4 text-silver-mist" />
-              {cooldown > 0 ? `Kirim Ulang (${cooldown}s)` : 'Kirim Ulang Email Verifikasi'}
+              {cooldown > 0 ? `Kirim Ulang / Resend (${cooldown}s)` : 'Kirim Ulang Email Verifikasi / Resend Verification'}
             </button>
 
             <div className="border-t border-cloud-canvas dark:border-stone-gray pt-4 mt-4">
@@ -146,7 +250,7 @@ export function VerifyEmailPage() {
                 className="w-full h-11 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
-                Keluar / Ganti Akun
+                Keluar / Ganti Akun / Log Out
               </button>
             </div>
           </div>

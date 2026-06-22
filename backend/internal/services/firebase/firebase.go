@@ -95,3 +95,56 @@ func (c *Client) GeneratePasswordResetLink(ctx context.Context, email string) (s
 
 	return res.OobLink, nil
 }
+
+func (c *Client) GenerateEmailVerificationLink(ctx context.Context, email string) (string, error) {
+	url := fmt.Sprintf("https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s", c.apiKey)
+
+	reqBody := SendOobCodeRequest{
+		RequestType:   "VERIFY_EMAIL",
+		Email:         email,
+		ReturnOobLink: true,
+	}
+
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to perform request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var errRes struct {
+			Error *FirebaseErrorDetails `json:"error"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&errRes); err == nil && errRes.Error != nil {
+			return "", fmt.Errorf("firebase auth error: %s (code %d)", errRes.Error.Message, errRes.Error.Code)
+		}
+		return "", fmt.Errorf("firebase auth error with status code: %d", resp.StatusCode)
+	}
+
+	var res SendOobCodeResponse
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if res.Error != nil {
+		return "", fmt.Errorf("firebase auth error: %s (code %d)", res.Error.Message, res.Error.Code)
+	}
+
+	if res.OobLink == "" {
+		return "", fmt.Errorf("no oobLink returned from Firebase API")
+	}
+
+	return res.OobLink, nil
+}
+

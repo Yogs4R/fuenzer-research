@@ -107,6 +107,7 @@ func main() {
 	api.Post("/ask", researchHandler.HandleAsk)
 	api.Get("/autocomplete", autocompleteHandler.Handle)
 	api.Post("/auth/forgot-password", authHandler.ForgotPassword)
+	api.Post("/auth/send-verification", authHandler.SendVerification)
 
 	// Serve static frontend files (production mode)
 	if cfg.Env == "production" {

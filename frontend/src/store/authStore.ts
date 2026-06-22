@@ -218,8 +218,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     try {
       const currentUser = auth.currentUser;
-      if (!currentUser) throw new Error('No user is currently signed in.');
-      await sendVerificationManual(currentUser);
+      if (!currentUser || !currentUser.email) throw new Error('No user or email is currently signed in.');
+      await sendVerificationManual(currentUser.email);
       set({ loading: false });
     } catch (err: unknown) {
       const lang = useUiStore.getState().language;
