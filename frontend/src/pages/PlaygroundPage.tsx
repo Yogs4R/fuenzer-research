@@ -330,9 +330,9 @@ export function PlaygroundPage() {
                 <PanelLeft className="w-5 h-5" />
               </button>
 
-              <h2 className="text-base md:text-2xl font-bold text-ink-black dark:text-paper-white font-serif shrink-0 mr-2">
+              <h1 className="text-base md:text-2xl font-bold text-ink-black dark:text-paper-white font-serif shrink-0 mr-2">
                 {t.referencesTitle}
-              </h2>
+              </h1>
 
               {/* Content Type Filter Chips */}
               <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray shrink-0 w-full md:w-auto order-3 md:order-0 mt-2 md:mt-0 justify-between md:justify-start">

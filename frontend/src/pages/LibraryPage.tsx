@@ -512,9 +512,9 @@ export function LibraryPage() {
                         disabled={selectedCompareRefs.size === 0 || isCompareLoading}
                         className="p-4 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-ink-black hover:border-fuenzer-teal hover:shadow-md text-left transition-all group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:border-cloud-canvas select-none"
                       >
-                        <h4 className="text-xs font-bold text-ink-black dark:text-paper-white group-hover:text-fuenzer-teal transition-colors">
+                        <h3 className="text-xs font-bold text-ink-black dark:text-paper-white group-hover:text-fuenzer-teal transition-colors">
                           {card.title}
-                        </h4>
+                        </h3>
                         <p className="text-[10px] text-slate-gray dark:text-silver-mist mt-1 leading-relaxed">
                           {card.desc}
                         </p>

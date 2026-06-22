@@ -117,7 +117,7 @@ export function VerifyEmailPage() {
       <div className="min-h-screen flex items-center justify-center bg-cloud-canvas dark:bg-[#121212] px-4 transition-colors">
         <div className="w-full max-w-md bg-paper-white dark:bg-ink-black rounded-2xl shadow-xl border border-cloud-canvas dark:border-stone-gray p-8 text-center transition-all duration-300">
           <div className="w-8 h-8 border-3 border-fuenzer-teal/30 border-t-fuenzer-teal rounded-full animate-spin mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-ink-black dark:text-paper-white font-serif mb-2">Memverifikasi Email Anda</h2>
+          <h1 className="text-xl font-bold text-ink-black dark:text-paper-white font-serif mb-2">Memverifikasi Email Anda</h1>
           <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">Verifying your email address, please wait...</p>
         </div>
       </div>
@@ -133,7 +133,7 @@ export function VerifyEmailPage() {
             <CheckCircle2 className="w-10 h-10 text-teal-500 animate-bounce" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif">Email Terverifikasi!</h2>
+            <h1 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif">Email Terverifikasi!</h1>
             <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">Email verified successfully! Your account is now active.</p>
           </div>
           {auth.currentUser ? (
@@ -160,7 +160,7 @@ export function VerifyEmailPage() {
             <AlertCircle className="w-10 h-10 text-red-500" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif">Verifikasi Gagal</h2>
+            <h1 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif">Verifikasi Gagal</h1>
             <p className="text-sm text-red-500 font-sans">{verificationError}</p>
           </div>
           <button
