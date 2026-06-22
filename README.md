@@ -193,79 +193,64 @@ Fuenzer Research **bukan wrapper ChatGPT** dan **bukan template standar**. Berik
 
 ### System Architecture Diagram
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         FUENZER RESEARCH ARCHITECTURE                         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                        CLIENT LAYER (Browser)                        │    │
-│  │                                                                      │    │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐   │    │
-│  │  │  React   │  │  Zustand │  │  React   │  │  Firebase Auth   │   │    │
-│  │  │  Router  │  │  Store   │  │  Query   │  │  + Firestore     │   │    │
-│  │  │  (SPA)   │  │  (State) │  │  (Cache) │  │  (Sync/Storage)  │   │    │
-│  │  └──────────┘  └──────────┘  └──────────┘  └──────────────────┘   │    │
-│  │                                                                      │    │
-│  │  Pages: Landing | Playground | Library | Citations | Auth            │    │
-│  │  Built with: React 19 + TypeScript + Vite 8 + Tailwind CSS 4       │    │
-│  └─────────────────────────────────────┬───────────────────────────────┘    │
-│                                         │                                    │
-│                              HTTPS POST/GET (JSON)                           │
-│                                         │                                    │
-│  ┌─────────────────────────────────────▼───────────────────────────────┐    │
-│  │                       API GATEWAY (Go Fiber)                         │    │
-│  │                                                                      │    │
-│  │  ┌──────────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │    │
-│  │  │  Security    │  │   CORS   │  │   Rate   │  │   Logging    │   │    │
-│  │  │  Headers     │  │  Strict  │  │  Limiter │  │  Middleware  │   │    │
-│  │  │  (CSP/HSTS)  │  │          │  │ 50/min   │  │              │   │    │
-│  │  └──────────────┘  └──────────┘  └──────────┘  └──────────────┘   │    │
-│  │                                                                      │    │
-│  │  Routes:                                                             │    │
-│  │    POST /api/v1/research  → ResearchHandler (orchestrator)          │    │
-│  │    POST /api/v1/ask       → AskHandler (Q&A about references)       │    │
-│  │    GET  /api/v1/autocomplete → AutocompleteHandler (suggestions)    │    │
-│  │    GET  /api/v1/health    → Health check                            │    │
-│  └─────────────────────────────────────┬───────────────────────────────┘    │
-│                                         │                                    │
-│                          Concurrent Service Calls                            │
-│                    ┌────────────┬───────┼───────┬────────────┐              │
-│                    │            │       │       │            │              │
-│  ┌─────────────────▼──┐ ┌──────▼─────┐ │ ┌─────▼──────┐ ┌──▼───────────┐  │
-│  │   OpenAlex API      │ │Google Books│ │ │   SINTA    │ │   Garuda     │  │
-│  │   (200M+ papers)    │ │   API      │ │ │  Mapper    │ │  SQLite DB   │  │
-│  │                      │ │            │ │ │ (JSON Dict)│ │ (652K docs)  │  │
-│  │  - Works search      │ │ - Book     │ │ │ ~700       │ │              │  │
-│  │  - Sources search    │ │   search   │ │ │  journals  │ │ - Full-text  │  │
-│  │  - Autocomplete      │ │ - metadata │ │ │ - Auto map │ │   search     │  │
-│  └──────────────────────┘ └────────────┘ │ └────────────┘ └──────────────┘  │
-│                                          │                                   │
-│                              ┌───────────▼────────────┐                     │
-│                              │   Google Gemini AI     │                     │
-│                              │   (3.1 Flash Lite)     │                     │
-│                              │                        │                     │
-│                              │  - Synthesis mode      │                     │
-│                              │  - Q&A mode            │                     │
-│                              │  - Temperature: 0.3    │                     │
-│                              │  - Anti-hallucination  │                     │
-│                              │  - Anti-injection      │                     │
-│                              └────────────────────────┘                     │
-│                                                                              │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                        DEPLOYMENT (Production)                                │
-│                                                                              │
-│  ┌────────────────────────────────────────────────────────────────────┐     │
-│  │  Docker Multi-Stage Build                                          │     │
-│  │                                                                     │     │
-│  │  Stage 1: node:20-alpine → npm run build → /dist (static)         │     │
-│  │  Stage 2: golang:1.25-alpine → go build → /api (binary)           │     │
-│  │  Stage 3: alpine:3.19 → binary + static + data → ~50MB image      │     │
-│  │                                                                     │     │
-│  │  Google Cloud Run → Auto-scaling → HTTPS → research.fuenzer.web.id│     │
-│  └────────────────────────────────────────────────────────────────────┘     │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    classDef client fill:#0f766e,stroke:#115e59,stroke-width:2px,color:#fff;
+    classDef gateway fill:#0d9488,stroke:#0f766e,stroke-width:2px,color:#fff;
+    classDef service fill:#14b8a6,stroke:#0d9488,stroke-width:2px,color:#fff;
+    classDef database fill:#2dd4bf,stroke:#14b8a6,stroke-width:2px,color:#000;
+    classDef ai fill:#8e75b2,stroke:#7c3aed,stroke-width:2px,color:#fff;
+    classDef deploy fill:#4285f4,stroke:#1a73e8,stroke-width:2px,color:#fff;
+
+    %% Client Layer
+    subgraph Client ["Client Layer (Browser)"]
+        SPA["React Router (SPA)"]
+        Store["Zustand (State)"]
+        Cache["React Query (Cache)"]
+        Auth["Firebase Auth & Firestore (Sync)"]
+    end
+
+    %% Gateway Layer
+    subgraph Gateway ["API Gateway (Go Fiber)"]
+        Security["Security Headers (CSP/HSTS)"]
+        CORS["CORS (Strict Rules)"]
+        Limiter["Rate Limiter (50/min)"]
+        Logging["Logging Middleware"]
+    end
+
+    %% Data Services
+    subgraph Services ["Data Services & Local DBs"]
+        OpenAlex["OpenAlex API (200M+ Papers)"]
+        GoogleBooks["Google Books API"]
+        SINTA["SINTA Mapper (JSON Dict)"]
+        Garuda["Garuda SQLite DB (652K+ Docs)"]
+    end
+
+    %% AI Engine
+    subgraph AIEngine ["AI Engine"]
+        Gemini["Google Gemini 3.1 Flash Lite"]
+    end
+
+    %% Deployment
+    subgraph ProdDeployment ["Deployment"]
+        Docker["Docker Multi-Stage Build"]
+        CloudRun["Google Cloud Run (HTTPS)"]
+    end
+
+    %% Relationships
+    SPA -->|HTTPS POST/GET JSON| Gateway
+    Gateway -->|Concurrent API Calls| OpenAlex
+    Gateway -->|Concurrent API Calls| GoogleBooks
+    Gateway -->|Local Mapping| SINTA
+    Gateway -->|SQLite FTS Search| Garuda
+    Gateway -->|Prompt Synthesis / Q&A| Gemini
+    Docker -->|Deploy Container| CloudRun
+
+    class SPA,Store,Cache,Auth client;
+    class Security,CORS,Limiter,Logging gateway;
+    class OpenAlex,GoogleBooks,SINTA,Garuda service;
+    class Gemini ai;
+    class Docker,CloudRun deploy;
 ```
 
 ### Request Flow (Sequence)

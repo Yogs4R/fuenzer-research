@@ -112,4 +112,4 @@ Server backend akan berjalan di `http://localhost:8080`
 
 ## 📄 License
 
-Dilindungi di bawah lisensi [MIT](../LICENSE).
+Dilindungi di bawah lisensi [Apache 2.0](../LICENSE).

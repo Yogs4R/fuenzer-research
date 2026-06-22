@@ -123,4 +123,4 @@ Hasil kompilasi akan dimasukkan ke folder `/dist` siap saji.
 
 ## 📄 License
 
-Dilindungi di bawah lisensi [MIT](../LICENSE).
+Dilindungi di bawah lisensi [Apache 2.0](../LICENSE).
