@@ -13,6 +13,7 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { SignUpPage } from './pages/auth/SignUpPage';
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,6 +60,50 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
     }
   }, [initialized, user, location.pathname, navigate]);
 
+  // Dynamic Page Title Updater
+  useEffect(() => {
+    const baseTitle = 'Fuenzer Research';
+    let pageTitle = '';
+
+    switch (location.pathname) {
+      case '/':
+        pageTitle = 'AI Scientific Research Assistant';
+        break;
+      case '/playground':
+        pageTitle = 'Playground';
+        break;
+      case '/library':
+        pageTitle = 'Library';
+        break;
+      case '/citations':
+        pageTitle = 'Citations';
+        break;
+      case '/terms':
+        pageTitle = 'Terms of Service';
+        break;
+      case '/privacy':
+        pageTitle = 'Privacy Policy';
+        break;
+      case '/login':
+        pageTitle = 'Sign In';
+        break;
+      case '/signup':
+        pageTitle = 'Sign Up';
+        break;
+      case '/verify-email':
+        pageTitle = 'Verify Email';
+        break;
+      case '/reset-password':
+        pageTitle = 'Reset Password';
+        break;
+      default:
+        pageTitle = 'Page Not Found';
+        break;
+    }
+
+    document.title = `${baseTitle} | ${pageTitle}`;
+  }, [location.pathname]);
+
   // Show nothing while auth is initializing (prevents flash)
   if (!initialized) {
     return (
@@ -90,6 +135,7 @@ function App() {
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </AuthInitializer>
       </BrowserRouter>
