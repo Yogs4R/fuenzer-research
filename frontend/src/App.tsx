@@ -12,6 +12,7 @@ import { CitationsPage } from './pages/CitationsPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignUpPage } from './pages/auth/SignUpPage';
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,6 +89,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
           </Routes>
         </AuthInitializer>
       </BrowserRouter>

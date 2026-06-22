@@ -14,6 +14,12 @@ type Config struct {
 	Port              string
 	Env               string
 	AllowedOrigins    string
+	SMTPHost          string
+	SMTPPort          string
+	SMTPUser          string
+	SMTPPass          string
+	SMTPFrom          string
+	FirebaseAPIKey    string
 }
 
 // Load reads environment variables from .env and returns a Config.
@@ -27,6 +33,12 @@ func Load() *Config {
 		Port:              getEnv("PORT", "8080"),
 		Env:               getEnv("ENV", "development"),
 		AllowedOrigins:    getEnv("ALLOWED_ORIGINS", "http://localhost:5173, https://research.fuenzer.web.id"),
+		SMTPHost:          getEnv("SMTP_HOST", ""),
+		SMTPPort:          getEnv("SMTP_PORT", "587"),
+		SMTPUser:          getEnv("SMTP_USER", ""),
+		SMTPPass:          getEnv("SMTP_PASS", ""),
+		SMTPFrom:          getEnv("SMTP_FROM", ""),
+		FirebaseAPIKey:    getEnv("FIREBASE_API_KEY", ""),
 	}
 
 	if cfg.GeminiAPIKey == "" {

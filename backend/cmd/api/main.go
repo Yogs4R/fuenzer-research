@@ -7,6 +7,8 @@ import (
 
 	"fuenzer-research/backend/internal/config"
 	"fuenzer-research/backend/internal/handlers"
+	"fuenzer-research/backend/internal/services/email"
+	firebaseService "fuenzer-research/backend/internal/services/firebase"
 	"fuenzer-research/backend/internal/services/garuda"
 	"fuenzer-research/backend/internal/services/gemini"
 	"fuenzer-research/backend/internal/services/googlebooks"
@@ -28,6 +30,15 @@ func main() {
 	geminiClient := gemini.NewClient(cfg.GeminiAPIKey)
 	googleBooksClient := googlebooks.NewClient(cfg.GoogleBooksAPIKey)
 
+	// Initialize Firebase Admin client
+	firebaseClient, err := firebaseService.NewClient(cfg)
+	if err != nil {
+		log.Printf("WARNING: Firebase Admin client could not be initialized: %v. Password reset email service will not work.", err)
+	}
+
+	// Initialize Email SMTP client
+	emailClient := email.NewClient(cfg)
+
 	// Initialize local Garuda SQLite database client
 	garudaClient, err := garuda.NewClient()
 	if err != nil {
@@ -44,6 +55,7 @@ func main() {
 	// Initialize handler
 	researchHandler := handlers.NewResearchHandler(openalexClient, geminiClient, sintaMapper, garudaClient, googleBooksClient)
 	autocompleteHandler := handlers.NewAutocompleteHandler(openalexClient)
+	authHandler := handlers.NewAuthHandler(firebaseClient, emailClient)
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -94,6 +106,7 @@ func main() {
 	api.Post("/research", researchHandler.Handle)
 	api.Post("/ask", researchHandler.HandleAsk)
 	api.Get("/autocomplete", autocompleteHandler.Handle)
+	api.Post("/auth/forgot-password", authHandler.ForgotPassword)
 
 	// Serve static frontend files (production mode)
 	if cfg.Env == "production" {

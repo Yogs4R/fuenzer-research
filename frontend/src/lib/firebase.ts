@@ -17,7 +17,6 @@ import {
   onAuthStateChanged,
   updateProfile,
   sendEmailVerification,
-  sendPasswordResetEmail,
   type User,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -91,9 +90,11 @@ export async function signUpWithEmail(email: string, password: string, displayNa
   return result.user;
 }
 
+import api from '../services/api';
+
 /** Send password reset email */
 export async function resetPassword(email: string): Promise<void> {
-  await sendPasswordResetEmail(auth, email);
+  await api.post('/api/v1/auth/forgot-password', { email });
 }
 
 /** Manually send verification email to current user */
