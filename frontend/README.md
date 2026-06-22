@@ -100,9 +100,18 @@ Hasil kompilasi akan dimasukkan ke folder `/dist` siap saji.
 │   ├── /components     # Komponen UI modular
 │   │   ├── /home       # Komponen halaman beranda
 │   │   ├── /playground # Panel playground riset & asisten AI
-│   │   └── /shared     # Komponen navbar, footer, modal, dropdown
+│   │   └── /shared     # Komponen navbar, footer, modal, dropdown, CookieConsent
+│   ├── /hooks          # Custom React hooks (useSEO, dll.)
 │   ├── /locales        # Manajemen lokalisasi (en.ts & id.ts)
-│   ├── /pages          # Halaman utama (Landing, Playground, Citations, Library)
+│   ├── /pages          # Halaman utama
+│   │   ├── /auth       # Halaman autentikasi (Login, SignUp, VerifyEmail, ResetPassword)
+│   │   ├── LandingPage.tsx
+│   │   ├── PlaygroundPage.tsx
+│   │   ├── LibraryPage.tsx
+│   │   ├── CitationsPage.tsx
+│   │   ├── TermsPage.tsx
+│   │   ├── PrivacyPage.tsx
+│   │   └── NotFoundPage.tsx
 │   ├── /services       # Klien komunikasi API backend
 │   ├── /store          # Pengelola state global aplikasi (Zustand)
 │   ├── /types          # Definisi tipe TypeScript

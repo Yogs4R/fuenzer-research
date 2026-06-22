@@ -82,9 +82,9 @@ func main() {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
-	// Middleware: Rate Limiting — 50 req/min per IP (hackathon-safe)
+	// Middleware: Rate Limiting — 15 req/min per IP
 	app.Use(limiter.New(limiter.Config{
-		Max:        50,
+		Max:        15,
 		Expiration: 1 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
 			return c.IP()

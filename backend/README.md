@@ -86,10 +86,13 @@ Server backend akan berjalan di `http://localhost:8080`
 ├── /internal
 │   ├── /config         # Logika pemuatan konfigurasi dan berkas .env
 │   ├── /handlers       # HTTP controllers untuk memproses request klien
+│   │   ├── auth.go           # Penangan fitur autentikasi & pengiriman email
 │   │   ├── autocomplete.go   # Penangan fitur autocomplete kata kunci
 │   │   └── research.go       # Logika orkestrasi riset & Q&A AI
 │   ├── /models         # Go Structs untuk representasi model data
 │   └── /services       # Logika bisnis dan komunikasi pihak ketiga
+│       ├── /email      # Layanan pengiriman email verifikasi & reset password
+│       ├── /firebase   # Integrasi Firebase Admin SDK
 │       ├── /garuda     # Klien kueri SQLite Garuda lokal
 │       ├── /gemini     # Integrasi API Google Gemini (Synthesize & Ask)
 │       ├── /googlebooks# Integrasi Google Books API
@@ -105,7 +108,7 @@ Server backend akan berjalan di `http://localhost:8080`
 
 - **Enkripsi State**: Seluruh komunikasi kunci API diproses secara tertutup di backend dan tidak pernah bocor ke sisi klien.
 - **CORS Configuration**: CORS dibatasi secara ketat hanya menerima asal request dari port frontend (`http://localhost:5173`) dan domain produksi (`https://research.fuenzer.web.id`).
-- **Rate Limiting**: Membatasi hingga maksimum 50 kueri/menit untuk setiap alamat IP unik guna menghindari serangan brute force.
+- **Rate Limiting**: Membatasi hingga maksimum 15 kueri/menit untuk setiap alamat IP unik guna menghindari serangan brute force.
 - **Stateless Processing**: Tidak ada data kueri riset pribadi yang disimpan secara permanen di backend untuk melatih model AI.
 
 ---

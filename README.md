@@ -55,21 +55,16 @@ Fuenzer Research dibangun untuk **akademisi, mahasiswa S1/S2/S3, dan peneliti In
 
 ### Potensi Skala (Impact)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  TARGET PASAR                                            │
-│                                                          │
-│  🎓 300K+ Mahasiswa S2/S3 Indonesia                      │
-│  👨‍🏫 100K+ Dosen & Peneliti Aktif                         │
-│  📚 15.456 Jurnal Terakreditasi SINTA                    │
-│  📄 3.6M+ Artikel di Database Garuda                     │
-│  🌍 200M+ Publikasi Global (OpenAlex)                    │
-│                                                          │
-│  Fuenzer Research menjembatani kesenjangan antara        │
-│  indeks akademis lokal Indonesia dengan tools riset      │
-│  global — sesuatu yang belum dilakukan platform lain.    │
-└─────────────────────────────────────────────────────────┘
-```
+> ### 🎯 TARGET PASAR
+>
+> * 🎓 **300K+** Mahasiswa S2/S3 Indonesia
+> * 👨‍🏫 **100K+** Dosen & Peneliti Aktif
+> * 📚 **15.456** Jurnal Terakreditasi SINTA
+> * 📄 **3.6M+** Artikel di Database Garuda
+> * 🌍 **200M+** Publikasi Global (OpenAlex)
+>
+> Fuenzer Research menjembatani kesenjangan antara indeks akademis lokal Indonesia dengan tools riset global — sesuatu yang belum dilakukan platform lain.
+
 
 ---
 
@@ -104,31 +99,22 @@ Berikut **hasil nyata** yang Fuenzer Research berikan kepada pengguna:
 
 ### Workflow Lengkap
 
+```mermaid
+graph TD
+    classDef step fill:#fafafa,stroke:#0d9488,stroke-width:2px,color:#262626;
+    classDef accent fill:#0d9488,stroke:#0f766e,stroke-width:2px,color:#fff;
+
+    Step1["🔍 1. SEARCH<br/>User enters research topic and filters by Type, Scope, and Index"]
+    Step2["🚀 2. DISCOVER<br/>Parallel queries to OpenAlex, SINTA, Garuda, and Google Books with auto SINTA tier mapping"]
+    Step3["🧠 3. SYNTHESIZE<br/>Google Gemini 3.1 Flash Lite reads abstracts to generate structured summaries"]
+    Step4["💬 4. INTERACT<br/>Filter, sort, bookmark references, ask follow-up questions or compare papers"]
+    Step5["📂 5. EXPORT<br/>Download PDF reports, batch export to ZIP, copy citation formats, or export BibTeX"]
+
+    Step1 --> Step2 --> Step3 --> Step4 --> Step5
+
+    class Step1,Step2,Step3,Step4,Step5 step;
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                    FUENZER RESEARCH WORKFLOW                       │
-│                                                                   │
-│  1. SEARCH    → User ketik topik riset                            │
-│                 Pilih: Type (All/Article/Journal/Book)             │
-│                 Pilih: Scope (Global/Indonesia)                    │
-│                 Pilih: Index (OpenAlex/SINTA/Garuda/Google Books) │
-│                                                                   │
-│  2. DISCOVER  → Sistem mencari dari multiple sources secara       │
-│                 concurrent (parallel API calls)                    │
-│                 → SINTA tier mapping otomatis                      │
-│                                                                   │
-│  3. SYNTHESIZE → Google Gemini 3.1 Flash Lite membaca abstrak     │
-│                  dan menghasilkan ringkasan terstruktur            │
-│                                                                   │
-│  4. INTERACT  → Filter, sort, bookmark referensi                  │
-│                 → Switch ke "Ask Mode" untuk Q&A tentang papers   │
-│                 → Compare selected references via AI              │
-│                                                                   │
-│  5. EXPORT    → Download PDF individual atau batch (ZIP)          │
-│                 → Export sitasi BibTeX untuk LaTeX                 │
-│                 → Copy citation format langsung                   │
-└──────────────────────────────────────────────────────────────────┘
-```
+
 
 ---
 
@@ -150,35 +136,21 @@ Fuenzer Research **bukan wrapper ChatGPT** dan **bukan template standar**. Berik
 
 ### Faktor "Wow" — Penggunaan AI yang Elegan
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  🤖 AI USAGE YANG TIDAK SEKADAR "CALL API"                   │
-│                                                              │
-│  1. NARRATIVE SKELETON LOADER                                │
-│     → 3-phase loading ("Searching..." → "Filtering..."      │
-│       → "Synthesizing...") membuat pengguna tetap engaged    │
-│                                                              │
-│  2. TOKEN ECONOMY                                            │
-│     → Hanya kirim Title + Abstract + Year ke Gemini          │
-│     → Menghemat 70% token vs kirim full paper data           │
-│                                                              │
-│  3. ANTI-PROMPT INJECTION                                    │
-│     → System prompt melarang Gemini mengikuti instruksi      │
-│       dari user yang mencoba override                        │
-│                                                              │
-│  4. GRACEFUL DEGRADATION                                     │
-│     → Jika Gemini gagal → tetap return referensi tanpa       │
-│       synthesis (user tidak stuck)                           │
-│                                                              │
-│  5. GIBBERISH DETECTION (Frontend + Backend)                 │
-│     → Deteksi keyboard mashing sebelum memanggil AI          │
-│     → Hemat quota, cegah abuse                              │
-│                                                              │
-│  6. CONTEXTUAL Q&A                                           │
-│     → User pilih 3 papers → tanya "bandingkan metodologi"   │
-│     → AI menjawab HANYA dari abstrak papers yang dipilih     │
-└─────────────────────────────────────────────────────────────┘
-```
+> ### 🤖 AI USAGE YANG TIDAK SEKADAR "CALL API"
+>
+> 1. **Narrative Skeleton Loader**
+>    * 3-phase loading (`Searching...` → `Filtering...` → `Synthesizing...`) membuat pengguna tetap engaged.
+> 2. **Token Economy**
+>    * Hanya kirim `Title` + `Abstract` + `Year` ke Gemini, menghemat 70% token vs mengirim full paper data.
+> 3. **Anti-Prompt Injection**
+>    * System prompt melarang Gemini mengikuti instruksi dari user yang mencoba override.
+> 4. **Graceful Degradation**
+>    * Jika Gemini gagal → tetap return referensi tanpa synthesis (user tidak stuck).
+> 5. **Gibberish Detection (Frontend + Backend)**
+>    * Deteksi keyboard mashing sebelum memanggil AI untuk menghemat kuota & mencegah abuse.
+> 6. **Contextual Q&A**
+>    * User pilih 3 papers → tanya "bandingkan metodologi" → AI menjawab HANYA dari abstrak papers yang dipilih.
+
 
 ### Bukan Template — Bukti Orisinalitas
 
@@ -214,7 +186,7 @@ graph TD
     subgraph Gateway ["API Gateway (Go Fiber)"]
         Security["Security Headers (CSP/HSTS)"]
         CORS["CORS (Strict Rules)"]
-        Limiter["Rate Limiter (50/min)"]
+        Limiter["Rate Limiter (15/min)"]
         Logging["Logging Middleware"]
     end
 
@@ -255,42 +227,37 @@ graph TD
 
 ### Request Flow (Sequence)
 
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant FE as Frontend (React)
+    participant BE as Backend (Go Fiber)
+    participant API as External APIs (OpenAlex/Books)
+    participant DB as Local Data (SINTA/Garuda DB)
+    participant AI as Gemini AI
+
+    User->>FE: Types query & clicks Search
+    Note over FE: 1. Gibberish detection (client-side)<br/>2. Keyword extraction & sanitization<br/>3. Autocomplete fetch
+    FE->>BE: POST /api/v1/research
+    Note over FE: Phase 1: "Searching OpenAlex..."
+    Note over BE: Input validation & routing
+    par Fetch Global
+        BE->>API: Query OpenAlex / Google Books
+        API-->>BE: Return papers metadata
+    and Fetch Local
+        BE->>DB: Query Garuda SQLite / SINTA JSON
+        DB-->>BE: Return local articles
+    end
+    Note over FE: Phase 2 (1.5s): "Filtering & mapping SINTA..."
+    BE->>BE: SINTA tier mapping (match publisher -> tier 1-6)
+    Note over FE: Phase 3 (3.5s): "Synthesizing with Gemini AI..."
+    BE->>AI: Send sanitized abstracts (Title, Abstract, Year)
+    AI-->>BE: Return structured summary/synthesis
+    BE-->>FE: Return unified JSON response
+    Note over FE: 1. Render AI synthesis (Markdown -> HTML)<br/>2. Render reference cards with badges<br/>3. Enable interaction (filter, export, Q&A)
 ```
-User types "machine learning"
-        │
-        ▼
-┌─ FRONTEND ────────────────────────────────────────────────────┐
-│  1. Gibberish detection (client-side) ✓                        │
-│  2. Keyword extraction & sanitization                          │
-│  3. Autocomplete fetch → "Did you mean?" suggestion           │
-│  4. User clicks Search → navigate('/playground')              │
-│  5. executeSearch() → POST /api/v1/research                   │
-│  6. Show narrative skeleton: "Searching OpenAlex..."          │
-│  7. Phase 2 (1.5s): "Filtering & mapping SINTA..."           │
-│  8. Phase 3 (3.5s): "Synthesizing with Gemini AI..."         │
-└───────────────────────────────────┬───────────────────────────┘
-                                    │
-                                    ▼
-┌─ BACKEND ─────────────────────────────────────────────────────┐
-│  1. Input validation (3-200 chars, gibberish check)            │
-│  2. Route by Index/Type:                                       │
-│     - GARUDA → SQLite full-text search                        │
-│     - SINTA → JSON dictionary search                          │
-│     - Google Books → Google Books API                         │
-│     - Default → OpenAlex Works/Sources API                    │
-│  3. SINTA mapping (match publisher → tier 1-6)                │
-│  4. Send abstracts to Gemini → receive synthesis              │
-│  5. Return unified JSON response                              │
-└───────────────────────────────────┬───────────────────────────┘
-                                    │
-                                    ▼
-┌─ FRONTEND (Response) ─────────────────────────────────────────┐
-│  1. Render AI synthesis (Markdown → sanitized HTML)            │
-│  2. Render reference cards with SINTA badges                   │
-│  3. Enable: filter, sort, bookmark, select, export             │
-│  4. User can switch to "Ask Mode" for follow-up Q&A           │
-└────────────────────────────────────────────────────────────────┘
-```
+
 
 ### Kenapa Stack Ini Cepat?
 
@@ -341,7 +308,7 @@ User types "machine learning"
 | Data Sources (Global) | OpenAlex API (200M+ publications), Google Books API |
 | Data Sources (Lokal) | SINTA JSON (~700 jurnal, tier 1-6), Garuda SQLite (652K+ artikel) |
 | Deployment | Docker Multi-Stage, Google Cloud Run, Alpine 3.19 |
-| Security | CORS strict, Rate Limiting 50/min, CSP Headers, HSTS |
+| Security | CORS strict, Rate Limiting 15/min, CSP Headers, HSTS |
 
 ### Detailed Dependency Versions
 
@@ -351,7 +318,7 @@ User types "machine learning"
 | `react-dom` | 19.2.6 | DOM rendering |
 | `react-router-dom` | 7.15.1 | Client-side SPA routing |
 | `typescript` | 6.0.2 | Type safety |
-| `vite` | 8.0.12 | Build tool & dev server |
+| `vite` | 8.0.16 | Build tool & dev server |
 | `@vitejs/plugin-react` | 6.0.1 | React Fast Refresh |
 | `tailwindcss` | 4.3.0 | Utility-first CSS |
 | `zustand` | 5.0.13 | Lightweight state management |
@@ -360,7 +327,7 @@ User types "machine learning"
 | `axios` | 1.16.1 | HTTP client |
 | `lucide-react` | 1.16.0 | Icon library |
 | `marked` | 18.0.4 | Markdown parser |
-| `dompurify` | 3.4.5 | XSS sanitization |
+| `dompurify` | 3.4.11 | XSS sanitization |
 | `jspdf` | 4.2.1 | PDF generation |
 | `jszip` | 3.10.1 | ZIP packaging |
 | `go` | 1.25 | Backend language |
@@ -426,10 +393,19 @@ docker run -p 8080:8080 \
 │   │   ├── /components
 │   │   │   ├── /home            # Landing page components (HeroBackground, etc.)
 │   │   │   ├── /playground      # Playground-specific (AIAssistantPanel)
-│   │   │   └── /shared          # Reusable (Navbar, Footer, JournalCard, etc.)
+│   │   │   └── /shared          # Reusable (Navbar, Footer, JournalCard, CookieConsent, etc.)
+│   │   ├── /hooks               # Custom React hooks (useSEO, etc.)
 │   │   ├── /lib                 # Firebase config, Firestore helpers
 │   │   ├── /locales             # i18n translations (en.ts, id.ts)
-│   │   ├── /pages               # Route pages (Landing, Playground, Library, etc.)
+│   │   ├── /pages               # Route pages
+│   │   │   ├── /auth            # Authentication pages (Login, SignUp, VerifyEmail, ResetPassword)
+│   │   │   ├── LandingPage.tsx
+│   │   │   ├── PlaygroundPage.tsx
+│   │   │   ├── LibraryPage.tsx
+│   │   │   ├── CitationsPage.tsx
+│   │   │   ├── TermsPage.tsx
+│   │   │   ├── PrivacyPage.tsx
+│   │   │   └── NotFoundPage.tsx
 │   │   ├── /services            # API client (axios → backend)
 │   │   ├── /store               # Zustand stores (research, auth, UI)
 │   │   ├── /types               # TypeScript interfaces
@@ -465,7 +441,7 @@ docker run -p 8080:8080 \
 | Layer | Implementasi |
 |-------|-------------|
 | **CORS** | Strict whitelist: hanya `localhost:5173` dan `research.fuenzer.web.id` |
-| **Rate Limiting** | 50 requests/menit per IP (melindungi Gemini quota) |
+| **Rate Limiting** | 15 requests/menit per IP (melindungi Gemini quota) |
 | **Security Headers** | HSTS, X-Frame-Options, CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy |
 | **Input Validation** | Query 3-200 karakter, scope validation, type validation |
 | **Gibberish Detection** | Dual-layer: frontend (vowel check + keyboard mash) + backend (pattern matching) |
