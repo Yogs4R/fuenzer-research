@@ -9,7 +9,9 @@
 
 ![Fuenzer Research Banner](frontend/public/og-image.png)
 
-[🇮🇩 Indonesia](README.md) | [🌐 English](README.en.md)
+<div align="center">
+  [🇮🇩 Indonesia](README.md) | [🌐 English](README.en.md)
+</div>
 
 > **Riset Akademis, Disintesis AI** — Asisten riset ilmiah bertenaga kecerdasan buatan untuk membantu akademisi Indonesia mencari, memetakan indeks SINTA/Garuda, dan menyintesis literatur ilmiah skala nasional & global secara instan.
 
