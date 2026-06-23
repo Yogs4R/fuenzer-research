@@ -73,7 +73,7 @@ func main() {
 		c.Set("X-Content-Type-Options", "nosniff")
 		c.Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		c.Set("Permissions-Policy", "geolocation=(), microphone=(), camera=(), interest-cohort=()")
-		c.Set("Content-Security-Policy", "default-src 'self'; script-src 'self' https://apis.google.com https://www.gstatic.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://lh3.googleusercontent.com https://images.unsplash.com https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://*.analytics.google.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://*.analytics.google.com; frame-src 'self' https://fuenzer-research.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; require-trusted-types-for 'script'; trusted-types default appPolicy;")
+		c.Set("Content-Security-Policy", "default-src 'self'; script-src 'self' https://apis.google.com https://www.gstatic.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://lh3.googleusercontent.com https://images.unsplash.com https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://*.analytics.google.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://*.analytics.google.com; frame-src 'self' https://fuenzer-research.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content; require-trusted-types-for 'script'; trusted-types default appPolicy;")
 		return c.Next()
 	})
 
@@ -114,11 +114,19 @@ func main() {
 	if cfg.Env == "production" {
 		app.Static("/", "./public")
 
+		// Read index.html once into memory
+		indexHTML, err := os.ReadFile("./public/index.html")
+		if err != nil {
+			log.Printf("WARNING: Could not read ./public/index.html: %v", err)
+		}
+
 		// SPA fallback: serve index.html for all non-API routes
 		app.Get("/*", func(c *fiber.Ctx) error {
-			return c.SendFile("./public/index.html")
+			c.Type("html")
+			return c.Send(indexHTML)
 		})
 	}
+
 
 	// Start server
 	port := cfg.Port
