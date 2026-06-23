@@ -225,5 +225,25 @@ export const en = {
         desc: 'Fuenzer Research launched its Alpha phase featuring a comprehensive scientific discovery platform. Powered by Gemini 3.1 Flash Lite, it integrates global search (OpenAlex & Google Books API) with a local repository of SINTA-indexed journals (~700 journals, ~7,000 articles) and SQLite Garuda database (years 2024-2025). Features dark mode, split-screen playground, and PDF & BibTeX export support.'
       }
     ]
+  },
+  auth: {
+    verifyEmailTitle: 'Verify Your Email',
+    verifyingTitle: 'Verifying Your Email',
+    verifyingDesc: 'Verifying your email address, please wait...',
+    verifiedTitle: 'Email Verified!',
+    verifiedDesc: 'Email verified successfully! Your account is now active.',
+    redirecting: 'Redirecting to homepage...',
+    loginToApp: 'Log In',
+    verificationFailed: 'Verification Failed',
+    invalidLink: 'The verification link is invalid, expired, or already used.',
+    backToLogin: 'Back to Login',
+    emailSentTo: 'We have sent a verification link to:',
+    iHaveVerified: 'I Have Verified',
+    resendEmail: 'Resend Verification',
+    resendEmailWait: 'Resend',
+    logout: 'Log Out',
+    close: 'Close',
+    emailNotVerified: 'Your email has not been verified. Please check your inbox or spam folder.',
+    newVerificationSent: 'A new verification email has been sent.'
   }
 };

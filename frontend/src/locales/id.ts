@@ -225,5 +225,25 @@ export const id = {
         desc: 'Fuenzer Research meluncurkan fase Alpha dengan platform penemuan ilmiah komprehensif. Ditenagai oleh Gemini 3.1 Flash Lite, menyatukan pencarian global (OpenAlex & Google Books API) dengan repositori lokal jurnal terindeks SINTA (~700 jurnal, ~7,000 artikel) serta database SQLite Garuda (artikel tahun 2024-2025). Dilengkapi mode gelap, playground layar terpisah, dan dukungan ekspor PDF & BibTeX.'
       }
     ]
+  },
+  auth: {
+    verifyEmailTitle: 'Verifikasi Email Anda',
+    verifyingTitle: 'Memverifikasi Email Anda',
+    verifyingDesc: 'Memverifikasi alamat email Anda, mohon tunggu...',
+    verifiedTitle: 'Email Terverifikasi!',
+    verifiedDesc: 'Email berhasil diverifikasi! Akun Anda sekarang aktif.',
+    redirecting: 'Mengalihkan ke halaman utama...',
+    loginToApp: 'Masuk ke Aplikasi',
+    verificationFailed: 'Verifikasi Gagal',
+    invalidLink: 'Tautan verifikasi salah, kedaluwarsa, atau telah digunakan.',
+    backToLogin: 'Kembali ke Halaman Masuk',
+    emailSentTo: 'Kami telah mengirimkan tautan verifikasi ke email:',
+    iHaveVerified: 'Saya Sudah Verifikasi',
+    resendEmail: 'Kirim Ulang Email Verifikasi',
+    resendEmailWait: 'Kirim Ulang',
+    logout: 'Keluar / Ganti Akun',
+    close: 'Tutup',
+    emailNotVerified: 'Email Anda belum terverifikasi. Silakan periksa kotak masuk atau spam email Anda.',
+    newVerificationSent: 'Email verifikasi baru telah dikirim.'
   }
 };

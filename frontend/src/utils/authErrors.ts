@@ -4,6 +4,22 @@
  */
 
 export function getFriendlyErrorMessage(error: any, lang: 'en' | 'id' = 'id'): string {
+  // Extract error from Axios response if available
+  const axiosError = error?.response?.data?.error;
+  if (axiosError && typeof axiosError === 'string') {
+    // If the backend provided a custom error message, we can return it directly
+    // since our backend already returns friendly messages in Indonesian (mostly).
+    // For English, we might need basic mapping if we want full translation, 
+    // but returning it is better than "Request failed with status code 500"
+    if (lang === 'en' && axiosError.includes('Gagal mengirimkan')) {
+      return 'Failed to send email. Please try again or contact support.';
+    }
+    if (lang === 'en' && axiosError.includes('Layanan autentikasi')) {
+      return 'Authentication service is currently unavailable.';
+    }
+    return axiosError;
+  }
+
   const code = error?.code || (typeof error === 'string' ? error : '');
   const isEn = lang === 'en';
 
@@ -54,15 +70,28 @@ export function getFriendlyErrorMessage(error: any, lang: 'en' | 'id' = 'id'): s
       return isEn 
         ? 'This sign-in method is not enabled. Contact the administrator.' 
         : 'Metode masuk ini belum diaktifkan. Hubungi administrator.';
+    case 'auth/invalid-action-code':
+      return isEn
+        ? 'The verification link is invalid, expired, or has already been used.'
+        : 'Tautan verifikasi tidak valid, sudah kedaluwarsa, atau telah digunakan.';
     default:
       if (error?.message) {
+        // Fallback for Network Error specifically
+        if (error.message === 'Network Error') {
+          return isEn 
+            ? 'Network error. Please check your internet connection.' 
+            : 'Koneksi jaringan bermasalah. Periksa koneksi internet Anda.';
+        }
         const cleanMsg = error.message.replace(/^Firebase:\s*/, '');
         if (cleanMsg.includes('popup-closed-by-user')) {
           return isEn 
             ? 'Sign in was cancelled because the login window was closed.' 
             : 'Proses masuk dibatalkan karena jendela login ditutup.';
         }
-        return cleanMsg;
+        // Instead of showing raw technical errors, fallback to a generic message
+        return isEn 
+          ? 'An unexpected error occurred. Please try again later.' 
+          : 'Terjadi kesalahan yang tidak terduga. Silakan coba beberapa saat lagi.';
       }
       return isEn 
         ? 'Authentication error occurred. Please try again.' 

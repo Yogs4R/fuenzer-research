@@ -6,6 +6,8 @@ import { Mail, RefreshCw, Send, LogOut, CheckCircle2, AlertCircle } from 'lucide
 import { applyActionCode } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { useSEO } from '../../hooks/useSEO';
+import { en } from '../../locales/en';
+import { id } from '../../locales/id';
 
 export function VerifyEmailPage() {
   useSEO({
@@ -14,7 +16,8 @@ export function VerifyEmailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, reloadUser, sendVerificationEmail, logout, loading, error, clearError } = useAuthStore();
-  const { theme } = useUiStore();
+  const { theme, language } = useUiStore();
+  const t = language === 'en' ? en : id;
   
   const [cooldown, setCooldown] = useState(0);
   const [successMsg, setSuccessMsg] = useState('');
@@ -69,7 +72,7 @@ export function VerifyEmailPage() {
         })
         .catch((err) => {
           console.error('[Auth] Email verification failed:', err);
-          setVerificationError('Tautan verifikasi salah, kedaluwarsa, atau telah digunakan. / The verification link is invalid, expired, or already used.');
+          setVerificationError(t.auth.invalidLink);
           setVerifyingCode(false);
         });
     }
@@ -87,7 +90,7 @@ export function VerifyEmailPage() {
     if (updatedUser?.emailVerified) {
       navigate('/');
     } else {
-      setStatusMsg('Email Anda belum terverifikasi. Silakan periksa kotak masuk atau spam email Anda.');
+      setStatusMsg(t.auth.emailNotVerified);
     }
   };
 
@@ -99,7 +102,7 @@ export function VerifyEmailPage() {
     
     try {
       await sendVerificationEmail();
-      setSuccessMsg('Email verifikasi baru telah dikirim.');
+      setSuccessMsg(t.auth.newVerificationSent);
       setCooldown(60); // 60 seconds cooldown
     } catch (err) {
       // Error is set in store
@@ -117,8 +120,8 @@ export function VerifyEmailPage() {
       <div className="min-h-screen flex items-center justify-center bg-cloud-canvas dark:bg-[#121212] px-4 transition-colors">
         <div className="w-full max-w-md bg-paper-white dark:bg-ink-black rounded-2xl shadow-xl border border-cloud-canvas dark:border-stone-gray p-8 text-center transition-all duration-300">
           <div className="w-8 h-8 border-3 border-fuenzer-teal/30 border-t-fuenzer-teal rounded-full animate-spin mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-ink-black dark:text-paper-white font-serif mb-2">Memverifikasi Email Anda</h1>
-          <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">Verifying your email address, please wait...</p>
+          <h1 className="text-xl font-bold text-ink-black dark:text-paper-white font-serif mb-2">{t.auth.verifyingTitle}</h1>
+          <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">{t.auth.verifyingDesc}</p>
         </div>
       </div>
     );
@@ -133,17 +136,17 @@ export function VerifyEmailPage() {
             <CheckCircle2 className="w-10 h-10 text-teal-500 animate-bounce" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif">Email Terverifikasi!</h1>
-            <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">Email verified successfully! Your account is now active.</p>
+            <h1 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif">{t.auth.verifiedTitle}</h1>
+            <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">{t.auth.verifiedDesc}</p>
           </div>
           {auth.currentUser ? (
-            <p className="text-xs text-silver-mist font-sans animate-pulse">Mengalihkan ke halaman utama... / Redirecting to homepage...</p>
+            <p className="text-xs text-silver-mist font-sans animate-pulse">{t.auth.redirecting}</p>
           ) : (
             <button
               onClick={() => navigate('/login')}
               className="w-full h-11 rounded-xl bg-fuenzer-teal-dark text-white text-sm font-bold hover:bg-fuenzer-teal transition-colors flex items-center justify-center font-sans cursor-pointer"
             >
-              Masuk ke Aplikasi / Log In
+              {t.auth.loginToApp}
             </button>
           )}
         </div>
@@ -160,14 +163,14 @@ export function VerifyEmailPage() {
             <AlertCircle className="w-10 h-10 text-red-500" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif">Verifikasi Gagal</h1>
+            <h1 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif">{t.auth.verificationFailed}</h1>
             <p className="text-sm text-red-500 font-sans">{verificationError}</p>
           </div>
           <button
             onClick={() => navigate('/login')}
             className="w-full h-11 rounded-xl bg-fuenzer-teal-dark text-white text-sm font-bold hover:bg-fuenzer-teal transition-colors flex items-center justify-center font-sans cursor-pointer"
           >
-            Kembali ke Halaman Masuk / Back to Login
+            {t.auth.backToLogin}
           </button>
         </div>
       </div>
@@ -199,10 +202,10 @@ export function VerifyEmailPage() {
               <Mail className="w-6 h-6 text-fuenzer-teal" />
             </div>
             <h1 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif mb-2">
-              Verifikasi Email Anda
+              {t.auth.verifyEmailTitle}
             </h1>
             <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">
-              Kami telah mengirimkan tautan verifikasi ke email:
+              {t.auth.emailSentTo}
             </p>
             <p className="text-sm font-bold text-ink-black dark:text-paper-white mt-1 select-all font-sans">
               {user.email}
@@ -213,7 +216,7 @@ export function VerifyEmailPage() {
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400 text-xs font-sans flex items-center justify-between">
               <span className="flex-1">{error}</span>
-              <button onClick={clearError} className="ml-2 underline text-[10px] cursor-pointer shrink-0 font-semibold">Tutup</button>
+              <button onClick={clearError} className="ml-2 underline text-[10px] cursor-pointer shrink-0 font-semibold">{t.auth.close}</button>
             </div>
           )}
 
@@ -236,7 +239,7 @@ export function VerifyEmailPage() {
               className="w-full h-11 rounded-xl bg-fuenzer-teal dark:bg-fuenzer-teal-dark hover:bg-fuenzer-teal/95 text-white text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Saya Sudah Verifikasi / I Have Verified
+              {t.auth.iHaveVerified}
             </button>
 
             <button
@@ -245,7 +248,7 @@ export function VerifyEmailPage() {
               className="w-full h-11 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-[#1A1A1A] hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/30 transition-colors text-sm font-semibold text-ink-black dark:text-paper-white flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-4 h-4 text-silver-mist" />
-              {cooldown > 0 ? `Kirim Ulang / Resend (${cooldown}s)` : 'Kirim Ulang Email Verifikasi / Resend Verification'}
+              {cooldown > 0 ? `${t.auth.resendEmailWait} (${cooldown}s)` : t.auth.resendEmail}
             </button>
 
             <div className="border-t border-cloud-canvas dark:border-stone-gray pt-4 mt-4">
@@ -254,7 +257,7 @@ export function VerifyEmailPage() {
                 className="w-full h-11 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
-                Keluar / Ganti Akun / Log Out
+                {t.auth.logout}
               </button>
             </div>
           </div>
