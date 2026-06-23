@@ -76,6 +76,13 @@ function mapUser(user: User): AuthUser {
   };
 }
 
+function handleAuthError(err: unknown, set: any, shouldThrow = false) {
+  const lang = useUiStore.getState().language;
+  const message = getFriendlyErrorMessage(err, lang);
+  set({ error: message, loading: false });
+  if (shouldThrow) throw err;
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   loading: true,
@@ -132,9 +139,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await signInWithGoogle();
       set({ user: mapUser(user), loading: false });
     } catch (err: unknown) {
-      const lang = useUiStore.getState().language;
-      const message = getFriendlyErrorMessage(err, lang);
-      set({ error: message, loading: false });
+      handleAuthError(err, set);
     }
   },
 
@@ -144,9 +149,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await signInWithMicrosoft();
       set({ user: mapUser(user), loading: false });
     } catch (err: unknown) {
-      const lang = useUiStore.getState().language;
-      const message = getFriendlyErrorMessage(err, lang);
-      set({ error: message, loading: false });
+      handleAuthError(err, set);
     }
   },
 
@@ -156,9 +159,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await signInWithEmail(email, password);
       set({ user: mapUser(user), loading: false });
     } catch (err: unknown) {
-      const lang = useUiStore.getState().language;
-      const message = getFriendlyErrorMessage(err, lang);
-      set({ error: message, loading: false });
+      handleAuthError(err, set);
     }
   },
 
@@ -168,9 +169,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await signUpWithEmail(email, password, displayName);
       set({ user: mapUser(user), loading: false });
     } catch (err: unknown) {
-      const lang = useUiStore.getState().language;
-      const message = getFriendlyErrorMessage(err, lang);
-      set({ error: message, loading: false });
+      handleAuthError(err, set);
     }
   },
 
@@ -180,9 +179,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await signInAsGuest();
       set({ user: mapUser(user), loading: false });
     } catch (err: unknown) {
-      const lang = useUiStore.getState().language;
-      const message = getFriendlyErrorMessage(err, lang);
-      set({ error: message, loading: false });
+      handleAuthError(err, set);
     }
   },
 
@@ -193,9 +190,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       // After logout, onAuthChange will trigger and auto-sign in as anonymous
       set({ loading: false });
     } catch (err: unknown) {
-      const lang = useUiStore.getState().language;
-      const message = getFriendlyErrorMessage(err, lang);
-      set({ error: message, loading: false });
+      handleAuthError(err, set);
     }
   },
 
@@ -207,10 +202,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       await resetPassword(email);
       set({ loading: false });
     } catch (err: unknown) {
-      const lang = useUiStore.getState().language;
-      const message = getFriendlyErrorMessage(err, lang);
-      set({ error: message, loading: false });
-      throw err;
+      handleAuthError(err, set, true);
     }
   },
 
@@ -222,10 +214,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       await sendVerificationManual(currentUser.email);
       set({ loading: false });
     } catch (err: unknown) {
-      const lang = useUiStore.getState().language;
-      const message = getFriendlyErrorMessage(err, lang);
-      set({ error: message, loading: false });
-      throw err;
+      handleAuthError(err, set, true);
     }
   },
 
@@ -240,9 +229,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ loading: false });
       }
     } catch (err: unknown) {
-      const lang = useUiStore.getState().language;
-      const message = getFriendlyErrorMessage(err, lang);
-      set({ error: message, loading: false });
+      handleAuthError(err, set);
     }
   },
 }));

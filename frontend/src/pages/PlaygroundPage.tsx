@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResearchStore } from '../store/researchStore';
 import { useUiStore } from '../store/uiStore';
@@ -12,6 +12,14 @@ import { AIAssistantPanel } from '../components/playground/AIAssistantPanel';
 import type { AcademicSource } from '../types/research';
 import JSZip from 'jszip';
 import { generatePdfDocument } from '../utils/pdfExport';
+import { Dropdown, DropdownItem } from '../components/shared/Dropdown';
+import {
+  type SortOption,
+  type FilterIndex,
+  INDEX_FILTERS,
+  sortSources,
+  filterByIndexes,
+} from '../utils/researchFilters';
 import {
   Search,
   BookOpen,
@@ -26,10 +34,7 @@ import {
   Square,
 } from 'lucide-react';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-type SortOption = 'relevance' | 'newest' | 'oldest' | 'citations';
 type CitationStyle = 'APA' | 'Harvard' | 'MLA' | 'Chicago' | 'Vancouver';
-type FilterIndex = 'All' | 'SINTA 1' | 'SINTA 2' | 'SINTA 3' | 'SINTA 4' | 'SINTA 5' | 'SINTA 6' | 'Scopus' | 'Garuda';
 type ContentTypeTab = 'All' | 'Articles' | 'Journals' | 'Books';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -41,87 +46,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 
 const CITATION_STYLES: CitationStyle[] = ['APA', 'Harvard', 'MLA', 'Chicago', 'Vancouver'];
 
-const INDEX_FILTERS: FilterIndex[] = ['All', 'SINTA 1', 'SINTA 2', 'SINTA 3', 'SINTA 4', 'SINTA 5', 'SINTA 6', 'Scopus', 'Garuda'];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function sortSources(sources: AcademicSource[], sort: SortOption): AcademicSource[] {
-  const copy = [...sources];
-  if (sort === 'newest') return copy.sort((a, b) => b.year - a.year);
-  if (sort === 'oldest') return copy.sort((a, b) => a.year - b.year);
-  return copy;
-}
-
-// Multi-select filter: matches if source has ANY of the selected indexes
-function filterByIndexes(sources: AcademicSource[], filters: Set<FilterIndex>): AcademicSource[] {
-  if (filters.has('All') || filters.size === 0) return sources;
-  return sources.filter((s) =>
-    [...filters].some((f) => {
-      if (f === 'Scopus') return s.indexes.some((i) => i.provider.toLowerCase() === 'scopus');
-      if (f === 'Garuda') return s.indexes.some((i) => i.provider.toLowerCase() === 'garuda');
-      const tier = f.split(' ')[1]; // 'SINTA 1' → '1'
-      return s.indexes.some((i) => i.provider.toLowerCase() === 'sinta' && i.tier === tier);
-    })
-  );
-}
-
-// ─── Reusable Dropdown ────────────────────────────────────────────────────────
-function Dropdown({
-  trigger,
-  children,
-  align = 'right',
-}: {
-  trigger: React.ReactNode;
-  children: React.ReactNode;
-  align?: 'right' | 'left';
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handle = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handle);
-    return () => document.removeEventListener('mousedown', handle);
-  }, []);
-
-  return (
-    <div className="relative" ref={ref}>
-      <div onClick={() => setOpen((o) => !o)}>{trigger}</div>
-      {open && (
-        <div
-          className={`absolute top-full mt-1 z-30 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-xl py-1 min-w-[160px] animate-in fade-in zoom-in-95 duration-150 ${align === 'right' ? 'right-0' : 'left-0'}`}
-          onClick={() => setOpen(false)}
-        >
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DropdownItem({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-        active
-          ? 'font-bold text-fuenzer-teal bg-fuenzer-teal/10'
-          : 'text-ink-black dark:text-cloud-canvas hover:bg-cloud-canvas/60 dark:hover:bg-stone-gray/30'
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export function PlaygroundPage() {
@@ -223,6 +147,7 @@ export function PlaygroundPage() {
     newest: t.sortNewest,
     oldest: t.sortOldest,
     citations: t.sortCitations,
+    title: t.sortTitle,
   };
 
   const currentSortLabel = sortOptionLabels[sort] ?? 'Sort';

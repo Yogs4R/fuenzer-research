@@ -138,7 +138,8 @@ export const en = {
     sortRelevance: 'Most Relevant',
     sortNewest: 'Newest First',
     sortOldest: 'Oldest First',
-    sortCitations: 'Most Cited'
+    sortCitations: 'Most Cited',
+    sortTitle: 'Title (A-Z)'
   },
   aiAssistant: {
     title: 'AI Assistant',

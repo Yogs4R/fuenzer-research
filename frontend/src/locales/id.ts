@@ -138,7 +138,8 @@ export const id = {
     sortRelevance: 'Paling Relevan',
     sortNewest: 'Terbaru',
     sortOldest: 'Terlama',
-    sortCitations: 'Sitasi Terbanyak'
+    sortCitations: 'Sitasi Terbanyak',
+    sortTitle: 'Judul (A-Z)'
   },
   aiAssistant: {
     title: 'AI Assistant',

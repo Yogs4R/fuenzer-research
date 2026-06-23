@@ -1,31 +1,9 @@
 import { jsPDF } from 'jspdf';
 import type { AcademicSource } from '../types/research';
+import { getFormattedCitation } from './citationFormatter';
 
 type CitationStyle = 'APA' | 'Harvard' | 'MLA' | 'Chicago' | 'Vancouver';
 
-// Helper to format citations programmatically
-function getFormattedCitation(source: AcademicSource, style: CitationStyle) {
-  const authorsArr = source.authors || [];
-  const authors = authorsArr.length > 0 ? authorsArr.join(', ') : 'Penulis tidak tersedia';
-  const year = source.year > 0 ? source.year : 'n.d.';
-  const title = source.title;
-  const pub = source.publisher || 'Unknown Publisher';
-
-  switch (style) {
-    case 'APA':
-      return `${authors} (${year}). ${title}. ${pub}.`;
-    case 'Harvard':
-      return `${authors}, ${year}. ${title}. ${pub}.`;
-    case 'MLA':
-      return `${authors}. "${title}." ${pub}, ${year}.`;
-    case 'Chicago':
-      return `${authors}. "${title}." ${pub} (${year}).`;
-    case 'Vancouver':
-      return `${authors}. ${title}. ${pub}. ${year};`;
-    default:
-      return `${authors} (${year}). ${title}. ${pub}.`;
-  }
-}
 
 // Generate premium A4 PDF Document
 export function generatePdfDocument(source: AcademicSource, citationStyle: CitationStyle): jsPDF {

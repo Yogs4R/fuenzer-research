@@ -1,5 +1,6 @@
 import type { AcademicSource } from '../../types/research';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
+import { getFormattedCitation } from '../../utils/citationFormatter';
 
 interface JournalCardProps {
   source: AcademicSource;
@@ -9,33 +10,6 @@ interface JournalCardProps {
   onToggleBookmark?: () => void;
   citationStyle?: string;
 }
-
-// Basic citation generator
-function getCitation(source: AcademicSource, style: string) {
-  const authorsArr = source.authors || [];
-  const authors = authorsArr.length > 0 ? authorsArr.join(', ') : 'Penulis tidak tersedia';
-  const year = source.year > 0 ? source.year : 'n.d.';
-  const title = source.title;
-  const pub = source.publisher || 'Unknown Publisher';
-  
-  switch(style) {
-    case 'APA':
-      return `${authors} (${year}). ${title}. ${pub}.`;
-    case 'Harvard':
-      return `${authors}, ${year}. ${title}. ${pub}.`;
-    case 'MLA':
-      return `${authors}. "${title}." ${pub}, ${year}.`;
-    case 'Chicago':
-      return `${authors}. "${title}." ${pub} (${year}).`;
-    case 'Vancouver':
-      return `${authors}. ${title}. ${pub}. ${year};`;
-    default:
-      return `${authors} (${year}). ${title}. ${pub}.`;
-  }
-}
-
-
-
 
 export function JournalCard({ 
   source, 
@@ -111,7 +85,7 @@ export function JournalCard({
         {source.content_type !== 'journal-article' && (
           <div className="text-[11px] text-slate-gray dark:text-silver-mist/80 bg-cloud-canvas/30 dark:bg-stone-gray/30 p-2.5 rounded-lg mb-4 font-sans leading-relaxed border border-cloud-canvas/50 dark:border-stone-gray/50">
             <span className="font-semibold text-ink-black dark:text-cloud-canvas mb-1 block">{citationStyle} Citation:</span>
-            {getCitation(source, citationStyle)}
+            {getFormattedCitation(source, citationStyle as any)}
           </div>
         )}
 

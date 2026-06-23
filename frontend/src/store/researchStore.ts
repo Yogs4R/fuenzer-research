@@ -33,6 +33,38 @@ function getCurrentBookmarksKey(): string {
   return isAnonymous ? 'fuenzer_bookmarked_library_guest' : `fuenzer_bookmarked_library_${userId}`;
 }
 
+function getLocalHistory(): HistoryEntry[] {
+  const historyKey = getCurrentHistoryKey();
+  try {
+    const stored = localStorage.getItem(historyKey);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalHistory(history: HistoryEntry[]): void {
+  const historyKey = getCurrentHistoryKey();
+  try {
+    localStorage.setItem(historyKey, JSON.stringify(history));
+  } catch (e) {
+    console.error('Failed to save local history', e);
+  }
+}
+
+function handleStateError(err: unknown, msgId: string, set: any) {
+  const message = err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.';
+  set((state: any) => ({
+    error: message,
+    loadingPhase: 'error',
+    messages: state.messages.map((m: any) =>
+      m.id === `${msgId}-ai`
+        ? { ...m, error: message, phase: 'error' }
+        : m
+    ),
+  }));
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'ai';
@@ -110,32 +142,26 @@ const syncCurrentSessionToLocalStorage = (state: ResearchState) => {
   const { currentSessionId } = state;
   if (!currentSessionId) return;
 
-  const historyKey = getCurrentHistoryKey();
-  const stored = localStorage.getItem(historyKey);
-  if (!stored) return;
+  const history = getLocalHistory();
+  if (history.length === 0) return;
 
-  try {
-    const history: HistoryEntry[] = JSON.parse(stored);
-    const updated = history.map((entry) => {
-      if (entry.id === currentSessionId) {
-        return {
-          ...entry,
-          query: state.query,
-          messages: state.messages,
-          response: state.response,
-          scope: state.scope,
-          searchType: state.searchType,
-          searchLocation: state.searchLocation,
-          searchAccreditation: state.searchAccreditation,
-          sintaRank: state.sintaRank,
-        };
-      }
-      return entry;
-    });
-    localStorage.setItem(historyKey, JSON.stringify(updated));
-  } catch (e) {
-    console.error('Failed to sync session to localStorage', e);
-  }
+  const updated = history.map((entry) => {
+    if (entry.id === currentSessionId) {
+      return {
+        ...entry,
+        query: state.query,
+        messages: state.messages,
+        response: state.response,
+        scope: state.scope,
+        searchType: state.searchType,
+        searchLocation: state.searchLocation,
+        searchAccreditation: state.searchAccreditation,
+        sintaRank: state.sintaRank,
+      };
+    }
+    return entry;
+  });
+  saveLocalHistory(updated);
 };
 
 /** Sync current session to Firestore (background, non-blocking) */
@@ -146,21 +172,13 @@ const syncCurrentSessionToFirestore = (state: ResearchState) => {
   const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
   if (isAnonymous) return;
 
-  const historyKey = getCurrentHistoryKey();
-  const stored = localStorage.getItem(historyKey);
-  if (!stored) return;
-
-  try {
-    const history: HistoryEntry[] = JSON.parse(stored);
-    const entry = history.find((h) => h.id === state.currentSessionId);
-    if (entry) {
-      // Fire and forget — don't await
-      saveHistoryEntry(userId, entry).catch((err) =>
-        console.warn('Firestore sync failed:', err)
-      );
-    }
-  } catch {
-    // Silent fail
+  const history = getLocalHistory();
+  const entry = history.find((h) => h.id === state.currentSessionId);
+  if (entry) {
+    // Fire and forget — don't await
+    saveHistoryEntry(userId, entry).catch((err) =>
+      console.warn('Firestore sync failed:', err)
+    );
   }
 };
 
@@ -230,13 +248,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
 
   initSession: (queryText: string) => {
     const sessionId = `h-${Date.now()}`;
-    const historyKey = getCurrentHistoryKey();
-    
-    let history: HistoryEntry[] = [];
-    try {
-      const stored = localStorage.getItem(historyKey);
-      history = stored ? JSON.parse(stored) : [];
-    } catch {}
+    const history = getLocalHistory();
     
     const newEntry: HistoryEntry = {
       id: sessionId,
@@ -253,7 +265,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     };
 
     const updated = [newEntry, ...history].slice(0, 20);
-    localStorage.setItem(historyKey, JSON.stringify(updated));
+    saveLocalHistory(updated);
 
     // Firestore sync (background)
     const userId = getCurrentUserId();
@@ -277,44 +289,34 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   },
 
   loadSession: (sessionId: string) => {
-    const historyKey = getCurrentHistoryKey();
-    const stored = localStorage.getItem(historyKey);
-    if (!stored) return;
+    const history = getLocalHistory();
+    const entry = history.find((h) => h.id === sessionId);
+    if (!entry) return;
 
-    try {
-      const history: HistoryEntry[] = JSON.parse(stored);
-      const entry = history.find((h) => h.id === sessionId);
-      if (!entry) return;
-
-      set({
-        currentSessionId: entry.id,
-        query: entry.query,
-        messages: entry.messages || [],
-        response: entry.response || null,
-        scope: entry.scope || 'global',
-        searchType: entry.searchType || 'All',
-        searchLocation: entry.searchLocation || 'Global',
-        searchAccreditation: entry.searchAccreditation || 'Any',
-        sintaRank: entry.sintaRank || ['All'],
-        loadingPhase: (entry.messages && entry.messages.length > 0) ? 'complete' : 'idle',
-        error: null,
-      });
-    } catch (e) {
-      console.error('Failed to load session', e);
-    }
+    set({
+      currentSessionId: entry.id,
+      query: entry.query,
+      messages: entry.messages || [],
+      response: entry.response || null,
+      scope: entry.scope || 'global',
+      searchType: entry.searchType || 'All',
+      searchLocation: entry.searchLocation || 'Global',
+      searchAccreditation: entry.searchAccreditation || 'Any',
+      sintaRank: entry.sintaRank || ['All'],
+      loadingPhase: (entry.messages && entry.messages.length > 0) ? 'complete' : 'idle',
+      error: null,
+    });
   },
 
   updateSessionTitle: (title: string) => {
     const { currentSessionId } = get();
     if (!currentSessionId) return;
 
-    const historyKey = getCurrentHistoryKey();
-    const stored = localStorage.getItem(historyKey);
-    const history: HistoryEntry[] = stored ? JSON.parse(stored) : [];
+    const history = getLocalHistory();
     const updated = history.map((h) =>
       h.id === currentSessionId ? { ...h, title: title } : h
     );
-    localStorage.setItem(historyKey, JSON.stringify(updated));
+    saveLocalHistory(updated);
 
     // Firestore sync
     const userId = getCurrentUserId();
@@ -328,12 +330,9 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   },
 
   deleteSession: (sessionId: string) => {
-    const historyKey = getCurrentHistoryKey();
-    // Remove from localStorage
-    const stored = localStorage.getItem(historyKey);
-    const history: HistoryEntry[] = stored ? JSON.parse(stored) : [];
+    const history = getLocalHistory();
     const updated = history.filter((h) => h.id !== sessionId);
-    localStorage.setItem(historyKey, JSON.stringify(updated));
+    saveLocalHistory(updated);
 
     // Remove from Firestore
     const userId = getCurrentUserId();
@@ -367,15 +366,10 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
    */
   syncFromFirestore: async () => {
     const userId = getCurrentUserId();
-    const historyKey = getCurrentHistoryKey();
     const bookmarksKey = getCurrentBookmarksKey();
 
     // 1. Load history from local storage specific to this user/guest
-    let localHistory: HistoryEntry[] = [];
-    try {
-      const stored = localStorage.getItem(historyKey);
-      localHistory = stored ? JSON.parse(stored) : [];
-    } catch {}
+    const localHistory = getLocalHistory();
 
     // 2. Load bookmarks from local storage specific to this user/guest
     let localBookmarks: AcademicSource[] = [];
@@ -410,7 +404,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
             .sort((a, b) => b.timestamp - a.timestamp)
             .slice(0, 30);
           
-          localStorage.setItem(historyKey, JSON.stringify(merged));
+          saveLocalHistory(merged);
 
           // Upload local-only entries to Firestore so they sync to other devices
           if (uniqueLocal.length > 0) {
@@ -543,17 +537,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     } catch (err: unknown) {
       clearTimeout(phaseTimer);
       clearTimeout(synthTimer);
-      const message =
-        err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.';
-      set((state) => ({
-        error: message,
-        loadingPhase: 'error',
-        messages: state.messages.map((m) =>
-          m.id === `${msgId}-ai`
-            ? { ...m, error: message, phase: 'error' as LoadingPhase }
-            : m
-        ),
-      }));
+      handleStateError(err, msgId, set);
       syncSession(get());
     }
   },
@@ -613,17 +597,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       }));
       syncSession(get());
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.';
-      set((state) => ({
-        error: message,
-        loadingPhase: 'error',
-        messages: state.messages.map((m) =>
-          m.id === `${msgId}-ai`
-            ? { ...m, error: message, phase: 'error' as LoadingPhase }
-            : m
-        ),
-      }));
+      handleStateError(err, msgId, set);
       syncSession(get());
     }
   },

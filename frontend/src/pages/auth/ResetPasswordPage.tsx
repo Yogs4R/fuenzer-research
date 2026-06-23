@@ -5,13 +5,14 @@ import { auth } from '../../lib/firebase';
 import { useUiStore } from '../../store/uiStore';
 import { Eye, EyeOff, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useSEO } from '../../hooks/useSEO';
+import { AuthLayout } from '../../components/shared/AuthLayout';
 
 export function ResetPasswordPage() {
   useSEO({
     canonical: 'https://research.fuenzer.web.id/reset-password/',
   });
   const location = useLocation();
-  const { theme, language } = useUiStore();
+  const { language } = useUiStore();
   const isEn = language === 'en';
 
   const [oobCode, setOobCode] = useState<string | null>(null);
@@ -23,6 +24,7 @@ export function ResetPasswordPage() {
   const [verifying, setVerifying] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   // Parse oobCode from URL query parameters
@@ -53,12 +55,13 @@ export function ResetPasswordPage() {
     e.preventDefault();
     if (!oobCode || password.length < 6) return;
     if (password !== confirmPassword) {
-      setError(isEn ? 'Passwords do not match.' : 'Password tidak cocok.');
+      setValidationError(isEn ? 'Passwords do not match.' : 'Password tidak cocok.');
       return;
     }
 
     setSubmitting(true);
     setError(null);
+    setValidationError(null);
 
     try {
       await confirmPasswordReset(auth, oobCode, password);
@@ -70,138 +73,138 @@ export function ResetPasswordPage() {
     }
   };
 
+  const getLayoutProps = () => {
+    if (verifying) {
+      return {
+        title: isEn ? 'Reset Password' : 'Atur Ulang Password',
+        subtitle: isEn ? 'Verifying link...' : 'Memverifikasi tautan...',
+      };
+    }
+    if (error && !email) {
+      return {
+        title: isEn ? 'Invalid Link' : 'Tautan Tidak Valid',
+        subtitle: error,
+      };
+    }
+    if (success) {
+      return {
+        title: isEn ? 'Success!' : 'Berhasil!',
+        subtitle: isEn ? 'Your password has been successfully reset!' : 'Password Anda telah berhasil diatur ulang!',
+      };
+    }
+    return {
+      title: isEn ? 'Reset Password' : 'Atur Ulang Password',
+      subtitle: isEn ? `Create a new password for ${email}` : `Buat password baru untuk ${email}`,
+    };
+  };
+
+  const layoutProps = getLayoutProps();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cloud-canvas dark:bg-[#121212] px-4 transition-colors">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <Link to="/">
-            <img
-              src={theme === 'dark' ? '/assets/dark/fuenzer-research-logo-dark.webp' : '/assets/light/fuenzer-research-logo-light.webp'}
-              alt="Fuenzer Research"
-              className="h-10 w-auto"
-            />
+    <AuthLayout
+      title={layoutProps.title}
+      subtitle={layoutProps.subtitle}
+      error={validationError}
+      onErrorDismiss={() => setValidationError(null)}
+      showBackButton={true}
+      backButtonTitle={isEn ? 'Back to Login' : 'Kembali ke Login'}
+    >
+      {verifying ? (
+        <div className="flex flex-col items-center gap-3 py-6">
+          <div className="w-8 h-8 border-3 border-fuenzer-teal/30 border-t-fuenzer-teal rounded-full animate-spin" />
+        </div>
+      ) : error && !email ? (
+        <div className="text-center py-4 space-y-4">
+          <div className="flex justify-center">
+            <AlertCircle className="w-12 h-12 text-red-500" />
+          </div>
+          <Link
+            to="/login"
+            className="flex w-full h-11 rounded-xl bg-fuenzer-teal-dark text-white text-sm font-bold hover:bg-fuenzer-teal transition-colors items-center justify-center gap-2 font-sans"
+          >
+            {isEn ? 'Back to Login' : 'Kembali ke Login'}
           </Link>
         </div>
+      ) : success ? (
+        <div className="text-center py-4 space-y-6">
+          <div className="flex justify-center">
+            <CheckCircle2 className="w-16 h-16 text-teal-500 animate-bounce" />
+          </div>
+          <Link
+            to="/login"
+            className="w-full h-11 rounded-xl bg-fuenzer-teal-dark text-white text-sm font-bold hover:bg-fuenzer-teal transition-colors flex items-center justify-center gap-2 font-sans"
+          >
+            {isEn ? 'Go to Login' : 'Masuk Sekarang'}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400 text-xs font-sans">
+              {error}
+            </div>
+          )}
 
-        {/* Card */}
-        <div className="bg-paper-white dark:bg-ink-black rounded-2xl shadow-xl border border-cloud-canvas dark:border-stone-gray p-8 relative transition-all duration-300">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif mb-2">
-              {isEn ? 'Reset Password' : 'Atur Ulang Password'}
-            </h1>
-            {email && (
-              <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">
-                {isEn ? `Create a new password for ` : `Buat password baru untuk `}
-                <strong className="text-fuenzer-teal">{email}</strong>
-              </p>
-            )}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-gray dark:text-silver-mist pl-1 font-sans">
+              {isEn ? 'New Password' : 'Password Baru'}
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={isEn ? "At least 6 characters" : "Minimal 6 karakter"}
+                required
+                minLength={6}
+                className="w-full h-11 pl-10 pr-11 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:border-fuenzer-teal focus:ring-1 focus:ring-fuenzer-teal/30 transition-colors font-sans"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-silver-mist hover:text-ink-black dark:hover:text-paper-white transition-colors cursor-pointer"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
-          {verifying ? (
-            <div className="flex flex-col items-center gap-3 py-6">
-              <div className="w-8 h-8 border-3 border-fuenzer-teal/30 border-t-fuenzer-teal rounded-full animate-spin" />
-              <p className="text-xs text-silver-mist font-sans">{isEn ? 'Verifying link...' : 'Memverifikasi tautan...'}</p>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-gray dark:text-silver-mist pl-1 font-sans">
+              {isEn ? 'Confirm New Password' : 'Konfirmasi Password Baru'}
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder={isEn ? "Confirm password" : "Ulangi password"}
+                required
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:border-fuenzer-teal focus:ring-1 focus:ring-fuenzer-teal/30 transition-colors font-sans"
+              />
             </div>
-          ) : error ? (
-            <div className="text-center py-4 space-y-4">
-              <div className="flex justify-center">
-                <AlertCircle className="w-12 h-12 text-red-500" />
-              </div>
-              <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">{error}</p>
-              <Link
-                to="/login"
-                className="inline-block w-full h-11 rounded-xl bg-fuenzer-teal-dark text-white text-sm font-bold hover:bg-fuenzer-teal transition-colors items-center justify-center gap-2 font-sans"
-              >
-                {isEn ? 'Back to Login' : 'Kembali ke Login'}
-              </Link>
-            </div>
-          ) : success ? (
-            <div className="text-center py-4 space-y-6">
-              <div className="flex justify-center">
-                <CheckCircle2 className="w-16 h-16 text-teal-500 animate-bounce" />
-              </div>
-              <p className="text-sm text-slate-gray dark:text-silver-mist font-sans">
-                {isEn 
-                  ? 'Your password has been successfully reset!' 
-                  : 'Password Anda telah berhasil diatur ulang!'}
-              </p>
-              <Link
-                to="/login"
-                className="w-full h-11 rounded-xl bg-fuenzer-teal-dark text-white text-sm font-bold hover:bg-fuenzer-teal transition-colors flex items-center justify-center gap-2 font-sans"
-              >
-                {isEn ? 'Go to Login' : 'Masuk Sekarang'}
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting || password.length < 6 || password !== confirmPassword}
+            className="w-full h-11 rounded-xl bg-fuenzer-teal-dark text-white text-sm font-bold hover:bg-fuenzer-teal transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-sans cursor-pointer mt-2"
+          >
+            {submitting ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                {isEn ? 'Reset Password' : 'Reset Password'}
                 <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400 text-xs font-sans">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-gray dark:text-silver-mist pl-1 font-sans">
-                  {isEn ? 'New Password' : 'Password Baru'}
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={isEn ? "At least 6 characters" : "Minimal 6 karakter"}
-                    required
-                    minLength={6}
-                    className="w-full h-11 pl-10 pr-11 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:border-fuenzer-teal focus:ring-1 focus:ring-fuenzer-teal/30 transition-colors font-sans"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-silver-mist hover:text-ink-black dark:hover:text-paper-white transition-colors cursor-pointer"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-gray dark:text-silver-mist pl-1 font-sans">
-                  {isEn ? 'Confirm New Password' : 'Konfirmasi Password Baru'}
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder={isEn ? "Confirm password" : "Ulangi password"}
-                    required
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-cloud-canvas/30 dark:bg-stone-gray/20 text-sm text-ink-black dark:text-paper-white placeholder:text-silver-mist outline-none focus:border-fuenzer-teal focus:ring-1 focus:ring-fuenzer-teal/30 transition-colors font-sans"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting || password.length < 6 || password !== confirmPassword}
-                className="w-full h-11 rounded-xl bg-fuenzer-teal-dark text-white text-sm font-bold hover:bg-fuenzer-teal transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-sans cursor-pointer mt-2"
-              >
-                {submitting ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    {isEn ? 'Reset Password' : 'Reset Password'}
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-          )}
-        </div>
-      </div>
-    </div>
+              </>
+            )}
+          </button>
+        </form>
+      )}
+    </AuthLayout>
   );
 }
+

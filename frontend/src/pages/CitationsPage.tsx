@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResearchStore } from '../store/researchStore';
 import { useUiStore } from '../store/uiStore';
@@ -8,6 +8,15 @@ import type { AcademicSource } from '../types/research';
 import { Navbar } from '../components/shared/Navbar';
 import { Footer } from '../components/shared/Footer';
 import { useSEO } from '../hooks/useSEO';
+import { getFormattedCitation, type CitationStyle, CITATION_STYLES } from '../utils/citationFormatter';
+import { Dropdown, DropdownItem } from '../components/shared/Dropdown';
+import {
+  type SortOption,
+  type FilterIndex,
+  INDEX_FILTERS,
+  sortSources,
+  filterByIndexes,
+} from '../utils/researchFilters';
 import {
   FileText,
   Copy,
@@ -24,44 +33,12 @@ import {
   ChevronDown,
 } from 'lucide-react';
 
-type CitationStyle = 'APA' | 'Harvard' | 'MLA' | 'Chicago' | 'Vancouver';
-const CITATION_STYLES: CitationStyle[] = ['APA', 'Harvard', 'MLA', 'Chicago', 'Vancouver'];
-
-type SortOption = 'relevance' | 'newest' | 'oldest' | 'title';
-type FilterIndex = 'All' | 'SINTA 1' | 'SINTA 2' | 'SINTA 3' | 'SINTA 4' | 'SINTA 5' | 'SINTA 6' | 'Scopus' | 'Garuda';
-
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'relevance', label: 'Most Relevant' },
   { value: 'newest', label: 'Newest First' },
   { value: 'oldest', label: 'Oldest First' },
   { value: 'title', label: 'Title (A-Z)' },
 ];
-
-const INDEX_FILTERS: FilterIndex[] = ['All', 'SINTA 1', 'SINTA 2', 'SINTA 3', 'SINTA 4', 'SINTA 5', 'SINTA 6', 'Scopus', 'Garuda'];
-
-// Citation formatter
-function getFormattedCitation(source: AcademicSource, style: CitationStyle) {
-  const authorsArr = source.authors || [];
-  const authors = authorsArr.length > 0 ? authorsArr.join(', ') : 'Penulis tidak tersedia';
-  const year = source.year > 0 ? source.year : 'n.d.';
-  const title = source.title;
-  const pub = source.publisher || 'Unknown Publisher';
-
-  switch (style) {
-    case 'APA':
-      return `${authors} (${year}). ${title}. ${pub}.`;
-    case 'Harvard':
-      return `${authors}, ${year}. ${title}. ${pub}.`;
-    case 'MLA':
-      return `${authors}. "${title}." ${pub}, ${year}.`;
-    case 'Chicago':
-      return `${authors}. "${title}." ${pub} (${year}).`;
-    case 'Vancouver':
-      return `${authors}. ${title}. ${pub}. ${year};`;
-    default:
-      return `${authors} (${year}). ${title}. ${pub}.`;
-  }
-}
 
 // BibTeX generator helper
 function generateBibTeX(sources: AcademicSource[]): string {
@@ -74,84 +51,6 @@ function generateBibTeX(sources: AcademicSource[]): string {
     .join('\n\n');
 }
 
-function sortSources(sources: AcademicSource[], sort: SortOption): AcademicSource[] {
-  const copy = [...sources];
-  if (sort === 'newest') return copy.sort((a, b) => b.year - a.year);
-  if (sort === 'oldest') return copy.sort((a, b) => a.year - b.year);
-  if (sort === 'title') return copy.sort((a, b) => a.title.localeCompare(b.title));
-  return copy;
-}
-
-function filterByIndexes(sources: AcademicSource[], filters: Set<FilterIndex>): AcademicSource[] {
-  if (filters.has('All') || filters.size === 0) return sources;
-  return sources.filter((s) =>
-    [...filters].some((f) => {
-      if (f === 'Scopus') return s.indexes?.some((i) => i.provider.toLowerCase() === 'scopus');
-      if (f === 'Garuda') return s.indexes?.some((i) => i.provider.toLowerCase() === 'garuda');
-      const tier = f.split(' ')[1]; // 'SINTA 1' → '1'
-      return s.indexes?.some((i) => i.provider.toLowerCase() === 'sinta' && i.tier === tier);
-    })
-  );
-}
-
-// Reusable Dropdown Component
-function Dropdown({
-  trigger,
-  children,
-  align = 'right',
-}: {
-  trigger: React.ReactNode;
-  children: React.ReactNode;
-  align?: 'right' | 'left';
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handle = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handle);
-    return () => document.removeEventListener('mousedown', handle);
-  }, []);
-
-  return (
-    <div className="relative font-sans" ref={ref}>
-      <div onClick={() => setOpen((o) => !o)}>{trigger}</div>
-      {open && (
-        <div
-          className={`absolute top-full mt-1 z-30 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-xl py-1 min-w-[160px] animate-in fade-in zoom-in-95 duration-150 ${align === 'right' ? 'right-0' : 'left-0'}`}
-          onClick={() => setOpen(false)}
-        >
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DropdownItem({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-        active
-          ? 'font-bold text-fuenzer-teal bg-fuenzer-teal/10'
-          : 'text-ink-black dark:text-cloud-canvas hover:bg-cloud-canvas/60 dark:hover:bg-stone-gray/30'
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
 
 export function CitationsPage() {
   useSEO({
@@ -266,6 +165,7 @@ export function CitationsPage() {
     relevance: 'Most Relevant',
     newest: 'Newest First',
     oldest: 'Oldest First',
+    citations: 'Most Cited',
     title: 'Title (A-Z)',
   };
 
