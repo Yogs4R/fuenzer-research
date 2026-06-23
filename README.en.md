@@ -9,7 +9,9 @@
 
 ![Fuenzer Research Banner](frontend/public/og-image.png)
 
-[🇮🇩 Indonesia](README.md) | [🌐 English](README.en.md)
+<p align="center">
+  <a href="README.md">🇮🇩 Indonesia</a> | <a href="README.en.md">🌐 English</a>
+</p>
 
 > **Academic Research, AI-Synthesized** — An AI-powered scientific research assistant designed to help Indonesian academics search, map SINTA/Garuda indexes, and instantly synthesize national and global scientific literature.
 
