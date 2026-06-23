@@ -20,36 +20,11 @@
     <!-- LLM Autodiscovery -->
     <link rel="alternate" type="text/plain" title="LLMs.txt" href="/llms.txt" />
 
+    <!-- Trusted Types Policy -->
+    <script src="/trusted-types.js"></script>
+
     <!-- Google Analytics (GA4) with Consent Mode -->
-    <script>
-      (function() {
-        const gaId = "G-8WBME81KPS";
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        window.gtag = gtag;
-
-        let consent = 'denied';
-        try {
-          consent = localStorage.getItem('cookie-consent') || 'denied';
-        } catch (e) {}
-
-        gtag('consent', 'default', {
-          'analytics_storage': consent === 'accepted' ? 'granted' : 'denied',
-          'ad_storage': consent === 'accepted' ? 'granted' : 'denied',
-          'personalization_storage': consent === 'accepted' ? 'granted' : 'denied',
-          'functionality_storage': 'granted',
-          'security_storage': 'granted'
-        });
-
-        const script = document.createElement('script');
-        script.async = true;
-        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + gaId;
-        document.head.appendChild(script);
-
-        gtag('js', new Date());
-        gtag('config', gaId);
-      })();
-    </script>
+    <script src="/analytics.js"></script>
 
     <link rel="canonical" href="https://research.fuenzer.web.id/" />
 
@@ -87,7 +62,7 @@
     <link rel="manifest" href="/site.webmanifest">
   </head>
   <body>
-    <h1 style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Fuenzer Research | AI Scientific Research Assistant</h1>
+    <h1 class="sr-only">Fuenzer Research | AI Scientific Research Assistant</h1>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
