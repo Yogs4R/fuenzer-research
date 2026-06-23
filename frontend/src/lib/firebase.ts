@@ -40,8 +40,8 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 // Auth providers
-export const googleProvider = new GoogleAuthProvider();
-export const microsoftProvider = new OAuthProvider('microsoft.com');
+const googleProvider = new GoogleAuthProvider();
+const microsoftProvider = new OAuthProvider('microsoft.com');
 
 // ─── Auth Helper Functions ────────────────────────────────────────────────────
 

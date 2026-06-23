@@ -11,7 +11,6 @@ import {
   collection,
   doc,
   setDoc,
-  getDoc,
   getDocs,
   deleteDoc,
   query,
@@ -114,10 +113,3 @@ export async function loadBookmarks(userId: string): Promise<AcademicSource[]> {
   });
 }
 
-/** Check if a source is bookmarked */
-export async function isBookmarked(userId: string, sourceId: string): Promise<boolean> {
-  const docId = encodeURIComponent(sourceId);
-  const ref = doc(db, 'users', userId, 'bookmarks', docId);
-  const snap = await getDoc(ref);
-  return snap.exists();
-}

@@ -25,7 +25,7 @@ export function getCurrentHistoryKey(): string {
   return isAnonymous ? 'fuenzer_search_history_guest' : `fuenzer_search_history_${userId}`;
 }
 
-export function getCurrentBookmarksKey(): string {
+function getCurrentBookmarksKey(): string {
   const user = useAuthStore.getState().user;
   const userId = user?.uid || null;
   const isAnonymous = user?.isAnonymous ?? true;

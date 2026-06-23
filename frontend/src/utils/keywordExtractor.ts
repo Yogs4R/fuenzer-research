@@ -117,26 +117,3 @@ export function extractKeywords(input: string): string {
   return keywords.join(' ').trim();
 }
 
-/**
- * Checks if the input contains ONLY noise words (no meaningful keywords).
- * Useful for showing validation errors.
- * 
- * @param input - Raw user input string
- * @returns true if no meaningful keywords were found
- */
-export function hasNoKeywords(input: string): boolean {
-  return extractKeywords(input).length === 0;
-}
-
-/**
- * Checks if the extracted keywords differ from the original input.
- * If they differ, it means noise words were stripped.
- * 
- * @param input - Raw user input string
- * @returns true if extraction changed the input (noise was removed)
- */
-export function wasExtracted(input: string): boolean {
-  if (!input || !input.trim()) return false;
-  const cleaned = extractKeywords(input);
-  return cleaned.toLowerCase() !== input.trim().toLowerCase().replace(/\s+/g, ' ');
-}

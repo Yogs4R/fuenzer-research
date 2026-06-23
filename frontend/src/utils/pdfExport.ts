@@ -4,7 +4,7 @@ import type { AcademicSource } from '../types/research';
 type CitationStyle = 'APA' | 'Harvard' | 'MLA' | 'Chicago' | 'Vancouver';
 
 // Helper to format citations programmatically
-export function getFormattedCitation(source: AcademicSource, style: CitationStyle) {
+function getFormattedCitation(source: AcademicSource, style: CitationStyle) {
   const authorsArr = source.authors || [];
   const authors = authorsArr.length > 0 ? authorsArr.join(', ') : 'Penulis tidak tersedia';
   const year = source.year > 0 ? source.year : 'n.d.';

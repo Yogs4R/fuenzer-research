@@ -38,8 +38,6 @@ export interface AutocompleteResponse {
 
 export type SearchScope = 'global' | 'indonesia';
 
-export type ContentType = 'All' | 'Articles' | 'Journals' | 'Books';
-
 export type LoadingPhase =
   | 'idle'
   | 'searching'

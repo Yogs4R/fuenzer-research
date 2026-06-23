@@ -21,7 +21,7 @@ import {
 import { getFriendlyErrorMessage } from '../utils/authErrors';
 import { useUiStore } from './uiStore';
 
-export interface AuthUser {
+interface AuthUser {
   uid: string;
   email: string | null;
   displayName: string | null;
