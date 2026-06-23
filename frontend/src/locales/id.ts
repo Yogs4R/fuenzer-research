@@ -206,11 +206,19 @@ export const id = {
       a4: 'Ya, sistem backend kami menerapkan pembatasan suhu (temperature 0.3) dan aturan prompt ketat yang memaksa Gemini 3.1 Flash Lite hanya mensintesis temuan berdasarkan abstrak yang disediakan, mencegah halusinasi eksternal, serta menjaga integritas akademis.',
       q5: 'Format ekspor apa saja yang saat ini didukung?',
       a5: 'Saat ini, Anda dapat mengekspor ringkasan akademis dan tinjauan literatur dalam format PDF. Untuk sitasi dan bibliografi, Anda dapat menyalinnya secara instan atau mengekspornya dalam file BibTeX (.bib) standar yang terintegrasi dengan LaTeX dan manajer referensi.'
-    }
+    },
+    ctaTitle: 'Siap mengakselerasi riset Anda?',
+    ctaDesc: 'Rasakan pengalaman Fuenzer Research, mesin penemuan ilmiah bertenaga AI Anda. Sintesis instan, database global, dan indeks siap SINTA.',
+    ctaButton: 'Mulai Riset Sekarang'
   },
   updates: {
     title: 'Catatan Pembaruan',
     logs: [
+      {
+        date: '23 Juni 2026',
+        title: 'Peningkatan Sistem & SEO',
+        desc: 'Menerapkan alur verifikasi email kustom, menambahkan halaman error dwi-bahasa dengan perutean wildcard, mengintegrasikan hook useSEO dinamis dengan pemeriksaan persetujuan cookie, memperbaiki masalah hierarki heading semantik, memperbarui diagram arsitektur ke Mermaid, dan mengoptimalkan pembatas laju (rate limiter) menjadi 15 req/menit.'
+      },
       {
         date: '30 Mei 2026',
         title: 'Rilis Alpha',

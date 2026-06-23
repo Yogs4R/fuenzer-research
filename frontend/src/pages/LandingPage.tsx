@@ -598,6 +598,35 @@ export function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* CTA Section */}
+      <section className="max-w-4xl mx-auto px-6 pb-24 relative z-10">
+        <FadeIn direction="up">
+          <div className="bg-paper-white dark:bg-ink-black rounded-3xl p-10 md:p-14 text-center border border-cloud-canvas dark:border-stone-gray shadow-xl relative overflow-hidden group transition-colors duration-200">
+            {/* Subtle animated background gradients */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-fuenzer-teal/10 dark:bg-fuenzer-teal/20 rounded-full blur-3xl pointer-events-none transition-all duration-300 group-hover:scale-110" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-code-blue/5 dark:bg-code-blue/10 rounded-full blur-3xl pointer-events-none transition-all duration-300 group-hover:scale-110" />
+
+            <div className="relative z-10 space-y-6 max-w-2xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold font-serif text-ink-black dark:text-paper-white leading-tight">
+                {t.landing.ctaTitle}
+              </h2>
+              <p className="text-sm md:text-base text-slate-gray dark:text-silver-mist font-sans leading-relaxed">
+                {t.landing.ctaDesc}
+              </p>
+              <div className="pt-4 flex justify-center">
+                <button
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="inline-flex items-center gap-2 px-8 py-3.5 bg-fuenzer-teal hover:bg-fuenzer-teal-dark text-white rounded-full font-sans font-bold text-sm transition-all duration-300 shadow-md hover:shadow-fuenzer-teal/20 transform hover:-translate-y-0.5 cursor-pointer"
+                >
+                  <Search className="w-4 h-4" />
+                  {t.landing.ctaButton}
+                </button>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+      </section>
       </main>
 
       {/* Footer */}

@@ -206,11 +206,19 @@ export const en = {
       a4: 'Yes, our backend operates under strict temperature constraints (0.3) and prompt rules that force the Gemini 3.1 Flash Lite model to synthesize findings strictly from the provided abstracts, preventing external hallucinations and maintaining academic integrity.',
       q5: 'How can I export my research, citations, and bibliography?',
       a5: 'Currently, you can export your academic summaries and literature reviews as PDF files. For citations, you can copy them instantly or export them as standard BibTeX (.bib) files, which seamlessly integrate with LaTeX and other reference managers.'
-    }
+    },
+    ctaTitle: 'Ready to accelerate your research?',
+    ctaDesc: 'Experience Fuenzer Research, your AI-powered scientific discovery engine. Instant synthesis, global databases, and SINTA-ready indexing.',
+    ctaButton: 'Start Researching'
   },
   updates: {
     title: 'Update Logs',
     logs: [
+      {
+        date: '23 June 2026',
+        title: 'System Enhancements & SEO',
+        desc: 'Implemented custom branded email verification flow, added a bilingual error page with wildcard routing, integrated dynamic useSEO hook with cookie consent check, resolved semantic heading hierarchy issues, updated architecture diagrams to Mermaid, and optimized rate limiter constraints to 15 req/min.'
+      },
       {
         date: '30 May 2026',
         title: 'Alpha Release',
