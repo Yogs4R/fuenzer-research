@@ -26,7 +26,7 @@ Built for **JuaraVibeCoding Season 1** Hackathon by Google.
 - [The Problem We Solve](#-the-problem-we-solve)
 - [Our Solution](#-our-solution)
 - [What Makes Us Unique](#-what-makes-us-unique)
-- [Full Architecture](#-full-architecture)
+- [Full Architecture](#️-full-architecture)
 - [Features](#-features)
 - [Tech Stack](#️-tech-stack)
 - [Getting Started](#-getting-started)
