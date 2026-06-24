@@ -441,13 +441,15 @@ docker run -p 8080:8080 \
 | Layer | Implementation |
 |-------|----------------|
 | **CORS** | Strict whitelist: `localhost:5173` and `research.fuenzer.web.id` only |
-| **Rate Limiting** | 15 requests/minute per IP (protecting Gemini API quota) |
+| **Rate Limiting** | 15 req/minute (global), **3 req/5 mins (Auth)** to prevent email bombing |
 | **Security Headers** | HSTS, X-Frame-Options, CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy |
 | **Input Validation** | Query 3-200 chars, strict scope and type checks |
+| **Email Security** | RFC 5322 Regex, CRLF sanitization (Header Injection Prevention), PII-free logs |
 | **Gibberish Detection** | Dual-layer: Frontend vowel checks and keyboard mash detection + Backend regex pattern checks |
 | **XSS Prevention** | DOMPurify sanitizes Markdown output from the AI |
+| **SQLi Prevention** | *Parameterized queries* for all local SQLite Garuda database executions |
 | **Anti-Prompt Injection** | Explict rules in Gemini system prompts to ignore override attempts |
-| **API Key Protection** | API keys stored securely in Go backend environment — never exposed to clients |
+| **Secret Management** | API keys stored securely in Go backend, `.env` explicitly ignored in Git |
 | **Auth** | Firebase Auth (Google + Microsoft + Email) + anonymous session fallbacks |
 
 ---

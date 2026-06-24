@@ -108,7 +108,9 @@ Server backend akan berjalan di `http://localhost:8080`
 
 - **Enkripsi State**: Seluruh komunikasi kunci API diproses secara tertutup di backend dan tidak pernah bocor ke sisi klien.
 - **CORS Configuration**: CORS dibatasi secara ketat hanya menerima asal request dari port frontend (`http://localhost:5173`) dan domain produksi (`https://research.fuenzer.web.id`).
-- **Rate Limiting**: Membatasi hingga maksimum 15 kueri/menit untuk setiap alamat IP unik guna menghindari serangan brute force.
+- **Rate Limiting**: Membatasi hingga maksimum 15 kueri/menit secara global, dan **3 kueri/5 menit khusus untuk endpoint autentikasi** guna mencegah serangan email bombing dan brute force.
+- **Email Security**: Validasi format email yang ketat (RFC 5322) dan sanitasi karakter CRLF (`\r\n`) pada header SMTP untuk memitigasi celah *Email Header Injection*. PII (alamat email pengguna) dipotong dari log sistem.
+- **SQL Injection Prevention**: Penggunaan *Parameterized Queries* secara komprehensif pada kueri klien SQLite Garuda untuk menghindari risiko injeksi SQL.
 - **Stateless Processing**: Tidak ada data kueri riset pribadi yang disimpan secara permanen di backend untuk melatih model AI.
 
 ---

@@ -445,13 +445,15 @@ docker run -p 8080:8080 \
 | Layer | Implementasi |
 |-------|-------------|
 | **CORS** | Strict whitelist: hanya `localhost:5173` dan `research.fuenzer.web.id` |
-| **Rate Limiting** | 15 requests/menit per IP (melindungi Gemini quota) |
+| **Rate Limiting** | 15 req/menit (global), **3 req/5 menit (Auth)** untuk mencegah email bombing |
 | **Security Headers** | HSTS, X-Frame-Options, CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy |
 | **Input Validation** | Query 3-200 karakter, scope validation, type validation |
+| **Email Security** | Validasi Regex RFC 5322, sanitasi CRLF (Header Injection Prevention), log sistem tanpa PII |
 | **Gibberish Detection** | Dual-layer: frontend (vowel check + keyboard mash) + backend (pattern matching) |
 | **XSS Prevention** | DOMPurify untuk sanitasi output Markdown dari AI |
+| **SQLi Prevention** | *Parameterized queries* pada semua eksekusi database SQLite Garuda |
 | **Anti-Prompt Injection** | System prompt dengan instruksi eksplisit untuk menolak override attempts |
-| **API Key Protection** | Semua API keys tersimpan di backend — tidak pernah exposed ke client |
+| **Secret Management** | API keys di backend, file `.env` di-ignore eksplisit di frontend & root `.gitignore` |
 | **Auth** | Firebase Auth (Google + Microsoft + Email) + anonymous session fallback |
 
 ---

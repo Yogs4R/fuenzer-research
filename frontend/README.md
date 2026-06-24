@@ -127,6 +127,7 @@ Hasil kompilasi akan dimasukkan ke folder `/dist` siap saji.
 - **XSS Mitigation**: Seluruh hasil keluaran teks kaya (Markdown) dari kecerdasan buatan disaring secara statis menggunakan **DOMPurify** sebelum dirender lewat `dangerouslySetInnerHTML`.
 - **Stateless Session**: Data sitasi dan status login perpustakaan pengguna disimpan secara aman di dalam memory state lokal dan sesi enkripsi browser.
 - **Client Shielding**: Frontend tidak pernah menyimpan atau mengirim kueri langsung ke Google Gemini. Seluruh panggilan dilewatkan secara aman lewat Gateway API Backend.
+- **Environment Protection**: Pola `.env` diabaikan secara eksplisit di `.gitignore` untuk mencegah kebocoran kredensial rahasia secara tidak sengaja ke repositori publik.
 
 ---
 
