@@ -54,7 +54,8 @@ echo "Membersihkan image lama agar storage aman..."
 # Mencari digests (ID unik) dari semua image yang tidak memiliki tag di repositori tersebut
 UNTAGGED_IMAGES=$(gcloud artifacts docker images list $REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$APP_NAME \
     --filter="NOT tags:*" \
-    --format="get(package.version)")
+    --format="value(version)" | tr -d '\r')
+
 
 if [ -z "$UNTAGGED_IMAGES" ]; then
     echo "✅ Tidak ada image lama yang menumpuk."
@@ -66,7 +67,7 @@ else
             --repository=$REPO_NAME \
             --location=$REGION \
             --package=$APP_NAME \
-            --quiet
+            --quiet || true
     done
     echo "✅ Pembersihan selesai! Hanya menyisakan versi terbaru."
 fi
