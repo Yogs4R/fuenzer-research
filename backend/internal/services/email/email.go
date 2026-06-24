@@ -21,6 +21,17 @@ func sanitizeHeader(s string) string {
 	return strings.NewReplacer("\r", "", "\n", "").Replace(s)
 }
 
+// extractEmail extracts the raw email address from a formatted string like "Name <email@domain.com>".
+// If no angle brackets are found, it returns the trimmed string.
+func extractEmail(from string) string {
+	start := strings.Index(from, "<")
+	end := strings.Index(from, ">")
+	if start != -1 && end != -1 && end > start {
+		return strings.TrimSpace(from[start+1 : end])
+	}
+	return strings.TrimSpace(from)
+}
+
 func (c *Client) SendEmail(to, subject, htmlBody string) error {
 	if c.cfg.SMTPHost == "" {
 		return fmt.Errorf("SMTP host is not configured")
@@ -47,11 +58,15 @@ func (c *Client) SendEmail(to, subject, htmlBody string) error {
 
 	addr := fmt.Sprintf("%s:%s", c.cfg.SMTPHost, c.cfg.SMTPPort)
 
+	// Envelope sender must be a raw email address (e.g. "noreply@domain.com")
+	envelopeSender := extractEmail(c.cfg.SMTPFrom)
+
 	// Send email
-	err := smtp.SendMail(addr, auth, c.cfg.SMTPFrom, []string{to}, []byte(msg.String()))
+	err := smtp.SendMail(addr, auth, envelopeSender, []string{to}, []byte(msg.String()))
 	if err != nil {
 		return fmt.Errorf("failed to send email via SMTP: %w", err)
 	}
 
 	return nil
 }
+
