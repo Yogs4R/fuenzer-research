@@ -1,0 +1,35 @@
+# Fuenzer Research
+
+Fuenzer Research is an AI-powered scientific research assistant designed to accelerate Indonesian and global academic discovery. It allows researchers, students, and lecturers to search, map local and global databases concurrently, and generate structured literature synthesis using Google Gemini.
+
+Founder: Ridwan Yoga Suryantara
+Live App: https://research.fuenzer.web.id/
+
+## The Problem We Solve
+- **SINTA Tier Verification**: Indonesian journals are accredited across SINTA tiers (1-6). Checking these manual tiers on separate platforms is tedious; Fuenzer Research solves this by automating tier mapping dynamically in real-time search results.
+- **Garuda Search Accessibility**: The Garuda Indonesian national database lacks programmable search indexing. We curated 652K+ publications into a local indexed SQLite database to make Indonesian research fully searchable.
+- **Disconnected Databases**: Global tools do not recognize Indonesian local academic contexts. Fuenzer integrates OpenAlex, Garuda, Google Books, and SINTA mapping into a unified interface.
+- **Abstract-Reading Overhead**: Reviewing literature is slow. Fuenzer synthesizes abstracts dynamically in under 5 seconds using Gemini to highlight methodology, findings, and contributions.
+
+## Key Capabilities & Features
+- **Concurrent Search**: One search query queries OpenAlex (200M+ global publications), Garuda (652K+ Indonesian publications), Google Books (160M+ indexed book references), Scopus (38M+ indexed journal references), Sinta (700+ indexed journal references & 7000+ indexed articles), and maps SINTA tiers in parallel.
+- **Dynamic AI Synthesis**: Generates instant structured literature summaries from selected references with Google Gemini 3.1 Flash Lite.
+- **Contextual AI Compare (Q&A)**: Select multiple references and ask the AI specific comparative questions (e.g., comparing methodologies or findings) restricted strictly to the selected abstracts to prevent hallucinations.
+- **Multi-Format Citation & Bibliography Exporter**: Generates references in APA, Harvard, MLA, Chicago, and Vancouver formats. Exports bulk references as BibTeX (.bib) files or batch-generated PDFs inside a ZIP archive.
+- **Sync & Workspace**: Firebase authentication allows syncing search history, library bookmarks, and comparisons across devices.
+
+## Technology Stack
+- **Frontend**: React 19, Vite 8, TypeScript 6, Tailwind CSS 4, Zustand 5, TanStack React Query 5.
+- **Backend**: Golang 1.25, Fiber (high-performance REST API with concurrent goroutine requests).
+- **Databases**: SQLite (FTS search for Garuda database), local SINTA mapped dicts, Firebase Firestore (workspace sync).
+- **AI Engine**: Google Gemini 3.1 Flash Lite (configured with temperature 0.3, token-efficient abstracts-only payload, and strict anti-hallucination prompt rules).
+
+## Main Navigation / Sitemap
+- Primary Search/Discovery Interface: [/](https://research.fuenzer.web.id/) - Academic query input with location filters (Global/Indonesia) and index selectors (SINTA, GARUDA, Scopus, Google Scholar, Google Books, Scimago).
+- Playground Workspace: [/playground/](https://research.fuenzer.web.id/playground/) - Dual-pane workspace showing search result cards, reference selection checklists, dynamic Gemini-powered AI Assistant synthesis chat, and multi-format bibliography exporter.
+- Personal Library: [/library/](https://research.fuenzer.web.id/library/) - Bookmark library containing saved research references, custom tier filtering, and an AI-driven multi-reference comparative chat.
+- Citation Exporter: [/citations/](https://research.fuenzer.web.id/citations/) - Interactive formatting tool for bulk citation copy (APA, Harvard, MLA, Chicago, Vancouver) and BibTeX file downloads.
+- Login Portal: [/login/](https://research.fuenzer.web.id/login/) - Google and Microsoft OAuth authentication gateway.
+- Registration Gateway: [/signup/](https://research.fuenzer.web.id/signup/) - Account creation page.
+- Privacy Policy: [/privacy/](https://research.fuenzer.web.id/privacy/) - Information on traffic metrics, cookies consent status, and Firebase data handling.
+- Terms of Service: [/terms/](https://research.fuenzer.web.id/terms/) - Terms of use for the AI synthesis features and academic database search tools.
