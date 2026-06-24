@@ -46,7 +46,7 @@ gcloud run deploy $APP_NAME \
     --memory 1Gi \
     --max-instances=1 \
     --env-vars-file=env.yaml \
-    --set-secrets=GEMINI_API_KEY=GEMINI_API_KEY:latest,GOOGLE_BOOKS_API_KEY=GOOGLE_BOOKS_API_KEY:latest,SMTP_USER=SMTP_USER:latest,SMTP_PASS=SMTP_PASS:latest,FIREBASE_API_KEY=FIREBASE_API_KEY:latest
+    --set-secrets=GEMINI_API_KEY=GEMINI_API_KEY:latest,GOOGLE_BOOKS_API_KEY=GOOGLE_BOOKS_API_KEY:latest,SMTP_USER=SMTP_USER:latest,SMTP_PASS=SMTP_PASS:latest
 
 # Pembersihan otomatis Image lama (Untagged)
 echo "Membersihkan image lama agar storage aman..."

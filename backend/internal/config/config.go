@@ -19,7 +19,7 @@ type Config struct {
 	SMTPUser          string
 	SMTPPass          string
 	SMTPFrom          string
-	FirebaseAPIKey    string
+	FirebaseProjectID string
 }
 
 // Load reads environment variables from .env and returns a Config.
@@ -38,7 +38,7 @@ func Load() *Config {
 		SMTPUser:          getEnv("SMTP_USER", ""),
 		SMTPPass:          getEnv("SMTP_PASS", ""),
 		SMTPFrom:          getEnv("SMTP_FROM", ""),
-		FirebaseAPIKey:    getEnv("FIREBASE_API_KEY", ""),
+		FirebaseProjectID: getEnv("FIREBASE_PROJECT_ID", ""),
 	}
 
 	if cfg.GeminiAPIKey == "" {
