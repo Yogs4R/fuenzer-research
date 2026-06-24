@@ -133,7 +133,7 @@ export function VerifyEmailPage() {
       <div className="min-h-screen flex items-center justify-center bg-cloud-canvas dark:bg-[#121212] px-4 transition-colors">
         <div className="w-full max-w-md bg-paper-white dark:bg-ink-black rounded-2xl shadow-xl border border-cloud-canvas dark:border-stone-gray p-8 text-center transition-all duration-300 space-y-6">
           <div className="mx-auto w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center">
-            <CheckCircle2 className="w-10 h-10 text-teal-500 animate-bounce" />
+            <CheckCircle2 className="w-10 h-10 text-teal-500" />
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-ink-black dark:text-paper-white font-serif">{t.auth.verifiedTitle}</h1>

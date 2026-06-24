@@ -259,7 +259,7 @@ func getEmailVerificationTemplate(link string) string {
       border-bottom: 1px solid #1E293B;
     }
     .header img {
-      height: 32px;
+      height: 48px;
       width: auto;
     }
     .content {
@@ -282,7 +282,7 @@ func getEmailVerificationTemplate(link string) string {
     }
     .btn-container {
       text-align: center;
-      margin: 28px 0;
+      margin: 24px 0;
     }
     .btn {
       background-color: #0D9488;
@@ -344,8 +344,12 @@ func getEmailVerificationTemplate(link string) string {
         <!-- Indonesian Section -->
         <div class="section-title">Verifikasi Alamat Email Anda</div>
         <p>Halo,</p>
-        <p>Terima kasih telah mendaftar di Fuenzer Research. Silakan klik tombol di atas atau gunakan link di bawah ini untuk memverifikasi alamat email Anda dan mengaktifkan akun:</p>
+        <p>Terima kasih telah mendaftar di Fuenzer Research. Silakan klik tombol di bawah ini untuk memverifikasi alamat email Anda dan mengaktifkan akun:</p>
         
+        <div class="btn-container">
+          <a href="%s" class="btn" target="_blank">Verifikasi Email</a>
+        </div>
+
         <p style="font-size: 12px; color: #64748B; line-height: 1.5; margin-bottom: 0;">
           <strong>Penting:</strong> Tautan ini hanya berlaku selama 1 jam. Jika Anda tidak merasa melakukan pendaftaran ini, abaikan email ini.
         </p>
@@ -353,7 +357,7 @@ func getEmailVerificationTemplate(link string) string {
         <div class="divider"></div>
 
         <p style="font-size: 11px; color: #94A3B8; margin-bottom: 4px;">
-          If the button does not work, copy and paste this link into your browser:<br/>
+          If the buttons do not work, copy and paste this link into your browser:<br/>
           (Jika tombol tidak berfungsi, salin dan tempel link ini ke browser Anda):
         </p>
         <div class="link-fallback">
@@ -366,7 +370,7 @@ func getEmailVerificationTemplate(link string) string {
     </div>
   </div>
 </body>
-</html>`, link, link, link)
+</html>`, link, link, link, link)
 }
 
 func getResetPasswordEmailTemplate(link string) string {
@@ -404,7 +408,7 @@ func getResetPasswordEmailTemplate(link string) string {
       border-bottom: 1px solid #1E293B;
     }
     .header img {
-      height: 32px;
+      height: 48px;
       width: auto;
     }
     .content {
@@ -489,8 +493,12 @@ func getResetPasswordEmailTemplate(link string) string {
         <!-- Indonesian Section -->
         <div class="section-title">Atur Ulang Kata Sandi Anda</div>
         <p>Halo,</p>
-        <p>Kami menerima permintaan untuk mereset kata sandi akun Fuenzer Research Anda. Klik tombol di atas atau gunakan link di bawah ini untuk mengatur kata sandi baru:</p>
+        <p>Kami menerima permintaan untuk mereset kata sandi akun Fuenzer Research Anda. Klik tombol di bawah ini untuk mengatur kata sandi baru:</p>
         
+        <div class="btn-container">
+          <a href="%s" class="btn" target="_blank">Atur Ulang Kata Sandi</a>
+        </div>
+
         <p style="font-size: 12px; color: #64748B; line-height: 1.5; margin-bottom: 0;">
           <strong>Penting:</strong> Tautan ini hanya berlaku selama 1 jam. Jika Anda tidak merasa melakukan permintaan ini, abaikan email ini dan kata sandi Anda tidak akan berubah.
         </p>
@@ -498,7 +506,7 @@ func getResetPasswordEmailTemplate(link string) string {
         <div class="divider"></div>
 
         <p style="font-size: 11px; color: #94A3B8; margin-bottom: 4px;">
-          If the button does not work, copy and paste this link into your browser:<br/>
+          If the buttons do not work, copy and paste this link into your browser:<br/>
           (Jika tombol tidak berfungsi, salin dan tempel link ini ke browser Anda):
         </p>
         <div class="link-fallback">
@@ -511,5 +519,5 @@ func getResetPasswordEmailTemplate(link string) string {
     </div>
   </div>
 </body>
-</html>`, link, link, link)
+</html>`, link, link, link, link)
 }

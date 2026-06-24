@@ -128,7 +128,7 @@ export function ResetPasswordPage() {
       ) : success ? (
         <div className="text-center py-4 space-y-6">
           <div className="flex justify-center">
-            <CheckCircle2 className="w-16 h-16 text-teal-500 animate-bounce" />
+            <CheckCircle2 className="w-16 h-16 text-teal-500" />
           </div>
           <Link
             to="/login"
