@@ -23,11 +23,11 @@ RUN apk --no-cache upgrade && apk --no-cache add ca-certificates
 
 WORKDIR /app
 
-# Copy backend binary
-COPY --from=backend-builder /api ./api
-
 # Copy folder data (sinta.json & garuda.db) dari laptop ke container production
 COPY backend/data ./data
+
+# Copy backend binary
+COPY --from=backend-builder /api ./api
 
 # Copy frontend build output
 COPY --from=frontend-builder /app/frontend/dist ./public
