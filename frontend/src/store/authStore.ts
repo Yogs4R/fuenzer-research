@@ -49,6 +49,7 @@ interface AuthState {
   sendResetEmail: (email: string) => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
   reloadUser: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 /** Convert Firebase User to our lean AuthUser type */
@@ -230,6 +231,31 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
     } catch (err: unknown) {
       handleAuthError(err, set);
+    }
+  },
+
+  deleteAccount: async () => {
+    set({ loading: true, error: null });
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('No user is currently signed in.');
+
+      // 1. Clear user data in Firestore first (requires active authentication)
+      const { clearAllHistory, clearAllBookmarks } = await import('../lib/firestore');
+      await clearAllHistory(currentUser.uid);
+      await clearAllBookmarks(currentUser.uid);
+
+      // 2. Delete user in Firebase Authentication
+      const { deleteUser } = await import('firebase/auth');
+      await deleteUser(currentUser);
+
+      // 3. Clear local storage guest data
+      localStorage.removeItem('fuenzer_search_history_guest');
+      localStorage.removeItem('fuenzer_bookmarked_library_guest');
+
+      set({ loading: false });
+    } catch (err: unknown) {
+      handleAuthError(err, set, true);
     }
   },
 }));

@@ -113,3 +113,10 @@ export async function loadBookmarks(userId: string): Promise<AcademicSource[]> {
   });
 }
 
+/** Delete all bookmarks for a user */
+export async function clearAllBookmarks(userId: string): Promise<void> {
+  const colRef = collection(db, 'users', userId, 'bookmarks');
+  const snapshot = await getDocs(colRef);
+  const deletePromises = snapshot.docs.map((d) => deleteDoc(d.ref));
+  await Promise.all(deletePromises);
+}

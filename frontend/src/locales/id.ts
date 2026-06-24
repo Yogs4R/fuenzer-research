@@ -244,6 +244,11 @@ export const id = {
     logout: 'Keluar / Ganti Akun',
     close: 'Tutup',
     emailNotVerified: 'Email Anda belum terverifikasi. Silakan periksa kotak masuk atau spam email Anda.',
-    newVerificationSent: 'Email verifikasi baru telah dikirim.'
+    newVerificationSent: 'Email verifikasi baru telah dikirim.',
+    deleteAccount: 'Hapus Akun',
+    deleteAccountTitle: 'Hapus Akun?',
+    deleteAccountDesc: 'Apakah Anda benar-benar yakin? Tindakan ini permanen dan akan menghapus semua bookmark, riwayat pencarian, serta data pribadi Anda.',
+    cancel: 'Batal',
+    delete: 'Hapus'
   }
 };

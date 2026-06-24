@@ -154,6 +154,9 @@ export function ResetPasswordPage() {
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
               <input
                 type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isEn ? "At least 6 characters" : "Minimal 6 karakter"}
@@ -179,6 +182,9 @@ export function ResetPasswordPage() {
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-mist" />
               <input
                 type={showPassword ? 'text' : 'password'}
+                id="confirm-password"
+                name="confirm-password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder={isEn ? "Confirm password" : "Ulangi password"}

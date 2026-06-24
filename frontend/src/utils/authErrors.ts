@@ -74,6 +74,10 @@ export function getFriendlyErrorMessage(error: any, lang: 'en' | 'id' = 'id'): s
       return isEn
         ? 'The verification link is invalid, expired, or has already been used.'
         : 'Tautan verifikasi tidak valid, sudah kedaluwarsa, atau telah digunakan.';
+    case 'auth/requires-recent-login':
+      return isEn
+        ? 'For security reasons, this action requires you to log out and log back in before trying again.'
+        : 'Demi keamanan, tindakan ini memerlukan Anda untuk keluar (log out) dan masuk kembali sebelum mencoba lagi.';
     default:
       if (error?.message) {
         // Fallback for Network Error specifically

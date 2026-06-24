@@ -244,6 +244,11 @@ export const en = {
     logout: 'Log Out',
     close: 'Close',
     emailNotVerified: 'Your email has not been verified. Please check your inbox or spam folder.',
-    newVerificationSent: 'A new verification email has been sent.'
+    newVerificationSent: 'A new verification email has been sent.',
+    deleteAccount: 'Delete Account',
+    deleteAccountTitle: 'Delete Account?',
+    deleteAccountDesc: 'Are you absolutely sure? This action is permanent and will delete all your bookmarks, search history, and personal data.',
+    cancel: 'Cancel',
+    delete: 'Delete'
   }
 };
