@@ -3,6 +3,8 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"log"
+	"regexp"
 	"strings"
 
 	"fuenzer-research/backend/internal/services/email"
@@ -10,6 +12,18 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 )
+
+// emailRegex validates email format per RFC 5322 (simplified) and blocks CRLF injection.
+var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+
+// isValidEmail checks that the email address has a valid format and contains no
+// header-injection characters (\r or \n). Returns false if either check fails.
+func isValidEmail(email string) bool {
+	if strings.ContainsAny(email, "\r\n") {
+		return false
+	}
+	return emailRegex.MatchString(email)
+}
 
 type AuthHandler struct {
 	firebaseClient *firebaseService.Client
@@ -43,6 +57,13 @@ func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
 
 	req.Email = strings.TrimSpace(req.Email)
 
+	// Validate email format and block header injection characters
+	if !isValidEmail(req.Email) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Format email tidak valid.",
+		})
+	}
+
 	// Determine origin dynamically based on Request Headers
 	origin := c.Get("Origin")
 	if origin == "" {
@@ -74,8 +95,9 @@ func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
 	ctx := context.Background()
 	link, err := h.firebaseClient.GeneratePasswordResetLink(ctx, req.Email)
 	if err != nil {
-		fmt.Printf("[Auth] Error generating password reset link for %s: %v\n", req.Email, err)
-		
+		// Log without PII — do not include the full email address in logs
+		log.Printf("[Auth] Error generating password reset link: %v", err)
+
 		// If user not found, we still return success (200 OK) to prevent user enumeration
 		if strings.Contains(err.Error(), "EMAIL_NOT_FOUND") {
 			return c.JSON(fiber.Map{
@@ -102,7 +124,8 @@ func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
 	// Send Email using SMTP
 	err = h.emailClient.SendEmail(req.Email, "Atur Ulang Kata Sandi Akun Fuenzer Research Anda", emailBody)
 	if err != nil {
-		fmt.Printf("[Auth] Error sending reset email to %s: %v\n", req.Email, err)
+		// Log without PII
+		log.Printf("[Auth] Error sending reset password email: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Gagal mengirimkan email reset password. Silakan hubungi dukungan.",
 		})
@@ -128,6 +151,13 @@ func (h *AuthHandler) SendVerification(c *fiber.Ctx) error {
 	}
 
 	req.Email = strings.TrimSpace(req.Email)
+
+	// Validate email format and block header injection characters
+	if !isValidEmail(req.Email) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Format email tidak valid.",
+		})
+	}
 
 	// Determine origin dynamically based on Request Headers
 	origin := c.Get("Origin")
@@ -156,7 +186,8 @@ func (h *AuthHandler) SendVerification(c *fiber.Ctx) error {
 	ctx := context.Background()
 	link, err := h.firebaseClient.GenerateEmailVerificationLink(ctx, req.Email)
 	if err != nil {
-		fmt.Printf("[Auth] Error generating email verification link for %s: %v\n", req.Email, err)
+		// Log without PII
+		log.Printf("[Auth] Error generating email verification link: %v", err)
 		if strings.Contains(err.Error(), "EMAIL_NOT_FOUND") {
 			return c.JSON(fiber.Map{
 				"message": "Tautan verifikasi telah dikirim ke email Anda jika terdaftar.",
@@ -181,7 +212,8 @@ func (h *AuthHandler) SendVerification(c *fiber.Ctx) error {
 	// Send Email using SMTP
 	err = h.emailClient.SendEmail(req.Email, "Verifikasi Email Akun Fuenzer Research Anda", emailBody)
 	if err != nil {
-		fmt.Printf("[Auth] Error sending verification email to %s: %v\n", req.Email, err)
+		// Log without PII
+		log.Printf("[Auth] Error sending verification email: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Gagal mengirimkan email verifikasi. Silakan hubungi dukungan.",
 		})

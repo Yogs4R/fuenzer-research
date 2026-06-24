@@ -15,16 +15,22 @@ func NewClient(cfg *config.Config) *Client {
 	return &Client{cfg: cfg}
 }
 
+// sanitizeHeader strips CR and LF characters from header values to prevent
+// Email Header Injection attacks (CWE-93).
+func sanitizeHeader(s string) string {
+	return strings.NewReplacer("\r", "", "\n", "").Replace(s)
+}
+
 func (c *Client) SendEmail(to, subject, htmlBody string) error {
 	if c.cfg.SMTPHost == "" {
 		return fmt.Errorf("SMTP host is not configured")
 	}
 
-	// Build headers
+	// Build headers — sanitize all user-supplied values to prevent header injection
 	headers := make(map[string]string)
-	headers["From"] = c.cfg.SMTPFrom
-	headers["To"] = to
-	headers["Subject"] = subject
+	headers["From"] = sanitizeHeader(c.cfg.SMTPFrom)
+	headers["To"] = sanitizeHeader(to)
+	headers["Subject"] = sanitizeHeader(subject)
 	headers["MIME-Version"] = "1.0"
 	headers["Content-Type"] = "text/html; charset=UTF-8"
 

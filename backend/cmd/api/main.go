@@ -107,8 +107,22 @@ func main() {
 	api.Post("/research", researchHandler.Handle)
 	api.Post("/ask", researchHandler.HandleAsk)
 	api.Get("/autocomplete", autocompleteHandler.Handle)
-	api.Post("/auth/forgot-password", authHandler.ForgotPassword)
-	api.Post("/auth/send-verification", authHandler.SendVerification)
+
+	// Auth Routes — stricter rate limit: 3 req / 5 min per IP to prevent email bombing
+	authLimiter := limiter.New(limiter.Config{
+		Max:        3,
+		Expiration: 5 * time.Minute,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.IP()
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error": "Terlalu banyak permintaan. Silakan coba lagi dalam 5 menit.",
+			})
+		},
+	})
+	api.Post("/auth/forgot-password", authLimiter, authHandler.ForgotPassword)
+	api.Post("/auth/send-verification", authLimiter, authHandler.SendVerification)
 
 	// Serve static frontend files (production mode)
 	if cfg.Env == "production" {
