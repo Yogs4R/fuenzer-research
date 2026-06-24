@@ -323,7 +323,7 @@ func getEmailVerificationTemplate(link string) string {
   <div class="wrapper">
     <div class="container">
       <div class="header">
-        <img src="https://research.fuenzer.web.id/assets/dark/fuenzer-logo-dark.png" alt="Fuenzer Research Logo" />
+        <img src="https://research.fuenzer.web.id/assets/dark/fuenzer-research-logo-dark.png" alt="Fuenzer Research Logo" />
       </div>
       <div class="content">
         <!-- English Section -->
