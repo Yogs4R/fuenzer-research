@@ -6,6 +6,7 @@ import { useSEO } from '../hooks/useSEO';
 export function NotFoundPage() {
   useSEO({
     canonical: 'https://research.fuenzer.web.id/',
+    noindex: true,
   });
   const { theme, language } = useUiStore();
   const location = useLocation();

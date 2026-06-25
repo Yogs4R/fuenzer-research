@@ -253,13 +253,13 @@ func getEmailVerificationTemplate(link string) string {
       border: 1px solid #E2E8F0;
     }
     .header {
-      background-color: #121212;
+      background-color: #000000;
       padding: 24px 20px;
       text-align: center;
-      border-bottom: 1px solid #1E293B;
+      border-bottom: 1px solid #000000;
     }
     .header img {
-      height: 48px;
+      height: 64px;
       width: auto;
     }
     .content {
@@ -402,13 +402,13 @@ func getResetPasswordEmailTemplate(link string) string {
       border: 1px solid #E2E8F0;
     }
     .header {
-      background-color: #121212;
+      background-color: #000000;
       padding: 24px 20px;
       text-align: center;
-      border-bottom: 1px solid #1E293B;
+      border-bottom: 1px solid #000000;
     }
     .header img {
-      height: 48px;
+      height: 64px;
       width: auto;
     }
     .content {

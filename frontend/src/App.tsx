@@ -65,7 +65,12 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
     const baseTitle = 'Fuenzer Research';
     let pageTitle = '';
 
-    switch (location.pathname) {
+    // Normalize path to ignore trailing slashes (except for root '/')
+    const path = location.pathname.endsWith('/') && location.pathname.length > 1
+      ? location.pathname.slice(0, -1)
+      : location.pathname;
+
+    switch (path) {
       case '/':
         pageTitle = 'AI Scientific Research Assistant';
         break;
