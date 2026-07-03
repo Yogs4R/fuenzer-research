@@ -12,6 +12,7 @@ import { AIAssistantPanel } from '../components/playground/AIAssistantPanel';
 import type { AcademicSource } from '../types/research';
 import JSZip from 'jszip';
 import { generatePdfDocument } from '../utils/pdfExport';
+import { generateBibTeX, generateRIS } from '../utils/citationExporter';
 import { Dropdown, DropdownItem } from '../components/shared/Dropdown';
 import {
   type SortOption,
@@ -226,6 +227,52 @@ export function PlaygroundPage() {
     }
   };
 
+  const getSourcesToExport = (): AcademicSource[] => {
+    let sources: AcademicSource[] = [];
+    if (selectedRefs.size > 0) {
+      sources = allRefs.filter((s) => selectedRefs.has(s.id));
+    } else {
+      sources = displayedRefs;
+    }
+    return sources;
+  };
+
+  const handleExportBibTeX = () => {
+    const sources = getSourcesToExport();
+    if (sources.length === 0) {
+      alert(language === 'en' ? 'No references available to export.' : 'Tidak ada referensi untuk diekspor.');
+      return;
+    }
+    const bibText = generateBibTeX(sources);
+    const blob = new Blob([bibText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'fuenzer_references.bib';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportRIS = () => {
+    const sources = getSourcesToExport();
+    if (sources.length === 0) {
+      alert(language === 'en' ? 'No references available to export.' : 'Tidak ada referensi untuk diekspor.');
+      return;
+    }
+    const risText = generateRIS(sources);
+    const blob = new Blob([risText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'fuenzer_references.ris';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="h-screen flex flex-col bg-cloud-canvas dark:bg-[#121212] font-serif transition-colors overflow-hidden">
       <Navbar mode="playground" />
@@ -292,7 +339,6 @@ export function PlaygroundPage() {
                   ))}
                 </Dropdown>
 
-                {/* Export dropdown */}
                 <Dropdown
                   trigger={
                     <button className="flex items-center gap-1 md:gap-1.5 h-8 px-2 md:px-3 bg-fuenzer-teal/10 text-fuenzer-teal-dark dark:text-fuenzer-teal rounded-lg text-xs font-semibold hover:bg-fuenzer-teal/20 transition-colors cursor-pointer shrink-0">
@@ -303,6 +349,8 @@ export function PlaygroundPage() {
                   }
                 >
                   <DropdownItem label={t.exportPDF} onClick={handleExportPDF} />
+                  <DropdownItem label={t.exportBibtex} onClick={handleExportBibTeX} />
+                  <DropdownItem label={t.exportRis} onClick={handleExportRIS} />
                 </Dropdown>
               </div>
             </div>

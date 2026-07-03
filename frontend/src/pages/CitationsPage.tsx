@@ -9,6 +9,7 @@ import { Navbar } from '../components/shared/Navbar';
 import { Footer } from '../components/shared/Footer';
 import { useSEO } from '../hooks/useSEO';
 import { getFormattedCitation, type CitationStyle, CITATION_STYLES } from '../utils/citationFormatter';
+import { generateBibTeX, generateRIS } from '../utils/citationExporter';
 import { Dropdown, DropdownItem } from '../components/shared/Dropdown';
 import {
   type SortOption,
@@ -39,18 +40,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'oldest', label: 'Oldest First' },
   { value: 'title', label: 'Title (A-Z)' },
 ];
-
-// BibTeX generator helper
-function generateBibTeX(sources: AcademicSource[]): string {
-  return sources
-    .map((s, idx) => {
-      const citeKey = `source_${idx + 1}`;
-      const authors = (s.authors || []).join(' and ') || 'Unknown Author';
-      return `@article{${citeKey},\n  author = {${authors}},\n  title = {${s.title}},\n  journal = {${s.publisher || 'Unknown Journal'}},\n  year = {${s.year > 0 ? s.year : 'n.d.'}}\n}`;
-    })
-    .join('\n\n');
-}
-
 
 export function CitationsPage() {
   useSEO({
@@ -161,6 +150,21 @@ export function CitationsPage() {
     URL.revokeObjectURL(url);
   };
 
+  // Download RIS file
+  const handleDownloadRIS = () => {
+    if (filteredSources.length === 0) return;
+    const risText = generateRIS(filteredSources);
+    const blob = new Blob([risText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'fuenzer_citations.ris';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const sortOptionLabels: Record<SortOption, string> = {
     relevance: 'Most Relevant',
     newest: 'Newest First',
@@ -201,13 +205,21 @@ export function CitationsPage() {
                 {copiedAll ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {copiedAll ? t.copiedAll : t.copyAll}
               </button>
-              <button
-                onClick={handleDownloadBibTeX}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-ink-black text-slate-gray dark:text-cloud-canvas text-xs font-bold hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-all cursor-pointer"
+              <Dropdown
+                align="right"
+                trigger={
+                  <button
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-ink-black text-slate-gray dark:text-cloud-canvas text-xs font-bold hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-all cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 text-silver-mist" />
+                    Export
+                    <ChevronDown className="w-3.5 h-3.5 text-silver-mist" />
+                  </button>
+                }
               >
-                <Download className="w-4 h-4 text-silver-mist" />
-                {t.exportBibtex}
-              </button>
+                <DropdownItem label={t.exportBibtex} onClick={handleDownloadBibTeX} />
+                <DropdownItem label={t.exportRis} onClick={handleDownloadRIS} />
+              </Dropdown>
             </div>
           )}
         </div>
