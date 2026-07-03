@@ -10,6 +10,7 @@ import { JournalCard } from '../components/shared/JournalCard';
 import { Navbar } from '../components/shared/Navbar';
 import { Footer } from '../components/shared/Footer';
 import { Dropdown, DropdownItem } from '../components/shared/Dropdown';
+import type { AcademicSource } from '../types/research';
 import {
   type SortOption,
   type FilterIndex,
@@ -35,12 +36,17 @@ import {
   BookOpen,
   Trash2,
   Download,
+  Folder,
+  Plus,
+  Globe,
+  Lock,
+  Link2,
 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import { askResearch } from '../services/api';
 import { parseMarkdownTable, exportToCSV } from '../utils/csvExporter';
-
+import { SaveToLibraryModal } from '../components/shared/SaveToLibraryModal';
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'relevance', label: 'Most Relevant' },
   { value: 'newest', label: 'Newest First' },
@@ -73,7 +79,19 @@ export function LibraryPage() {
     canonical: 'https://research.fuenzer.web.id/library/',
   });
   const navigate = useNavigate();
-  const { bookmarkedSources, toggleBookmark } = useResearchStore();
+  const {
+    bookmarkedSources,
+    libraries,
+    activeLibraryId,
+    createFolder,
+    removeFolder,
+    togglePublicStatus,
+    setActiveLibraryId,
+    isBookmarkedInAnyLibrary,
+  } = useResearchStore();
+  const [newFolderInput, setNewFolderInput] = useState('');
+  const [copiedLibId, setCopiedLibId] = useState<string | null>(null);
+  const [bookmarkModalSource, setBookmarkModalSource] = useState<AcademicSource | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [contentTypeFilter, setContentTypeFilter] = useState<'All' | 'Articles' | 'Journals' | 'Books'>('All');
   const [sort, setSort] = useState<SortOption>('relevance');
@@ -84,8 +102,8 @@ export function LibraryPage() {
 
   const { user } = useAuthStore();
   const storageKey = user
-    ? (user.isAnonymous ? 'fuenzer_library_compare_chat_guest' : `fuenzer_library_compare_chat_${user.uid}`)
-    : 'fuenzer_library_compare_chat_guest';
+    ? (user.isAnonymous ? `fuenzer_library_compare_chat_guest_${activeLibraryId}` : `fuenzer_library_compare_chat_${user.uid}_${activeLibraryId}`)
+    : `fuenzer_library_compare_chat_guest_${activeLibraryId}`;
 
   const [viewMode, setViewMode] = useState<'list' | 'compare'>('list');
   const [selectedCompareRefs, setSelectedCompareRefs] = useState<Set<string>>(new Set());
@@ -302,9 +320,129 @@ export function LibraryPage() {
       </section>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 md:px-8 py-10 font-sans flex flex-col">
-        {bookmarkedSources.length === 0 ? (
-          /* Empty state */
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 md:px-8 py-10 font-sans grid grid-cols-1 md:grid-cols-4 gap-8">
+        
+        {/* Left Sidebar: Folder List */}
+        <aside className="md:col-span-1 flex flex-col gap-6 border-b md:border-b-0 md:border-r border-cloud-canvas dark:border-stone-gray pb-6 md:pb-0 md:pr-6 shrink-0 h-fit">
+          <div className="flex flex-col gap-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-gray dark:text-silver-mist">
+              {language === 'en' ? 'My Libraries' : 'Pustaka Saya'}
+            </h3>
+            
+            <div className="space-y-1 max-h-80 overflow-y-auto pr-1">
+              {libraries.map((lib) => {
+                const isActive = activeLibraryId === lib.id;
+                const isDefault = lib.id === 'default';
+                const isPublic = lib.isPublic;
+                const isCopied = copiedLibId === lib.id;
+
+                const copyShareLink = (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  if (!user) return;
+                  const shareUrl = `${window.location.origin}/shared/library/${user.uid}/${lib.id}`;
+                  navigator.clipboard.writeText(shareUrl).then(() => {
+                    setCopiedLibId(lib.id);
+                    setTimeout(() => setCopiedLibId(null), 2000);
+                  });
+                };
+
+                return (
+                  <div
+                    key={lib.id}
+                    onClick={() => setActiveLibraryId(lib.id)}
+                    className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold cursor-pointer select-none transition-all ${
+                      isActive
+                        ? 'bg-fuenzer-teal/10 border-l-2 border-fuenzer-teal text-fuenzer-teal'
+                        : 'text-slate-gray dark:text-silver-mist hover:bg-cloud-canvas/40 dark:hover:bg-stone-gray/10 hover:text-ink-black dark:hover:text-paper-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Folder className={`w-4 h-4 shrink-0 ${isActive ? 'text-fuenzer-teal' : 'text-slate-gray/70'}`} />
+                      <span className="truncate">{lib.name}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0">
+                      {/* Public/Private Toggle Icon (only if logged in & not anonymous) */}
+                      {user && !user.isAnonymous && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            togglePublicStatus(lib.id, !isPublic);
+                          }}
+                          className="p-1 rounded hover:bg-cloud-canvas/65 dark:hover:bg-stone-gray/25 text-slate-gray/80 dark:text-silver-mist hover:text-fuenzer-teal cursor-pointer"
+                          title={isPublic ? 'Make Private' : 'Make Public'}
+                        >
+                          {isPublic ? <Globe className="w-3.5 h-3.5 text-fuenzer-teal" /> : <Lock className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
+
+                      {/* Copy Shareable Link (if public) */}
+                      {isPublic && user && (
+                        <button
+                          onClick={copyShareLink}
+                          className="p-1 rounded hover:bg-cloud-canvas/65 dark:hover:bg-stone-gray/25 text-slate-gray/80 dark:text-silver-mist hover:text-fuenzer-teal cursor-pointer"
+                          title="Copy Public Link"
+                        >
+                          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Link2 className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
+
+                      {/* Delete folder (non-default) */}
+                      {!isDefault && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(language === 'en' ? 'Are you sure you want to delete this folder? Bookmarks inside it will be removed.' : 'Apakah Anda yakin ingin menghapus folder ini? Bookmark di dalamnya akan ikut terhapus.')) {
+                              removeFolder(lib.id);
+                            }
+                          }}
+                          className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-gray/80 dark:text-silver-mist hover:text-red-500 cursor-pointer"
+                          title="Delete Library"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Add Folder Form */}
+          <div className="pt-4 border-t border-cloud-canvas/60 dark:border-stone-gray/20">
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!newFolderInput.trim()) return;
+                await createFolder(newFolderInput.trim());
+                setNewFolderInput('');
+              }}
+              className="flex gap-2"
+            >
+              <input
+                type="text"
+                placeholder={language === 'en' ? 'New folder name...' : 'Folder baru...'}
+                value={newFolderInput}
+                onChange={(e) => setNewFolderInput(e.target.value)}
+                className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-cloud-canvas dark:border-stone-gray bg-white/60 dark:bg-ink-black/60 text-ink-black dark:text-paper-white focus:outline-hidden focus:ring-1 focus:ring-fuenzer-teal font-sans min-w-0"
+                maxLength={40}
+              />
+              <button
+                type="submit"
+                className="p-2 bg-fuenzer-teal text-white rounded-xl hover:bg-fuenzer-teal-dark transition-colors cursor-pointer shrink-0"
+                title="Create Folder"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </form>
+          </div>
+        </aside>
+
+        {/* Right Content Area */}
+        <div className="md:col-span-3 flex flex-col min-w-0">
+          {bookmarkedSources.length === 0 ? (
+            /* Empty state */
           <div className="flex-1 flex flex-col items-center justify-center py-20 text-center gap-6 max-w-md mx-auto">
             <div className="w-20 h-20 rounded-3xl bg-fuenzer-teal/10 flex items-center justify-center shadow-inner relative overflow-hidden group">
               <div className="absolute inset-0 bg-linear-to-br from-fuenzer-teal/20 to-transparent scale-0 group-hover:scale-100 transition-transform duration-500 rounded-3xl" />
@@ -697,8 +835,8 @@ export function LibraryPage() {
                   <JournalCard
                     key={source.id}
                     source={source}
-                    isBookmarked={true}
-                    onToggleBookmark={() => toggleBookmark(source)}
+                    isBookmarked={isBookmarkedInAnyLibrary(source.id)}
+                    onToggleBookmark={() => setBookmarkModalSource(source)}
                     citationStyle="APA"
                   />
                 ))}
@@ -706,7 +844,14 @@ export function LibraryPage() {
             )}
           </div>
         )}
-      </main>
+      </div>
+    </main>
+
+      <SaveToLibraryModal
+        isOpen={bookmarkModalSource !== null}
+        onClose={() => setBookmarkModalSource(null)}
+        source={bookmarkModalSource}
+      />
 
       <Footer />
     </div>

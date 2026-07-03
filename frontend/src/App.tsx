@@ -14,6 +14,8 @@ import { SignUpPage } from './pages/auth/SignUpPage';
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { SharedLibraryPage } from './pages/SharedLibraryPage';
+import { SharedWorkspacePage } from './pages/SharedWorkspacePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -142,6 +144,8 @@ function App() {
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/shared/library/:hostUserId/:libraryId" element={<SharedLibraryPage />} />
+            <Route path="/shared/workspace/:hostUserId/:sessionId" element={<SharedWorkspacePage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <CookieConsent />

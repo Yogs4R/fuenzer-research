@@ -32,6 +32,7 @@ import {
   Square,
   Filter,
   ChevronDown,
+  Folder,
 } from 'lucide-react';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -46,7 +47,12 @@ export function CitationsPage() {
     canonical: 'https://research.fuenzer.web.id/citations/',
   });
   const navigate = useNavigate();
-  const { bookmarkedSources } = useResearchStore();
+  const {
+    bookmarkedSources,
+    libraries,
+    activeLibraryId,
+    setActiveLibraryId,
+  } = useResearchStore();
   const [selectedStyle, setSelectedStyle] = useState<CitationStyle>('APA');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
@@ -195,9 +201,34 @@ export function CitationsPage() {
             </p>
           </div>
 
-          {/* Action buttons */}
-          {bookmarkedSources.length > 0 && (
-            <div className="flex items-center gap-3 font-sans shrink-0">
+          <div className="flex items-center gap-3 flex-wrap shrink-0">
+            {/* Library Selector Dropdown */}
+            <div className="flex items-center gap-2 font-sans select-none shrink-0 border border-cloud-canvas dark:border-stone-gray rounded-xl p-1 bg-cloud-canvas/20 dark:bg-stone-gray/10">
+              <span className="text-[10px] uppercase font-bold text-slate-gray pl-2">{language === 'en' ? 'Library:' : 'Pustaka:'}</span>
+              <Dropdown
+                align="right"
+                trigger={
+                  <button className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-bold text-ink-black dark:text-paper-white hover:bg-cloud-canvas/30 dark:hover:bg-stone-gray/25 transition-colors cursor-pointer">
+                    <Folder className="w-3.5 h-3.5 text-fuenzer-teal shrink-0" />
+                    <span>{libraries.find(l => l.id === activeLibraryId)?.name || 'Library'}</span>
+                    <ChevronDown className="w-3 h-3 text-silver-mist" />
+                  </button>
+                }
+              >
+                {libraries.map((lib) => (
+                  <DropdownItem
+                    key={lib.id}
+                    label={lib.name}
+                    active={activeLibraryId === lib.id}
+                    onClick={() => setActiveLibraryId(lib.id)}
+                  />
+                ))}
+              </Dropdown>
+            </div>
+
+            {/* Action buttons */}
+            {bookmarkedSources.length > 0 && (
+              <div className="flex items-center gap-3 font-sans shrink-0">
               <button
                 onClick={handleCopyAll}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-fuenzer-teal text-white text-xs font-bold hover:bg-fuenzer-teal-dark shadow-md transition-all cursor-pointer"
@@ -222,6 +253,7 @@ export function CitationsPage() {
               </Dropdown>
             </div>
           )}
+        </div>
         </div>
       </section>
 

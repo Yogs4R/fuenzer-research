@@ -9,6 +9,7 @@ import { JournalCard } from '../components/shared/JournalCard';
 import { Navbar } from '../components/shared/Navbar';
 import { Footer } from '../components/shared/Footer';
 import { AIAssistantPanel } from '../components/playground/AIAssistantPanel';
+import { SaveToLibraryModal } from '../components/shared/SaveToLibraryModal';
 import type { AcademicSource } from '../types/research';
 import JSZip from 'jszip';
 import { generatePdfDocument } from '../utils/pdfExport';
@@ -61,7 +62,8 @@ export function PlaygroundPage() {
   const [contentTypeFilter, setContentTypeFilter] = useState<ContentTypeTab>('All');
 
   const navigate = useNavigate();
-  const { query, messages, bookmarkedSources, toggleBookmark } = useResearchStore();
+  const { query, messages, isBookmarkedInAnyLibrary } = useResearchStore();
+  const [bookmarkModalSource, setBookmarkModalSource] = useState<AcademicSource | null>(null);
   const { language } = useUiStore();
   const t = language === 'en' ? en.playground : id.playground;
 
@@ -514,8 +516,8 @@ export function PlaygroundPage() {
                         source={source} 
                         isSelected={selectedRefs.has(source.id)}
                         onToggleSelect={() => toggleSelection(source.id)}
-                        isBookmarked={bookmarkedSources.some((b) => b.id === source.id)}
-                        onToggleBookmark={() => toggleBookmark(source)}
+                        isBookmarked={isBookmarkedInAnyLibrary(source.id)}
+                        onToggleBookmark={() => setBookmarkModalSource(source)}
                         citationStyle={citation}
                       />
                     </div>
@@ -562,6 +564,12 @@ export function PlaygroundPage() {
           </div>
         </section>
       </main>
+
+      <SaveToLibraryModal
+        isOpen={bookmarkModalSource !== null}
+        onClose={() => setBookmarkModalSource(null)}
+        source={bookmarkModalSource}
+      />
     </div>
   );
 }

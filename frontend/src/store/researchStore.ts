@@ -10,11 +10,17 @@ import { useAuthStore } from './authStore';
 import {
   saveHistoryEntry,
   loadHistory,
-  saveBookmark,
-  removeBookmark,
-  loadBookmarks,
   deleteHistoryEntry,
   clearAllHistory,
+  type Library,
+  createLibrary,
+  updateLibraryPublicStatus,
+  loadLibraries,
+  saveBookmarkToLibrary,
+  removeBookmarkFromLibrary,
+  loadBookmarksFromLibrary,
+  deleteLibrary,
+  migrateLegacyBookmarks,
 } from '../lib/firestore';
 
 export function getCurrentHistoryKey(): string {
@@ -25,12 +31,20 @@ export function getCurrentHistoryKey(): string {
   return isAnonymous ? 'fuenzer_search_history_guest' : `fuenzer_search_history_${userId}`;
 }
 
-function getCurrentBookmarksKey(): string {
+function getCurrentLibrariesKey(): string {
   const user = useAuthStore.getState().user;
   const userId = user?.uid || null;
   const isAnonymous = user?.isAnonymous ?? true;
-  if (!userId) return 'fuenzer_bookmarked_library_guest';
-  return isAnonymous ? 'fuenzer_bookmarked_library_guest' : `fuenzer_bookmarked_library_${userId}`;
+  if (!userId) return 'fuenzer_libraries_guest';
+  return isAnonymous ? 'fuenzer_libraries_guest' : `fuenzer_libraries_${userId}`;
+}
+
+function getLibraryBookmarksKey(libraryId: string): string {
+  const user = useAuthStore.getState().user;
+  const userId = user?.uid || null;
+  const isAnonymous = user?.isAnonymous ?? true;
+  const prefix = isAnonymous ? 'guest' : (userId || 'guest');
+  return `fuenzer_bookmarks_${prefix}_${libraryId}`;
 }
 
 function getLocalHistory(): HistoryEntry[] {
@@ -107,6 +121,17 @@ interface ResearchState {
   bookmarkedSources: AcademicSource[];
   toggleBookmark: (source: AcademicSource) => void;
 
+  // Multi-library state
+  libraries: Library[];
+  activeLibraryId: string;
+  createFolder: (name: string) => Promise<void>;
+  removeFolder: (id: string) => Promise<void>;
+  togglePublicStatus: (id: string, isPublic: boolean) => Promise<void>;
+  setActiveLibraryId: (id: string) => Promise<void>;
+  toggleBookmarkInLibrary: (libraryId: string, source: AcademicSource) => Promise<void>;
+  isBookmarkedInAnyLibrary: (sourceId: string) => boolean;
+  getLibrariesForBookmark: (sourceId: string) => string[];
+
   setQuery: (query: string) => void;
   setScope: (scope: SearchScope) => void;
   setSearchType: (type: string) => void;
@@ -121,6 +146,7 @@ interface ResearchState {
 
   // History Actions
   initSession: (queryText: string) => string;
+  forkSharedSession: (queryText: string, messages: ChatMessage[]) => string;
   loadSession: (sessionId: string) => void;
   updateSessionTitle: (title: string) => void;
   deleteSession: (sessionId: string) => void;
@@ -205,34 +231,172 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   currentSessionId: null,
   aiMode: 'search',
 
-  toggleBookmark: (source: AcademicSource) => {
-    const current = get().bookmarkedSources;
-    const exists = current.some((s) => s.id === source.id);
+  libraries: [],
+  activeLibraryId: 'default',
+
+  createFolder: async (name: string) => {
+    const userId = getCurrentUserId();
+    const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+    
+    let newLib: Library;
+    if (userId && !isAnonymous) {
+      newLib = await createLibrary(userId, name, false);
+    } else {
+      newLib = {
+        id: `lib-${Date.now()}`,
+        name,
+        isPublic: false,
+      };
+    }
+
+    const updated = [...get().libraries, newLib];
+    localStorage.setItem(getCurrentLibrariesKey(), JSON.stringify(updated));
+    set({ libraries: updated });
+  },
+
+  removeFolder: async (id: string) => {
+    const userId = getCurrentUserId();
+    const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+    
+    if (userId && !isAnonymous) {
+      await deleteLibrary(userId, id);
+    }
+
+    const updated = get().libraries.filter(l => l.id !== id);
+    localStorage.setItem(getCurrentLibrariesKey(), JSON.stringify(updated));
+
+    // Clear bookmarks from localstorage
+    localStorage.removeItem(getLibraryBookmarksKey(id));
+
+    // Set fallback active library if deleted
+    let activeId = get().activeLibraryId;
+    let bookmarked = get().bookmarkedSources;
+    if (activeId === id) {
+      activeId = 'default';
+      const stored = localStorage.getItem(getLibraryBookmarksKey('default'));
+      bookmarked = stored ? JSON.parse(stored) : [];
+    }
+
+    set({ 
+      libraries: updated,
+      activeLibraryId: activeId,
+      bookmarkedSources: bookmarked
+    });
+  },
+
+  togglePublicStatus: async (id: string, isPublic: boolean) => {
+    const userId = getCurrentUserId();
+    const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+
+    if (userId && !isAnonymous) {
+      await updateLibraryPublicStatus(userId, id, isPublic);
+    }
+
+    const updated = get().libraries.map(l => l.id === id ? { ...l, isPublic } : l);
+    localStorage.setItem(getCurrentLibrariesKey(), JSON.stringify(updated));
+    set({ libraries: updated });
+  },
+
+  setActiveLibraryId: async (id: string) => {
+    const userId = getCurrentUserId();
+    const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+    
+    let bookmarked: AcademicSource[] = [];
+    
+    // Check localstorage cache
+    const cacheKey = getLibraryBookmarksKey(id);
+    const stored = localStorage.getItem(cacheKey);
+    if (stored) {
+      bookmarked = JSON.parse(stored);
+    }
+
+    set({ activeLibraryId: id, bookmarkedSources: bookmarked });
+
+    // Fetch fresh from Firestore if logged in
+    if (userId && !isAnonymous) {
+      try {
+        const fresh = await loadBookmarksFromLibrary(userId, id);
+        localStorage.setItem(cacheKey, JSON.stringify(fresh));
+        
+        if (get().activeLibraryId === id) {
+          set({ bookmarkedSources: fresh });
+        }
+      } catch (err) {
+        console.warn('Failed to load bookmarks from library:', err);
+      }
+    }
+  },
+
+  toggleBookmarkInLibrary: async (libraryId: string, source: AcademicSource) => {
+    const cacheKey = getLibraryBookmarksKey(libraryId);
+    let cached: AcademicSource[] = [];
+    const stored = localStorage.getItem(cacheKey);
+    if (stored) {
+      cached = JSON.parse(stored);
+    }
+
+    const exists = cached.some(s => s.id === source.id);
     let updated;
     if (exists) {
-      updated = current.filter((s) => s.id !== source.id);
+      updated = cached.filter(s => s.id !== source.id);
     } else {
-      updated = [...current, source];
+      updated = [...cached, source];
     }
-    // Local cache
-    const bookmarksKey = getCurrentBookmarksKey();
-    localStorage.setItem(bookmarksKey, JSON.stringify(updated));
-    set({ bookmarkedSources: updated });
 
-    // Firestore sync (background)
+    localStorage.setItem(cacheKey, JSON.stringify(updated));
+
+    // If it's the currently active library, sync state
+    if (get().activeLibraryId === libraryId) {
+      set({ bookmarkedSources: updated });
+    }
+
+    // Sync to Firestore
     const userId = getCurrentUserId();
     const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
     if (userId && !isAnonymous) {
       if (exists) {
-        removeBookmark(userId, source.id).catch((err) =>
+        await removeBookmarkFromLibrary(userId, libraryId, source.id).catch(err => 
           console.warn('Failed to remove bookmark from Firestore:', err)
         );
       } else {
-        saveBookmark(userId, source).catch((err) =>
+        await saveBookmarkToLibrary(userId, libraryId, source).catch(err =>
           console.warn('Failed to save bookmark to Firestore:', err)
         );
       }
     }
+  },
+
+  isBookmarkedInAnyLibrary: (sourceId: string) => {
+    const libs = get().libraries;
+    for (const lib of libs) {
+      const cacheKey = getLibraryBookmarksKey(lib.id);
+      const stored = localStorage.getItem(cacheKey);
+      if (stored) {
+        const bookmarks = JSON.parse(stored) as AcademicSource[];
+        if (bookmarks.some(s => s.id === sourceId)) return true;
+      }
+    }
+    return false;
+  },
+
+  getLibrariesForBookmark: (sourceId: string) => {
+    const libs = get().libraries;
+    const matchedIds: string[] = [];
+    for (const lib of libs) {
+      const cacheKey = getLibraryBookmarksKey(lib.id);
+      const stored = localStorage.getItem(cacheKey);
+      if (stored) {
+        const bookmarks = JSON.parse(stored) as AcademicSource[];
+        if (bookmarks.some(s => s.id === sourceId)) {
+          matchedIds.push(lib.id);
+        }
+      }
+    }
+    return matchedIds;
+  },
+
+  toggleBookmark: (source: AcademicSource) => {
+    get().toggleBookmarkInLibrary(get().activeLibraryId, source);
   },
 
   setQuery: (query: string) => set({ query }),
@@ -283,6 +447,48 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       response: null,
       error: null,
       loadingPhase: 'idle',
+    });
+
+    return sessionId;
+  },
+
+  forkSharedSession: (queryText: string, messages: ChatMessage[]) => {
+    const sessionId = `h-${Date.now()}`;
+    const history = getLocalHistory();
+    
+    const newEntry: HistoryEntry = {
+      id: sessionId,
+      query: queryText,
+      title: queryText,
+      timestamp: Date.now(),
+      messages: messages,
+      response: null,
+      scope: get().scope,
+      searchType: get().searchType,
+      searchLocation: get().searchLocation,
+      searchAccreditation: get().searchAccreditation,
+      sintaRank: get().sintaRank,
+    };
+
+    const updated = [newEntry, ...history].slice(0, 20);
+    saveLocalHistory(updated);
+
+    // Firestore sync (background)
+    const userId = getCurrentUserId();
+    const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
+    if (userId && !isAnonymous) {
+      saveHistoryEntry(userId, newEntry).catch((err) =>
+        console.warn('Failed to save history to Firestore:', err)
+      );
+    }
+
+    set({
+      currentSessionId: sessionId,
+      query: queryText,
+      messages: messages,
+      response: null,
+      error: null,
+      loadingPhase: 'complete',
     });
 
     return sessionId;
@@ -359,28 +565,33 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     }
   },
 
-  /**
-   * Sync data from Firestore into local state.
-   * Called once after auth is initialized / user changes.
-   * Merges Firestore data with any existing localStorage data.
-   */
   syncFromFirestore: async () => {
     const userId = getCurrentUserId();
-    const bookmarksKey = getCurrentBookmarksKey();
+    const librariesKey = getCurrentLibrariesKey();
 
-    // 1. Load history from local storage specific to this user/guest
-    const localHistory = getLocalHistory();
+    // 1. Local Cache Load First (Instantly responsive UI)
+    let localLibraries: Library[] = [];
+    try {
+      const stored = localStorage.getItem(librariesKey);
+      localLibraries = stored ? JSON.parse(stored) : [];
+    } catch {}
 
-    // 2. Load bookmarks from local storage specific to this user/guest
+    // Ensure default exists locally if empty
+    if (localLibraries.length === 0) {
+      localLibraries = [{ id: 'default', name: 'My Library', isPublic: false }];
+    }
+
+    const activeId = get().activeLibraryId || 'default';
+    const cacheKey = getLibraryBookmarksKey(activeId);
     let localBookmarks: AcademicSource[] = [];
     try {
-      const stored = localStorage.getItem(bookmarksKey);
+      const stored = localStorage.getItem(cacheKey);
       localBookmarks = stored ? JSON.parse(stored) : [];
     } catch {}
 
-    // 3. Update the state with these local values first
-    // Also, when context is loaded/reloaded, clear any active session states to prevent leaks!
     set({
+      libraries: localLibraries,
+      activeLibraryId: activeId,
       bookmarkedSources: localBookmarks,
       messages: [],
       currentSessionId: null,
@@ -390,54 +601,48 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       query: '',
     });
 
-    // 4. If we have a real user (not anonymous), sync with Firestore in the background
     const isAnonymous = useAuthStore.getState().user?.isAnonymous ?? true;
     if (userId && !isAnonymous) {
       try {
-        // Load history from Firestore
+        // A. Run background migration for legacy flat bookmarks
+        await migrateLegacyBookmarks(userId);
+
+        // B. Sync History
+        const localHistory = getLocalHistory();
         const firestoreHistory = await loadHistory(userId);
         if (firestoreHistory.length > 0 || localHistory.length > 0) {
-          // Merge: Firestore wins for same IDs, keep unique locals
           const firestoreIds = new Set(firestoreHistory.map((h) => h.id));
           const uniqueLocal = localHistory.filter((h) => !firestoreIds.has(h.id));
           const merged = [...firestoreHistory, ...uniqueLocal]
             .sort((a, b) => b.timestamp - a.timestamp)
             .slice(0, 30);
-          
           saveLocalHistory(merged);
-
-          // Upload local-only entries to Firestore so they sync to other devices
           if (uniqueLocal.length > 0) {
             await Promise.all(
-              uniqueLocal.map((entry) =>
-                saveHistoryEntry(userId, entry).catch((err) =>
-                  console.warn('Failed to upload local history:', err)
-                )
-              )
+              uniqueLocal.map((entry) => saveHistoryEntry(userId, entry).catch(() => {}))
             );
           }
         }
 
-        // Load bookmarks from Firestore
-        const firestoreBookmarks = await loadBookmarks(userId);
-        if (firestoreBookmarks.length > 0 || localBookmarks.length > 0) {
-          // Merge: Firestore + unique locals
-          const firestoreIds = new Set(firestoreBookmarks.map((b) => b.id));
-          const uniqueLocal = localBookmarks.filter((b) => !firestoreIds.has(b.id));
-          const merged = [...firestoreBookmarks, ...uniqueLocal];
+        // C. Sync Libraries
+        let firestoreLibs = await loadLibraries(userId);
+        const hasDefault = firestoreLibs.some(l => l.id === 'default');
+        if (!hasDefault) {
+          const newDef = await createLibrary(userId, 'My Library', false, 'default');
+          firestoreLibs = [newDef, ...firestoreLibs];
+        }
 
-          localStorage.setItem(bookmarksKey, JSON.stringify(merged));
-          set({ bookmarkedSources: merged });
+        localStorage.setItem(librariesKey, JSON.stringify(firestoreLibs));
+        set({ libraries: firestoreLibs });
 
-          // Upload local-only bookmarks to Firestore so they sync to other devices
-          if (uniqueLocal.length > 0) {
-            await Promise.all(
-              uniqueLocal.map((source) =>
-                saveBookmark(userId, source).catch((err) =>
-                  console.warn('Failed to upload local bookmark:', err)
-                )
-              )
-            );
+        // D. Load bookmarks for all libraries and cache them locally
+        for (const lib of firestoreLibs) {
+          const freshBookmarks = await loadBookmarksFromLibrary(userId, lib.id);
+          const libCacheKey = getLibraryBookmarksKey(lib.id);
+          localStorage.setItem(libCacheKey, JSON.stringify(freshBookmarks));
+          
+          if (get().activeLibraryId === lib.id) {
+            set({ bookmarkedSources: freshBookmarks });
           }
         }
       } catch (err) {

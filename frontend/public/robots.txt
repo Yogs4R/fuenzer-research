@@ -1,4 +1,11 @@
 User-agent: *
 Allow: /
 
+Disallow: /shared/
+Disallow: /library
+Disallow: /citations
+Disallow: /playground
+Disallow: /verify-email
+Disallow: /reset-password
+
 Sitemap: https://research.fuenzer.web.id/sitemap.xml
