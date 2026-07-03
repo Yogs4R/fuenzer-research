@@ -106,7 +106,11 @@ export const en = {
     sourcesCount: 'sources',
     titleMethodology: 'Methodology Comparison',
     titleFindings: 'Main Discoveries',
-    titleLimitations: 'Limitations Matrix'
+    titleLimitations: 'Limitations Matrix',
+    titleMatrix: 'Literature Matrix',
+    descMatrix: 'Generate comparison matrix table',
+    promptMatrix: 'Generate a literature review matrix comparing the selected references. Format the output STRICTLY as a single Markdown table with the exact columns: | No | Title | Year | Methodology | Main Findings | Research Gap |. Do not include any intro or outro text.',
+    exportCSV: 'Export to CSV'
   },
   citations: {
     badge: 'Citation Generator',

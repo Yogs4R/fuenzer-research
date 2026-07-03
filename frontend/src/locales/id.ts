@@ -106,7 +106,11 @@ export const id = {
     sourcesCount: 'sumber',
     titleMethodology: 'Perbandingan Metodologi',
     titleFindings: 'Temuan Utama',
-    titleLimitations: 'Keterbatasan Penelitian'
+    titleLimitations: 'Keterbatasan Penelitian',
+    titleMatrix: 'Matriks Literatur',
+    descMatrix: 'Buat tabel komparasi matriks',
+    promptMatrix: 'Buatlah matriks tinjauan literatur yang membandingkan referensi yang dipilih. Format output HARUS berupa tabel Markdown tunggal dengan kolom: | No | Judul | Tahun | Metodologi | Temuan Utama | Kesenjangan Riset (Gap) |. Jangan sertakan teks pengantar atau penutup apa pun.',
+    exportCSV: 'Ekspor ke CSV'
   },
   citations: {
     badge: 'Generator Sitasi',

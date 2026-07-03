@@ -149,3 +149,21 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
 }
+
+/* Make tables inside prose scrollable */
+.prose table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.prose table th, .prose table td {
+  padding: 8px 12px;
+  border: 1px solid var(--color-cloud-canvas);
+}
+
+html.dark .prose table th, html.dark .prose table td {
+  border-color: var(--color-stone-gray);
+}
+

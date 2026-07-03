@@ -34,10 +34,12 @@ import {
   MessageSquare,
   BookOpen,
   Trash2,
+  Download,
 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import { askResearch } from '../services/api';
+import { parseMarkdownTable, exportToCSV } from '../utils/csvExporter';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'relevance', label: 'Most Relevant' },
@@ -414,7 +416,7 @@ export function LibraryPage() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl px-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-3xl px-2">
                     {[
                       {
                         title: t.titleMethodology,
@@ -430,6 +432,11 @@ export function LibraryPage() {
                         title: t.titleLimitations,
                         prompt: t.promptLimitations,
                         desc: t.descLimitations,
+                      },
+                      {
+                        title: t.titleMatrix,
+                        prompt: t.promptMatrix,
+                        desc: t.descMatrix,
                       },
                     ].map((card, idx) => (
                       <button
@@ -499,7 +506,24 @@ export function LibraryPage() {
                             <span>{msg.latencyMs ? (msg.latencyMs / 1000).toFixed(1) : '0.0'}s</span>
                           </div>
 
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-2">
+                            {msg.content.includes('|') && msg.content.includes('-|-') && (
+                              <button
+                                onClick={() => {
+                                  const tableData = parseMarkdownTable(msg.content);
+                                  if (tableData.length > 0) {
+                                    const headers = tableData[0];
+                                    const rows = tableData.slice(1);
+                                    exportToCSV(headers, rows, `literature_matrix_${Date.now()}.csv`);
+                                  }
+                                }}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-ink-black text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white text-[10px] font-bold transition-all cursor-pointer shadow-xs select-none"
+                                title="Export matrix table to CSV/Excel"
+                              >
+                                <Download className="w-3.5 h-3.5 text-silver-mist" />
+                                {t.exportCSV}
+                              </button>
+                            )}
                             <CopyButton text={msg.content} />
                           </div>
                         </div>
