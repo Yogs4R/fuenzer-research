@@ -57,25 +57,48 @@ func (c *Client) Search(query string, workType string) ([]models.AcademicSource,
 		limit = 15
 	}
 
-	// Format keywords for case-insensitive LIKE search
-	searchTerm := "%" + strings.ToLower(query) + "%"
+	// Sanitize and tokenize query for FTS5 MATCH syntax
+	words := strings.Fields(query)
+	var searchTerms []string
+	for _, word := range words {
+		cleaned := strings.Map(func(r rune) rune {
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+				return r
+			}
+			return -1
+		}, word)
+		if cleaned != "" {
+			searchTerms = append(searchTerms, cleaned+"*")
+		}
+	}
+
+	var matchQuery string
+	if len(searchTerms) > 0 {
+		matchQuery = strings.Join(searchTerms, " AND ")
+	} else {
+		return nil, nil // return empty results if no valid keywords
+	}
 
 	var rows *sql.Rows
 	if workType == "journal" {
 		rows, err = db.Query(
 			`SELECT article_title, title, article_abstract, article_year, doi, url, source
 			 FROM artikel
-			 WHERE lower(title) LIKE ?
+			 WHERE id IN (
+				 SELECT rowid FROM artikel_fts WHERE title MATCH ?
+			 )
 			 LIMIT ?`,
-			searchTerm, limit,
+			matchQuery, limit,
 		)
 	} else {
 		rows, err = db.Query(
 			`SELECT article_title, title, article_abstract, article_year, doi, url, source
 			 FROM artikel
-			 WHERE lower(article_title) LIKE ? OR lower(article_abstract) LIKE ?
+			 WHERE id IN (
+				 SELECT rowid FROM artikel_fts WHERE artikel_fts MATCH ?
+			 )
 			 LIMIT ?`,
-			searchTerm, searchTerm, limit,
+			matchQuery, limit,
 		)
 	}
 	if err != nil {
