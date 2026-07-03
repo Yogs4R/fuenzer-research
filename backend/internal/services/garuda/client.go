@@ -82,21 +82,19 @@ func (c *Client) Search(query string, workType string) ([]models.AcademicSource,
 	var rows *sql.Rows
 	if workType == "journal" {
 		rows, err = db.Query(
-			`SELECT article_title, title, article_abstract, article_year, doi, url, source
-			 FROM artikel
-			 WHERE id IN (
-				 SELECT rowid FROM artikel_fts WHERE title MATCH ?
-			 )
+			`SELECT a.article_title, a.title, a.article_abstract, a.article_year, a.doi, a.url, a.source
+			 FROM artikel_fts f
+			 JOIN artikel a ON a.id = f.rowid
+			 WHERE f.title MATCH ?
 			 LIMIT ?`,
 			matchQuery, limit,
 		)
 	} else {
 		rows, err = db.Query(
-			`SELECT article_title, title, article_abstract, article_year, doi, url, source
-			 FROM artikel
-			 WHERE id IN (
-				 SELECT rowid FROM artikel_fts WHERE artikel_fts MATCH ?
-			 )
+			`SELECT a.article_title, a.title, a.article_abstract, a.article_year, a.doi, a.url, a.source
+			 FROM artikel_fts f
+			 JOIN artikel a ON a.id = f.rowid
+			 WHERE f.artikel_fts MATCH ?
 			 LIMIT ?`,
 			matchQuery, limit,
 		)
