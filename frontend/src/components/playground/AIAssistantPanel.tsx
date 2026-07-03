@@ -4,6 +4,8 @@ import { useResearchStore, getCurrentHistoryKey } from '../../store/researchStor
 import type { ChatMessage } from '../../store/researchStore';
 import { NarrativeSkeletonLoader } from '../shared/NarrativeSkeletonLoader';
 import { useUiStore } from '../../store/uiStore';
+import { useAuthStore } from '../../store/authStore';
+import { updateHistoryPublicStatus } from '../../lib/firestore';
 import { en } from '../../locales/en';
 import { id } from '../../locales/id';
 import {
@@ -163,6 +165,23 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
   } = useResearchStore();
 
   const allRefs = response?.references ?? [];
+
+  const currentUser = useAuthStore((state) => state.user);
+  const isAnonymous = currentUser?.isAnonymous ?? true;
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const handleShareWorkspace = async () => {
+    if (!currentUser || isAnonymous || !currentSessionId) return;
+    try {
+      await updateHistoryPublicStatus(currentUser.uid, currentSessionId, true);
+      const shareUrl = `${window.location.origin}/shared/workspace/${currentUser.uid}/${currentSessionId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to share workspace:', err);
+    }
+  };
 
   const [sessionTitle, setSessionTitle] = useState(t.newTopic);
 
@@ -324,6 +343,27 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
                   <ExternalLink className="w-4 h-4 text-silver-mist" />
                   {t.newWindow}
                 </button>
+                {!isAnonymous && currentSessionId && (
+                  <>
+                    <div className="border-t border-cloud-canvas dark:border-stone-gray my-1" />
+                    <button
+                      onClick={handleShareWorkspace}
+                      className="w-full text-left px-4 py-2 text-sm font-semibold text-ink-black dark:text-cloud-canvas hover:bg-cloud-canvas/60 dark:hover:bg-stone-gray/30 transition-colors flex items-center gap-2"
+                    >
+                      {shareCopied ? (
+                        <>
+                          <Check className="w-4 h-4 text-emerald-600" />
+                          <span>Copied Link!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="w-4 h-4 text-fuenzer-teal" />
+                          <span>{language === 'en' ? 'Share Workspace' : 'Bagikan Workspace'}</span>
+                        </>
+                      )}
+                    </button>
+                  </>
+                )}
                 <div className="border-t border-cloud-canvas dark:border-stone-gray my-1" />
                 <button
                   onClick={() => {

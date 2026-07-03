@@ -645,23 +645,24 @@ export function LibraryPage() {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            {msg.content.includes('|') && msg.content.includes('-|-') && (
-                              <button
-                                onClick={() => {
-                                  const tableData = parseMarkdownTable(msg.content);
-                                  if (tableData.length > 0) {
-                                    const headers = tableData[0];
-                                    const rows = tableData.slice(1);
+                            {(() => {
+                              const parsedTable = msg.content.includes('|') ? parseMarkdownTable(msg.content) : [];
+                              if (parsedTable.length <= 1) return null;
+                              return (
+                                <button
+                                  onClick={() => {
+                                    const headers = parsedTable[0];
+                                    const rows = parsedTable.slice(1);
                                     exportToCSV(headers, rows, `literature_matrix_${Date.now()}.csv`);
-                                  }
-                                }}
-                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-ink-black text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white text-[10px] font-bold transition-all cursor-pointer shadow-xs select-none"
-                                title="Export matrix table to CSV/Excel"
-                              >
-                                <Download className="w-3.5 h-3.5 text-silver-mist" />
-                                {t.exportCSV}
-                              </button>
-                            )}
+                                  }}
+                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-ink-black text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white text-[10px] font-bold transition-all cursor-pointer shadow-xs select-none"
+                                  title="Export matrix table to CSV/Excel"
+                                >
+                                  <Download className="w-3.5 h-3.5 text-silver-mist" />
+                                  {t.exportCSV}
+                                </button>
+                              );
+                            })()}
                             <CopyButton text={msg.content} />
                           </div>
                         </div>

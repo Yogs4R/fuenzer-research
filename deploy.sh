@@ -43,7 +43,7 @@ gcloud run deploy $APP_NAME \
     --platform managed \
     --region $REGION \
     --allow-unauthenticated \
-    --memory 1Gi \
+    --memory 2Gi \
     --max-instances=1 \
     --env-vars-file=env.yaml \
     --set-secrets=GEMINI_API_KEY=GEMINI_API_KEY:latest,GOOGLE_BOOKS_API_KEY=GOOGLE_BOOKS_API_KEY:latest,SMTP_USER=SMTP_USER:latest,SMTP_PASS=SMTP_PASS:latest

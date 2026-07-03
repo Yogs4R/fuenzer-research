@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useResearchStore } from '../../store/researchStore';
 import { useUiStore } from '../../store/uiStore';
 import { X, Plus, FolderPlus, Folder, Check, Lock, Globe } from 'lucide-react';
@@ -23,10 +23,15 @@ export function SaveToLibraryModal({ isOpen, onClose, source }: SaveToLibraryMod
 
   const [newLibName, setNewLibName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (source && isOpen) {
+      setSavedIds(getLibrariesForBookmark(source.id));
+    }
+  }, [source, isOpen, getLibrariesForBookmark]);
 
   if (!isOpen || !source) return null;
-
-  const savedLibraryIds = getLibrariesForBookmark(source.id);
 
   const handleCreateLibrary = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +47,11 @@ export function SaveToLibraryModal({ isOpen, onClose, source }: SaveToLibraryMod
   };
 
   const handleToggle = async (libraryId: string) => {
+    setSavedIds(prev =>
+      prev.includes(libraryId)
+        ? prev.filter(id => id !== libraryId)
+        : [...prev, libraryId]
+    );
     await toggleBookmarkInLibrary(libraryId, source);
   };
 
@@ -95,7 +105,7 @@ export function SaveToLibraryModal({ isOpen, onClose, source }: SaveToLibraryMod
           {/* Libraries List */}
           <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
             {libraries.map((lib) => {
-              const isSaved = savedLibraryIds.includes(lib.id);
+              const isSaved = savedIds.includes(lib.id);
               return (
                 <div
                   key={lib.id}

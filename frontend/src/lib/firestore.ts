@@ -314,3 +314,9 @@ export async function loadPublicSession(userId: string, sessionId: string): Prom
     sintaRank: data.sintaRank || ['All'],
   } as HistoryEntry;
 }
+
+/** Update the public status of a history session */
+export async function updateHistoryPublicStatus(userId: string, sessionId: string, isPublic: boolean): Promise<void> {
+  const ref = doc(db, 'users', userId, 'history', sessionId);
+  await setDoc(ref, { isPublic }, { merge: true });
+}
