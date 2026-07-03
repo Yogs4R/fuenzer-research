@@ -38,9 +38,9 @@ export function SharedWorkspacePage() {
     }
   }, [user, loading, navigate]);
 
-  // Load public workspace session
+  // Load public workspace session — only after user is confirmed authenticated
   useEffect(() => {
-    if (!hostUserId || !sessionId) return;
+    if (!hostUserId || !sessionId || !user) return;
     setLoading(true);
     setError(null);
 
@@ -57,7 +57,7 @@ export function SharedWorkspacePage() {
       .finally(() => {
         setLoading(false);
       });
-  }, [hostUserId, sessionId]);
+  }, [hostUserId, sessionId, user]);
 
   const handleFork = async () => {
     if (!sessionData) return;

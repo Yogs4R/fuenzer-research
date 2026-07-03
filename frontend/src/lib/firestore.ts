@@ -285,7 +285,7 @@ export async function loadPublicLibrary(userId: string, libraryId: string): Prom
   return { library, bookmarks };
 }
 
-/** Loads a shared workspace session (read-only) */
+/** Loads a shared workspace session (read-only). Only succeeds if session has isPublic = true. */
 export async function loadPublicSession(userId: string, sessionId: string): Promise<HistoryEntry> {
   const ref = doc(db, 'users', userId, 'history', sessionId);
   const snap = await getDoc(ref);
@@ -295,6 +295,11 @@ export async function loadPublicSession(userId: string, sessionId: string): Prom
   }
 
   const data = snap.data() as DocumentData;
+
+  if (!data.isPublic) {
+    throw new Error('Workspace ini bersifat privat.');
+  }
+
   return {
     id: data.id || snap.id,
     query: data.query || '',

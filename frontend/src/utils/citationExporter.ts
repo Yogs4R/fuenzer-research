@@ -10,19 +10,40 @@ function extractDoi(url?: string): string | null {
 }
 
 /**
+ * Sanitizes a string for safe inclusion in a BibTeX field value.
+ * Escapes backslashes first, then braces, to avoid breaking .bib structure.
+ */
+function sanitizeBibTexField(value: string): string {
+  return value
+    .replace(/\\/g, '\\textbackslash{}')  // Must come first
+    .replace(/\{/g, '\\{')
+    .replace(/\}/g, '\\}')
+    .replace(/~/g, '\\textasciitilde{}')
+    .replace(/\^/g, '\\textasciicircum{}')
+    .replace(/%/g, '\\%')
+    .replace(/&/g, '\\&')
+    .replace(/_/g, '\\_')
+    .replace(/#/g, '\\#')
+    .replace(/\$/g, '\\$');
+}
+
+/**
  * Generates a BibTeX string from an array of academic sources.
  */
 export function generateBibTeX(sources: AcademicSource[]): string {
   return sources
     .map((s, idx) => {
       const citeKey = `source_${idx + 1}`;
-      const authors = (s.authors || []).join(' and ') || 'Unknown Author';
+      const authors = (s.authors || []).map(sanitizeBibTexField).join(' and ') || 'Unknown Author';
+      const title = sanitizeBibTexField(s.title || '');
+      const journal = sanitizeBibTexField(s.publisher || 'Unknown Journal');
       const doiVal = extractDoi(s.url);
       const doiField = doiVal ? `,\n  doi = {${doiVal}}` : '';
-      return `@article{${citeKey},\n  author = {${authors}},\n  title = {${s.title}},\n  journal = {${s.publisher || 'Unknown Journal'}},\n  year = {${s.year > 0 ? s.year : 'n.d.'}}${doiField}\n}`;
+      return `@article{${citeKey},\n  author = {${authors}},\n  title = {${title}},\n  journal = {${journal}},\n  year = {${s.year > 0 ? s.year : 'n.d.'}}${doiField}\n}`;
     })
     .join('\n\n');
 }
+
 
 /**
  * Generates an RIS string from an array of academic sources.

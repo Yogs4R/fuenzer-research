@@ -53,9 +53,9 @@ export function SharedLibraryPage() {
     }
   }, [user, loading, navigate]);
 
-  // Load shared library
+  // Load shared library — only after user is confirmed authenticated
   useEffect(() => {
-    if (!hostUserId || !libraryId) return;
+    if (!hostUserId || !libraryId || !user) return;
     setLoading(true);
     setError(null);
 
@@ -70,7 +70,7 @@ export function SharedLibraryPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, [hostUserId, libraryId]);
+  }, [hostUserId, libraryId, user]);
 
   // Filter and Sort Pipeline
   const filteredBookmarks = bookmarks

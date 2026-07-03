@@ -25,11 +25,19 @@ export function parseMarkdownTable(markdown: string): string[][] {
 }
 
 /**
+ * Sanitizes a cell value to prevent CSV Formula Injection.
+ * Prefixes cells starting with dangerous characters (=, +, -, @, tab, CR) with a single quote.
+ */
+function sanitizeCsvCell(cell: string): string {
+  return cell.replace(/^([=+\-@\t\r])/, "'$1");
+}
+
+/**
  * Converts headers and rows to a CSV string and triggers a browser download.
  */
 export function exportToCSV(headers: string[], dataRows: string[][], filename: string = 'literature_matrix.csv'): void {
   const csvContent = [headers, ...dataRows]
-    .map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+    .map(row => row.map(cell => `"${sanitizeCsvCell(cell).replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
   // Add BOM (Byte Order Mark) for proper UTF-8 parsing in MS Excel
