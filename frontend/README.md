@@ -18,8 +18,10 @@ Built for **JuaraVibeCoding** Hackathon by Google.
 - 🖥️ **Premium Split-Screen Playground** — Area kerja berdensitas tinggi yang membagi porsi antara Asisten Tanya-Jawab AI di sebelah kiri dan daftar referensi interaktif di sebelah kanan secara mulus.
 - 🎨 **Rich Aesthetics & Dark Mode** — Desain modern bersertifikasi kenyamanan mata menggunakan warna latar belakang Alabaster (`#FAFAFA`), Glassmorphism, efek transisi halus, dan dukungan penuh tema gelap (*Dark Mode*).
 - 🇮🇩 **Bilingual Localization** — Dukungan penuh untuk bahasa Inggris dan bahasa Indonesia yang disesuaikan secara akademis untuk seluruh label, deskripsi, FAQ, dan modal riwayat.
-- 📚 **Library & AI Compare** — Area kerja pribadi untuk menyimpan paper favorit dan membandingkan metodologi, temuan utama, atau limitasi antardokumen menggunakan AI.
-- 🎓 **Bibliography & Citations Generator** — Menyalin sitasi secara instan atau mengekspor bibliografi lengkap ke berkas standar **BibTeX (.bib)** untuk diintegrasikan dengan referensi manager.
+- 📚 **Multi-Library Folders & AI Compare** — Area kerja pribadi dengan struktur banyak folder/pustaka untuk menyimpan paper, serta membandingkan dokumen untuk memetakan metodologi, hasil, dan research gap secara otomatis.
+- 📊 **Literature Matrix CSV Exporter** — Ekspor tabel Matriks Tinjauan Literatur hasil komparasi AI secara langsung menjadi dokumen Excel/CSV (.csv) yang aman dari CSV Injection.
+- 🔗 **Shareable Link & Fork** — Buat tautan kolaborasi untuk membagikan folder pustaka publik atau sesi workspace playground riset Anda ke peneliti lain, yang dapat menduplikasinya (fork) secara instan.
+- 🎓 **Bibliography & Citations Generator** — Menyalin sitasi atau mengekspor bibliografi lengkap ke berkas standar **BibTeX (.bib)** dan **RIS (.ris)** dengan sanitasi karakter agar kompatibel dengan Zotero/Mendeley.
 - 📄 **PDF Document Exporter** — Mengekspor hasil sintesis akademis beserta daftar pustaka lengkap secara langsung menjadi berkas dokumen PDF siap cetak.
 
 ---

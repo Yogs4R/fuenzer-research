@@ -222,6 +222,11 @@ export const id = {
     title: 'Catatan Pembaruan',
     logs: [
       {
+        date: '03 Juli 2026',
+        title: 'Kolaborasi Berbagi & Folder Pustaka',
+        desc: 'Menerapkan ekspor CSV Matriks Tinjauan Literatur, menambahkan sidebar multi-library untuk mengelola folder pustaka, menambahkan shareable link publik untuk perpustakaan dan sesi workspace dengan fitur fork, mengamankan rute data dengan Firestore Security Rules, serta menerapkan migrasi latar belakang otomatis untuk data bookmark lama.'
+      },
+      {
         date: '23 Juni 2026',
         title: 'Peningkatan Sistem & SEO',
         desc: 'Menerapkan alur verifikasi email kustom, menambahkan halaman error dwi-bahasa dengan perutean wildcard, mengintegrasikan hook useSEO dinamis dengan pemeriksaan persetujuan cookie, memperbaiki masalah hierarki heading semantik, memperbarui diagram arsitektur ke Mermaid, dan mengoptimalkan pembatas laju (rate limiter) menjadi 15 req/menit.'

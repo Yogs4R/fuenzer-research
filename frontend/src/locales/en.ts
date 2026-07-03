@@ -222,6 +222,11 @@ export const en = {
     title: 'Update Logs',
     logs: [
       {
+        date: '03 July 2026',
+        title: 'Collaborative Sharing & Library Folders',
+        desc: 'Implemented Literature Matrix CSV export, introduced multi-library folders sidebar to organize sources, added public shareable links for libraries and workspace sessions with fork capability, secured resource routes with Firestore Rules, and implemented automatic background migration for legacy bookmarks.'
+      },
+      {
         date: '23 June 2026',
         title: 'System Enhancements & SEO',
         desc: 'Implemented custom branded email verification flow, added a bilingual error page with wildcard routing, integrated dynamic useSEO hook with cookie consent check, resolved semantic heading hierarchy issues, updated architecture diagrams to Mermaid, and optimized rate limiter constraints to 15 req/min.'

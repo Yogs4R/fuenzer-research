@@ -286,8 +286,9 @@ sequenceDiagram
 | 🇮🇩 **SINTA Auto-Mapping** | Pemetaan otomatis tier jurnal Indonesia (SINTA 1-6) — fitur unik yang tidak dimiliki platform lain |
 | 🤖 **AI Synthesis** | Google Gemini 3.1 Flash Lite menghasilkan ringkasan literatur terstruktur dalam <5 detik |
 | 💬 **Dual AI Mode** | Search Mode (cari referensi baru) + Ask Mode (Q&A tentang referensi terpilih) |
-| 📂 **PDF & BibTeX Export** | Export referensi ke PDF individual atau batch ZIP + BibTeX (.bib) untuk LaTeX |
-| 📚 **Library & Bookmark** | Simpan referensi favorit ke library personal, sync via Firebase across devices |
+| 📂 **PDF, BibTeX & CSV Export** | Ekspor referensi ke PDF, BibTeX (.bib) untuk LaTeX/Zotero, serta Matriks Literatur otomatis ke Excel/CSV |
+| 📚 **Multi-Library Folder** | Simpan referensi ke beberapa folder pustaka kustom, disinkronkan via Firebase secara real-time |
+| 🔗 **Shareable Link & Fork** | Bagikan workspace sesi riset atau folder pustaka publik via tautan unik, tamu bisa menduplikasi (fork) |
 | 🎨 **Dark Mode + i18n** | Tema gelap/terang + bilingual penuh (ID/EN) |
 | 🔒 **Anti-Hallucination** | Temperature 0.3, strict prompt, AI hanya menjawab dari data yang diberikan |
 | 🛡️ **Security-First** | Rate limiting, CORS strict, CSP headers, DOMPurify, gibberish detection |
