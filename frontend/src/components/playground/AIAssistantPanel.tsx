@@ -160,6 +160,10 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
     clearMessages,
     currentSessionId,
     updateSessionTitle,
+    searchType,
+    searchLocation,
+    searchAccreditation,
+    sintaRank,
     aiMode,
     setAiMode,
     executeAsk,
@@ -463,6 +467,27 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
             </button>
           </div>
         </div>
+
+        {/* Active Search Filters Summary (Only in Search Mode) */}
+        {aiMode === 'search' && (
+          <div className="px-5 pb-2.5 shrink-0 flex items-center gap-1.5 flex-wrap text-[10px] text-slate-gray dark:text-silver-mist font-sans">
+            <span className="font-bold text-ink-black dark:text-paper-white uppercase tracking-wider">{language === 'en' ? 'Filters:' : 'Filter:'}</span>
+            <span className="px-2 py-0.5 rounded bg-cloud-canvas/40 dark:bg-stone-gray/25 border border-cloud-canvas dark:border-stone-gray/30">
+              {searchType}
+            </span>
+            <span className="px-2 py-0.5 rounded bg-cloud-canvas/40 dark:bg-stone-gray/25 border border-cloud-canvas dark:border-stone-gray/30">
+              {searchLocation}
+            </span>
+            <span className="px-2 py-0.5 rounded bg-cloud-canvas/40 dark:bg-stone-gray/25 border border-cloud-canvas dark:border-stone-gray/30">
+              {searchAccreditation}
+              {searchAccreditation === 'SINTA' && sintaRank && !sintaRank.includes('All') && (
+                <span className="ml-1 text-[9px] text-fuenzer-teal">
+                  ({sintaRank.map(r => r.replace('SINTA ', '')).join(',')})
+                </span>
+              )}
+            </span>
+          </div>
+        )}
 
         {/* Chat Messages Area — ref-based scroll, NOT scrollIntoView */}
         <div
