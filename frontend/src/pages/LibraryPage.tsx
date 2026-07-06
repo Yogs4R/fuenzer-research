@@ -7,6 +7,7 @@ import { useSEO } from '../hooks/useSEO';
 import { en } from '../locales/en';
 import { id } from '../locales/id';
 import { JournalCard } from '../components/shared/JournalCard';
+import { UserMessageCopyButton } from '../components/shared/UserMessageCopyButton';
 import { Navbar } from '../components/shared/Navbar';
 import { Footer } from '../components/shared/Footer';
 import { Dropdown, DropdownItem } from '../components/shared/Dropdown';
@@ -757,8 +758,11 @@ export function LibraryPage() {
                 if (msg.role === 'user') {
                   return (
                     <div key={msg.id} className="flex justify-end">
-                      <div className="max-w-[85%] bg-fuenzer-teal text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-xs leading-relaxed shadow-sm wrap-break-word select-text font-sans">
-                        {msg.content}
+                      <div className="flex flex-col items-end max-w-[85%]">
+                        <div className="bg-fuenzer-teal text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-xs leading-relaxed shadow-sm wrap-break-word select-text font-sans w-full">
+                          {msg.content}
+                        </div>
+                        <UserMessageCopyButton text={msg.content} />
                       </div>
                     </div>
                   );

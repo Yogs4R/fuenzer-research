@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import { useResearchStore, getCurrentHistoryKey } from '../../store/researchStore';
 import type { ChatMessage } from '../../store/researchStore';
 import { NarrativeSkeletonLoader } from '../shared/NarrativeSkeletonLoader';
+import { UserMessageCopyButton } from '../shared/UserMessageCopyButton';
 import { useUiStore } from '../../store/uiStore';
 import { useAuthStore } from '../../store/authStore';
 import { updateHistoryPublicStatus } from '../../lib/firestore';
@@ -479,8 +480,11 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
             if (message.role === 'user') {
               return (
                 <div key={message.id} className="flex justify-end">
-                  <div className="max-w-[85%] bg-fuenzer-teal text-white rounded-2xl rounded-tr-sm px-3 py-2 text-xs leading-relaxed shadow-sm wrap-break-word">
-                    {message.query}
+                  <div className="flex flex-col items-end max-w-[85%]">
+                    <div className="bg-fuenzer-teal text-white rounded-2xl rounded-tr-sm px-3 py-2 text-xs leading-relaxed shadow-sm wrap-break-word w-full">
+                      {message.query}
+                    </div>
+                    <UserMessageCopyButton text={message.query || ''} />
                   </div>
                 </div>
               );
