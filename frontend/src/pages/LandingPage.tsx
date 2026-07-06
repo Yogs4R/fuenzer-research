@@ -16,7 +16,8 @@ import { extractKeywords } from '../utils/keywordExtractor';
 import { fetchAutocomplete } from '../services/api';
 import {
   BookOpen,
-  ArrowRight,
+  ArrowUp,
+  Mic,
   Globe,
   Zap,
   Network,
@@ -108,6 +109,51 @@ export function LandingPage() {
   } = useResearchStore();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  const { language } = useUiStore();
+  const t = language === 'en' ? en : id;
+
+  // Speech-to-Text state
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => setIsListening(false);
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        const currentQuery = useResearchStore.getState().query;
+        const newQuery = currentQuery ? `${currentQuery} ${transcript}` : transcript;
+        setQuery(newQuery);
+        setTypedQuery(newQuery);
+      };
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+      };
+      
+      recognitionRef.current = recognition;
+    }
+  }, [setQuery]);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert(language === 'en' ? "Your browser does not support Voice Input." : "Browser anda tidak mendukung fitur Voice Input.");
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.lang = language === 'id' ? 'id-ID' : 'en-US';
+      recognitionRef.current.start();
+    }
+  };
+
   useSEO({
     canonical: 'https://research.fuenzer.web.id/',
     schema: {
@@ -122,34 +168,37 @@ export function LandingPage() {
 
   // "Did you mean?" state
   const [suggestion, setSuggestion] = useState<string | null>(null);
-  const [isValidKeyword, setIsValidKeyword] = useState(false);
+  const [typedQuery, setTypedQuery] = useState(query);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset the store state when returning to the landing page so search query starts empty
   useEffect(() => {
     reset();
+    setTypedQuery('');
   }, [reset]);
+
+  // Derived state: check if current query is a valid academic keyword
+  const extractedKeywords = extractKeywords(query);
+  const isValidKeyword = extractedKeywords.length >= 3 && !checkIfGibberish(extractedKeywords);
+
+  // Auto-resize textarea whenever query changes
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [query]);
 
   // Extract keywords and fetch autocomplete on query change
   useEffect(() => {
     const extracted = extractKeywords(query);
     
-    // If nothing meaningful extracted or too short, mark invalid
-    if (extracted.length < 3) {
-      setIsValidKeyword(false);
+    // If nothing meaningful extracted or too short, reset suggestion and stop
+    if (extracted.length < 3 || checkIfGibberish(extracted)) {
       setSuggestion(null);
       return;
     }
-
-    // Local validation check: if obvious gibberish, mark invalid immediately
-    if (checkIfGibberish(extracted)) {
-      setIsValidKeyword(false);
-      setSuggestion(null);
-      return;
-    }
-
-    // Default to valid for pronounceable/normal words (including Indonesian terms)
-    setIsValidKeyword(true);
 
     // Debounce autocomplete call (500ms) only to populate "Did you mean?" suggestion
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -168,7 +217,6 @@ export function LandingPage() {
           setSuggestion(null);
         }
       } catch {
-        // Autocomplete failed or offline — preserve valid keyword state
         setSuggestion(null);
       }
     }, 500);
@@ -182,8 +230,8 @@ export function LandingPage() {
   const applySuggestion = useCallback(() => {
     if (suggestion) {
       setQuery(suggestion);
+      setTypedQuery(suggestion);
       setSuggestion(null);
-      setIsValidKeyword(true);
     }
   }, [suggestion, setQuery]);
 
@@ -218,20 +266,21 @@ export function LandingPage() {
     }
   }, [searchType, searchLocation, accreditationOptions, searchAccreditation, setSearchAccreditation]);
   
-  const { language } = useUiStore();
-  const t = language === 'en' ? en : id;
-
   const handleSearch = () => {
     if (!canSearch) return;
     const extracted = extractKeywords(query);
     setQuery(extracted); // Clean query before searching
+    setTypedQuery(extracted);
     initSession(extracted);
     navigate('/playground');
     executeSearch();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSearch();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSearch();
+    }
   };
 
   return (
@@ -253,36 +302,34 @@ export function LandingPage() {
           </p>
 
           {/* Search Bar Container */}
-          <div className="max-w-3xl mx-auto relative group font-sans flex flex-col items-center">
+          <div className="max-w-3xl mx-auto relative group font-sans flex flex-col w-full bg-paper-white dark:bg-ink-black rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.04)] focus-within:ring-2 focus-within:ring-fuenzer-teal/50 transition-all border border-cloud-canvas dark:border-stone-gray z-30 mb-2 text-left">
             
-            {/* Main Search Input */}
-            <div className="w-full relative flex items-center bg-paper-white dark:bg-ink-black rounded-xl shadow-xl p-2 group-focus-within:ring-2 group-focus-within:ring-fuenzer-teal/50 transition-all border border-cloud-canvas dark:border-stone-gray z-10 mb-2">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={t.hero.searchPlaceholder}
-                className="flex-1 h-14 px-6 bg-transparent text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray outline-none text-lg min-w-[200px]"
-                maxLength={200}
-              />
-              <button
-                onClick={handleSearch}
-                disabled={!canSearch}
-                aria-label="Search"
-                className={`w-14 h-14 flex items-center justify-center rounded-lg transition-all duration-200 ${
-                  canSearch
-                    ? 'bg-fuenzer-teal-dark text-white hover:bg-fuenzer-teal cursor-pointer'
-                    : 'bg-fuenzer-teal-dark/30 text-white/50 cursor-not-allowed'
-                }`}
-              >
-                <ArrowRight className="w-6 h-6" strokeWidth={2} />
-              </button>
-            </div>
+            {/* Main Search Textarea */}
+            <textarea
+              ref={textareaRef}
+              value={query}
+              onChange={(e) => {
+                const val = e.target.value;
+                setQuery(val);
+                setTypedQuery(val);
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={t.hero.searchPlaceholder}
+              className="w-full min-h-[140px] md:min-h-[100px] max-h-[350px] resize-none px-6 pt-5 pb-3 bg-transparent text-ink-black dark:text-paper-white placeholder:text-silver-mist dark:placeholder:text-stone-gray outline-none text-lg overflow-y-auto"
+              maxLength={400}
+              rows={1}
+            />
 
+            {/* Validation Feedback Warning (Gibberish) */}
+            {!isValidKeyword && !suggestion && query.trim().length >= 3 && (
+              <div className="w-full px-6 mb-2 text-red-500 font-semibold dark:text-red-400 text-xs font-sans animate-in fade-in">
+                {t.hero.invalidQuery}
+              </div>
+            )}
+            
             {/* "Did you mean?" Suggestion */}
             {suggestion && (
-              <div className="w-full text-left px-4 mb-3 z-10 animate-in fade-in">
+              <div className="w-full px-6 mb-2 animate-in fade-in">
                 <button
                   onClick={applySuggestion}
                   className="text-sm font-sans text-slate-gray dark:text-silver-mist hover:text-fuenzer-teal transition-colors cursor-pointer"
@@ -296,48 +343,91 @@ export function LandingPage() {
               </div>
             )}
 
-            {/* Validation Feedback Warning (Gibberish) */}
-            {!isValidKeyword && !suggestion && query.trim().length >= 3 && (
-              <div className="w-full text-left px-4 mb-3 z-10 animate-in fade-in text-red-500 font-semibold dark:text-red-400 text-xs font-sans">
-                Topik riset tidak valid. Silakan masukkan kata kunci akademis yang benar (misal: "machine learning").
-              </div>
-            )}
-
-            {/* Dropdowns Below — relative z-20 so they appear above Popular Searches */}
-            <div className="flex flex-wrap justify-center gap-3 relative z-20 mt-2">
-              <CustomDropdown
-                value={searchType}
-                onChange={setSearchType}
-                options={['All', 'Books', 'Journals', 'Articles']}
-                prefix={t.hero.filterType}
-              />
-
-              <CustomDropdown
-                value={searchLocation}
-                onChange={setSearchLocation}
-                options={['Global', 'Indonesia']}
-                prefix={t.hero.filterScope}
-              />
-
-              <CustomDropdown
-                value={searchAccreditation}
-                onChange={setSearchAccreditation}
-                options={accreditationOptions}
-                prefix={t.hero.filterIndex}
-              />
-
-              {searchAccreditation === 'SINTA' && (
-                <CustomMultiSelect
-                  values={sintaRank}
-                  onChange={setSintaRank}
-                  options={['All', 'SINTA 1', 'SINTA 2', 'SINTA 3', 'SINTA 4', 'SINTA 5', 'SINTA 6']}
+            {/* Bottom Row Actions & Filters */}
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-4 pt-1 mt-auto bg-transparent">
+              {/* Left Side: Filters */}
+              <div className="flex flex-wrap items-center gap-2 relative z-20">
+                <CustomDropdown
+                  value={searchType}
+                  onChange={setSearchType}
+                  options={['All', 'Books', 'Journals', 'Articles']}
+                  prefix={t.hero.filterType}
                 />
-              )}
+                <CustomDropdown
+                  value={searchLocation}
+                  onChange={setSearchLocation}
+                  options={['Global', 'Indonesia']}
+                  prefix={t.hero.filterScope}
+                />
+                <CustomDropdown
+                  value={searchAccreditation}
+                  onChange={setSearchAccreditation}
+                  options={accreditationOptions}
+                  prefix={t.hero.filterIndex}
+                />
+                {searchAccreditation === 'SINTA' && (
+                  <CustomMultiSelect
+                    values={sintaRank}
+                    onChange={setSintaRank}
+                    options={['All', 'SINTA 1', 'SINTA 2', 'SINTA 3', 'SINTA 4', 'SINTA 5', 'SINTA 6']}
+                  />
+                )}
+              </div>
+
+              {/* Right Side: Tools & Submit */}
+              <div className="flex items-center gap-2 shrink-0 ml-auto">
+                <button
+                  type="button"
+                  title={language === 'en' ? "Voice Input" : "Input Suara"}
+                  onClick={toggleListening}
+                  className={`p-2 rounded-full transition-colors cursor-pointer ${
+                    isListening 
+                      ? 'text-red-500 bg-red-500/10 animate-pulse' 
+                      : 'text-slate-gray hover:text-fuenzer-teal hover:bg-cloud-canvas/50 dark:text-silver-mist dark:hover:bg-stone-gray/50'
+                  }`}
+                >
+                  <Mic className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleSearch}
+                  disabled={!canSearch}
+                  aria-label="Search"
+                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 ${
+                    canSearch
+                      ? 'bg-fuenzer-teal-dark text-white hover:bg-fuenzer-teal cursor-pointer shadow-md transform hover:scale-105 active:scale-95'
+                      : 'bg-fuenzer-teal-dark/30 text-white/50 cursor-not-allowed'
+                  }`}
+                >
+                  <ArrowUp className="w-5 h-5" strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Suggestion Prompts */}
+          <div className="relative max-w-3xl mx-auto w-full mt-4 z-10 px-4">
+            <div className="flex flex-row items-center gap-2 overflow-x-auto no-scrollbar py-1.5 w-full justify-start md:justify-center px-2 scroll-smooth">
+              {t.hero.suggestions?.map((sug, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setQuery(sug);
+                    setTypedQuery(sug);
+                  }}
+                  onMouseEnter={() => setQuery(sug)}
+                  onMouseLeave={() => setQuery(typedQuery)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border border-cloud-canvas/60 dark:border-stone-gray/30 text-slate-gray hover:text-fuenzer-teal dark:text-silver-mist dark:hover:text-fuenzer-teal bg-paper-white/50 dark:bg-ink-black/50 hover:bg-cloud-canvas/30 transition-all cursor-pointer shadow-sm shrink-0 max-w-[200px] md:max-w-none truncate"
+                  title={sug}
+                >
+                  <Zap className="w-3 h-3 text-amber-500 shrink-0" />
+                  <span className="truncate">{sug}</span>
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Popular Tags Marquee — z-10, mt-16 to clear dropdown panels */}
-          <div className="mt-16 flex flex-col items-center gap-4 font-sans w-full max-w-3xl mx-auto relative z-10">
+          <div className="mt-12 flex flex-col items-center gap-4 font-sans w-full max-w-3xl mx-auto relative z-10">
             <span className="text-[10px] font-semibold text-slate-gray dark:text-stone-gray uppercase tracking-widest">
               {t.landing.popularSearches}
             </span>

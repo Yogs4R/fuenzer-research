@@ -26,6 +26,12 @@ export const en = {
     title: 'Accelerate Your Academic Research',
     subtitle: 'Access a high-density information environment powered by AI. Seamlessly search global databases and SINTA-indexed journals with unparalleled efficiency.',
     searchPlaceholder: 'Ask anything, search topics, or enter a DOI ...',
+    invalidQuery: 'Invalid research topic. Please enter valid academic keywords (e.g., "machine learning").',
+    suggestions: [
+      'Recent journals about artificial intelligence',
+      'Impact of climate change on agriculture',
+      'Analysis of digital economy policies'
+    ],
     filterType: 'Type',
     filterScope: 'Scope',
     filterIndex: 'Index',

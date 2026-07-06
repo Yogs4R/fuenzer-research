@@ -26,6 +26,12 @@ export const id = {
     title: 'Akselerasi Riset Akademis Anda',
     subtitle: 'Akses lingkungan informasi berdensitas tinggi yang ditenagai oleh AI. Cari database global dan jurnal terindeks SINTA dengan efisiensi tak terpandingi secara mulus.',
     searchPlaceholder: 'Tanyakan apa saja, cari topik, atau masukkan DOI ...',
+    invalidQuery: 'Topik riset tidak valid. Silakan masukkan kata kunci akademis yang benar (misal: "machine learning").',
+    suggestions: [
+      'Jurnal terbaru tentang kecerdasan buatan',
+      'Pengaruh perubahan iklim terhadap agrikultur',
+      'Analisis kebijakan ekonomi digital'
+    ],
     filterType: 'Tipe',
     filterScope: 'Cakupan',
     filterIndex: 'Indeks',
