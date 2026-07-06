@@ -28,7 +28,8 @@ import {
   Square,
   Filter,
   ChevronDown,
-  Send,
+  ArrowUp,
+  Mic,
   Copy,
   Check,
   Clock,
@@ -112,6 +113,54 @@ export function LibraryPage() {
   const [compareInput, setCompareInput] = useState('');
   const [isCompareLoading, setIsCompareLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const compareTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Speech-to-Text state
+  const [isCompareListening, setIsCompareListening] = useState(false);
+  const compareRecognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      
+      recognition.onstart = () => setIsCompareListening(true);
+      recognition.onend = () => setIsCompareListening(false);
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setCompareInput((prev) => prev ? `${prev} ${transcript}` : transcript);
+      };
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setIsCompareListening(false);
+      };
+      
+      compareRecognitionRef.current = recognition;
+    }
+  }, []);
+
+  const toggleCompareListening = () => {
+    if (!compareRecognitionRef.current) {
+      alert(language === 'en' ? "Your browser does not support Voice Input." : "Browser anda tidak mendukung fitur Voice Input.");
+      return;
+    }
+    if (isCompareListening) {
+      compareRecognitionRef.current.stop();
+    } else {
+      compareRecognitionRef.current.lang = language === 'id' ? 'id-ID' : 'en-US';
+      compareRecognitionRef.current.start();
+    }
+  };
+
+  // Auto-resize compare textarea whenever compareInput changes
+  useEffect(() => {
+    if (compareTextareaRef.current) {
+      compareTextareaRef.current.style.height = 'auto';
+      compareTextareaRef.current.style.height = `${compareTextareaRef.current.scrollHeight}px`;
+    }
+  }, [compareInput]);
 
   // Load chat messages on mount/user change
   useEffect(() => {
@@ -770,27 +819,49 @@ export function LibraryPage() {
                   )}
                 </div>
               )}
-              <div className="bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-full p-2 pl-4 flex items-center gap-2 focus-within:ring-2 focus-within:ring-fuenzer-teal/20 transition-all">
-                <input
-                  type="text"
+              <div className="bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-2xl p-2 flex flex-col w-full relative">
+                <textarea
+                  ref={compareTextareaRef}
                   placeholder={
                     selectedCompareRefs.size === 0
                       ? t.placeholderRefsLocked
                       : t.placeholderRefsUnlocked
                   }
-                  className="flex-1 min-w-0 bg-transparent text-xs outline-none text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray h-9 animate-none"
+                  className="w-full min-h-[60px] max-h-[200px] resize-none px-3 py-2 bg-transparent text-xs outline-none text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray overflow-y-auto"
                   value={compareInput}
                   onChange={(e) => setCompareInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendCompare(compareInput)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendCompare(compareInput);
+                    }
+                  }}
                   disabled={selectedCompareRefs.size === 0 || isCompareLoading}
+                  rows={1}
                 />
-                <button
-                  onClick={() => handleSendCompare(compareInput)}
-                  disabled={compareInput.trim().length < 3 || selectedCompareRefs.size === 0 || isCompareLoading}
-                  className="w-9 h-9 shrink-0 rounded-full bg-fuenzer-teal text-white flex items-center justify-center hover:bg-fuenzer-teal-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-md"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                </button>
+                
+                <div className="flex items-center justify-end gap-2 mt-1 pt-1 px-1">
+                  <button
+                    type="button"
+                    title={language === 'en' ? "Voice Input" : "Input Suara"}
+                    onClick={toggleCompareListening}
+                    disabled={selectedCompareRefs.size === 0 || isCompareLoading}
+                    className={`p-1.5 rounded-full transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                      isCompareListening 
+                        ? 'text-red-500 bg-red-500/10 animate-pulse' 
+                        : 'text-slate-gray hover:text-fuenzer-teal hover:bg-cloud-canvas/50 dark:text-silver-mist dark:hover:bg-stone-gray/50'
+                    }`}
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleSendCompare(compareInput)}
+                    disabled={compareInput.trim().length < 3 || selectedCompareRefs.size === 0 || isCompareLoading}
+                    className="w-7 h-7 shrink-0 rounded-full bg-fuenzer-teal text-white flex items-center justify-center hover:bg-fuenzer-teal-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-md"
+                  >
+                    <ArrowUp className="w-4 h-4" strokeWidth={2.5} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -9,7 +9,8 @@ import { updateHistoryPublicStatus } from '../../lib/firestore';
 import { en } from '../../locales/en';
 import { id } from '../../locales/id';
 import {
-  ArrowRight,
+  ArrowUp,
+  Mic,
   Clock,
   Edit2,
   ExternalLink,
@@ -164,6 +165,55 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
     response,
   } = useResearchStore();
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Speech-to-Text state
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => setIsListening(false);
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInputVal((prev) => prev ? `${prev} ${transcript}` : transcript);
+      };
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+      };
+      
+      recognitionRef.current = recognition;
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert(language === 'en' ? "Your browser does not support Voice Input." : "Browser anda tidak mendukung fitur Voice Input.");
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.lang = language === 'id' ? 'id-ID' : 'en-US';
+      recognitionRef.current.start();
+    }
+  };
+
+  // Auto-resize textarea whenever inputVal changes
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [inputVal]);
+
   const allRefs = response?.references ?? [];
 
   const currentUser = useAuthStore((state) => state.user);
@@ -265,8 +315,11 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSend();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
   };
 
   const isAnythingLoading = messages.some(
@@ -439,38 +492,52 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
 
         {/* Input Area */}
         <div className="px-5 pb-5 pt-3 shrink-0 border-t border-cloud-canvas dark:border-stone-gray">
-          {aiMode === 'ask' && (
-            <div className="mb-2 px-2 flex justify-between items-center text-xs animate-in fade-in slide-in-from-top-1 select-none">
-              <span className="font-semibold text-fuenzer-teal">
-                {selectedRefs.size} {language === 'en' ? `${selectedRefs.size === 1 ? 'Source' : 'Sources'} Selected` : `${selectedRefs.size} Referensi Terpilih`}
-              </span>
-              {selectedRefs.size === 0 && (
-                <span className="text-[10px] text-red-500 font-semibold animate-pulse">
-                  {language === 'en' ? '*Select reference(s) to Ask' : '*Pilih referensi untuk bertanya'}
-                </span>
-              )}
-            </div>
-          )}
-          <div className="bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-lg rounded-xl p-2 flex items-center gap-2">
-            <input
-              type="text"
+          <div className="bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-lg rounded-2xl p-2 flex flex-col w-full relative">
+            <textarea
+              ref={textareaRef}
               placeholder={aiMode === 'search' ? t.inputPlaceholder : (language === 'en' ? 'Ask a question about selected sources...' : 'Tanyakan tentang referensi terpilih...')}
-              className="flex-1 min-w-0 h-10 px-3 bg-transparent text-sm outline-none text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray"
+              className="w-full min-h-[60px] max-h-[200px] resize-none px-3 py-2 bg-transparent text-sm outline-none text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray overflow-y-auto"
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               onKeyDown={handleKeyDown}
+              rows={1}
             />
-            <button
-              onClick={handleSend}
-              disabled={
-                inputVal.trim().length < 3 || 
-                isAnythingLoading || 
-                (aiMode === 'ask' && selectedRefs.size === 0)
-              }
-              className="w-8 h-8 shrink-0 rounded-full bg-fuenzer-teal text-white flex items-center justify-center hover:bg-fuenzer-teal-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-            >
-              <ArrowRight className="w-4 h-4 -rotate-90" strokeWidth={2} />
-            </button>
+            
+            <div className="flex items-center justify-between mt-1 pt-1 px-1">
+              <div className="text-[10px] text-fuenzer-teal font-semibold">
+                {aiMode === 'ask' && (
+                  <span>
+                    {selectedRefs.size} {language === 'en' ? `${selectedRefs.size === 1 ? 'Source' : 'Sources'} Selected` : `${selectedRefs.size} Terpilih`}
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  title={language === 'en' ? "Voice Input" : "Input Suara"}
+                  onClick={toggleListening}
+                  className={`p-1.5 rounded-full transition-colors cursor-pointer ${
+                    isListening 
+                      ? 'text-red-500 bg-red-500/10 animate-pulse' 
+                      : 'text-slate-gray hover:text-fuenzer-teal hover:bg-cloud-canvas/50 dark:text-silver-mist dark:hover:bg-stone-gray/50'
+                  }`}
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleSend}
+                  disabled={
+                    inputVal.trim().length < 3 || 
+                    isAnythingLoading || 
+                    (aiMode === 'ask' && selectedRefs.size === 0)
+                  }
+                  className="w-7 h-7 shrink-0 rounded-full bg-fuenzer-teal text-white flex items-center justify-center hover:bg-fuenzer-teal-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  <ArrowUp className="w-4 h-4" strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
