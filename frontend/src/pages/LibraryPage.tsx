@@ -328,7 +328,7 @@ export function LibraryPage() {
           {bookmarkedSources.length > 0 && (
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0 font-sans">
               {/* Segmented Control */}
-              <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray select-none w-fit shrink-0">
+              <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-frost-gray dark:border-stone-gray select-none w-fit shrink-0">
                 <button
                   onClick={() => setViewMode('list')}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-center whitespace-nowrap cursor-pointer ${
@@ -353,7 +353,7 @@ export function LibraryPage() {
               </div>
 
               {viewMode === 'list' && (
-                <div className="flex items-center border border-cloud-canvas dark:border-stone-gray rounded-xl px-4 h-12 hover:border-silver-mist focus-within:border-fuenzer-teal bg-cloud-canvas/30 dark:bg-stone-gray/30 transition-colors w-full md:w-64 font-sans">
+                <div className="flex items-center border border-frost-gray dark:border-stone-gray rounded-xl px-4 h-12 hover:border-silver-mist focus-within:border-fuenzer-teal bg-cloud-canvas/30 dark:bg-stone-gray/30 transition-colors w-full md:w-64 font-sans">
                   <Search className="w-4 h-4 text-silver-mist shrink-0 mr-2.5" />
                   <input
                     type="text"
@@ -872,7 +872,7 @@ export function LibraryPage() {
             <div className="flex flex-col gap-4 pb-4 border-b border-cloud-canvas dark:border-stone-gray">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-wrap">
                 {/* Content Type Filter Tabs */}
-                <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray shrink-0 max-w-fit">
+                <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-frost-gray dark:border-stone-gray shrink-0 max-w-fit">
                   {(['All', 'Articles', 'Journals', 'Books'] as const).map((ct) => (
                     <button
                       key={ct}
@@ -894,7 +894,7 @@ export function LibraryPage() {
                   <Dropdown
                     align="left"
                     trigger={
-                      <button className="flex items-center gap-1.5 h-9 px-3 border border-cloud-canvas dark:border-stone-gray rounded-lg text-xs font-medium text-slate-gray dark:text-silver-mist hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-colors cursor-pointer whitespace-nowrap">
+                      <button className="flex items-center gap-1.5 h-9 px-3 border border-frost-gray dark:border-stone-gray rounded-lg text-xs font-medium text-slate-gray dark:text-silver-mist hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-colors cursor-pointer whitespace-nowrap">
                         <Filter className="w-3.5 h-3.5" />
                         {currentSortLabel}
                         <ChevronDown className="w-3.5 h-3.5" />
@@ -912,7 +912,7 @@ export function LibraryPage() {
                     className={`flex items-center gap-1.5 h-9 px-3 border rounded-lg text-xs font-medium transition-colors ${
                       showFilters || activeFilterCount > 0
                         ? 'border-fuenzer-teal text-fuenzer-teal bg-fuenzer-teal/10'
-                        : 'border-cloud-canvas dark:border-stone-gray text-slate-gray dark:text-silver-mist hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50'
+                        : 'border-frost-gray dark:border-stone-gray text-slate-gray dark:text-silver-mist hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50'
                     }`}
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -932,7 +932,7 @@ export function LibraryPage() {
 
               {/* Index Filters Checklist */}
               {showFilters && (
-                <div className="flex flex-col gap-2 animate-in slide-in-from-top-2 duration-200 bg-cloud-canvas/20 dark:bg-stone-gray/10 p-3.5 rounded-xl border border-cloud-canvas dark:border-stone-gray">
+                <div className="flex flex-col gap-2 animate-in slide-in-from-top-2 duration-200 bg-cloud-canvas/20 dark:bg-stone-gray/10 p-3.5 rounded-xl border border-frost-gray dark:border-stone-gray">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase tracking-widest font-bold text-silver-mist">Index Filter</span>
                     {activeFilterCount > 0 && (
@@ -954,7 +954,7 @@ export function LibraryPage() {
                           className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
                             checked
                               ? 'bg-fuenzer-teal text-white border-fuenzer-teal'
-                              : 'border-cloud-canvas dark:border-stone-gray text-slate-gray dark:text-silver-mist hover:border-fuenzer-teal/60 hover:text-fuenzer-teal'
+                              : 'border-frost-gray dark:border-stone-gray text-slate-gray dark:text-silver-mist hover:border-fuenzer-teal/60 hover:text-fuenzer-teal'
                           }`}
                         >
                           {checked

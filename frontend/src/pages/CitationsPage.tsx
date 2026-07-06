@@ -186,7 +186,7 @@ export function CitationsPage() {
       <Navbar mode="playground" />
 
       {/* Hero header */}
-      <section className="bg-paper-white dark:bg-ink-black border-b border-cloud-canvas dark:border-stone-gray py-12 px-6 md:px-8 transition-colors shrink-0">
+      <section className="bg-paper-white dark:bg-ink-black border-b border-frost-gray dark:border-stone-gray py-12 px-6 md:px-8 transition-colors shrink-0">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-fuenzer-teal">
@@ -203,7 +203,7 @@ export function CitationsPage() {
 
           <div className="flex items-center gap-3 flex-wrap shrink-0">
             {/* Library Selector Dropdown */}
-            <div className="flex items-center gap-2 font-sans select-none shrink-0 border border-cloud-canvas dark:border-stone-gray rounded-xl p-1 bg-cloud-canvas/20 dark:bg-stone-gray/10">
+            <div className="flex items-center gap-2 font-sans select-none shrink-0 border border-frost-gray dark:border-stone-gray rounded-xl p-1 bg-cloud-canvas/20 dark:bg-stone-gray/10">
               <span className="text-[10px] uppercase font-bold text-slate-gray pl-2">{language === 'en' ? 'Library:' : 'Pustaka:'}</span>
               <Dropdown
                 align="right"
@@ -240,7 +240,7 @@ export function CitationsPage() {
                 align="right"
                 trigger={
                   <button
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-ink-black text-slate-gray dark:text-cloud-canvas text-xs font-bold hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-frost-gray dark:border-stone-gray bg-paper-white dark:bg-ink-black text-slate-gray dark:text-cloud-canvas text-xs font-bold hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-all cursor-pointer"
                   >
                     <Download className="w-4 h-4 text-silver-mist" />
                     Export
@@ -286,12 +286,12 @@ export function CitationsPage() {
           /* Citations formatter area */
           <div className="space-y-6 flex-1">
             {/* Search, Tabs, Sort, and Filters Row */}
-            <div className="flex flex-col gap-4 pb-4 border-b border-cloud-canvas dark:border-stone-gray">
+            <div className="flex flex-col gap-4 pb-4 border-b border-frost-gray dark:border-stone-gray">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 flex-wrap">
                 {/* Search Bar + Tabs */}
                 <div className="flex items-center gap-3 flex-wrap w-full lg:w-auto">
                   {/* Search bar */}
-                  <div className="flex items-center border border-cloud-canvas dark:border-stone-gray rounded-xl px-3 h-10 hover:border-silver-mist focus-within:border-fuenzer-teal bg-cloud-canvas/30 dark:bg-stone-gray/30 transition-colors w-full sm:w-64 font-sans">
+                  <div className="flex items-center border border-frost-gray dark:border-stone-gray rounded-xl px-3 h-10 hover:border-silver-mist focus-within:border-fuenzer-teal bg-cloud-canvas/30 dark:bg-stone-gray/30 transition-colors w-full sm:w-64 font-sans">
                     <Search className="w-4 h-4 text-silver-mist shrink-0 mr-2" />
                     <input
                       type="text"
@@ -308,7 +308,7 @@ export function CitationsPage() {
                   </div>
 
                   {/* Content Type Tabs */}
-                  <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-cloud-canvas dark:border-stone-gray shrink-0 max-w-fit">
+                  <div className="flex bg-cloud-canvas/60 dark:bg-stone-gray/40 rounded-lg p-0.5 border border-frost-gray dark:border-stone-gray shrink-0 max-w-fit">
                     {(['All', 'Articles', 'Journals', 'Books'] as const).map((ct) => (
                       <button
                         key={ct}
@@ -331,7 +331,7 @@ export function CitationsPage() {
                   <Dropdown
                     align="left"
                     trigger={
-                      <button className="flex items-center gap-1.5 h-10 px-3 border border-cloud-canvas dark:border-stone-gray rounded-xl text-xs font-medium text-slate-gray dark:text-silver-mist hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-colors cursor-pointer whitespace-nowrap">
+                      <button className="flex items-center gap-1.5 h-10 px-3 border border-frost-gray dark:border-stone-gray rounded-xl text-xs font-medium text-slate-gray dark:text-silver-mist hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-colors cursor-pointer whitespace-nowrap">
                         <Filter className="w-3.5 h-3.5" />
                         {currentSortLabel}
                         <ChevronDown className="w-3.5 h-3.5" />
@@ -349,7 +349,7 @@ export function CitationsPage() {
                     className={`flex items-center gap-1.5 h-10 px-3 border rounded-xl text-xs font-medium transition-colors ${
                       showFilters || activeFilterCount > 0
                         ? 'border-fuenzer-teal text-fuenzer-teal bg-fuenzer-teal/10'
-                        : 'border-cloud-canvas dark:border-stone-gray text-slate-gray dark:text-silver-mist hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50'
+                        : 'border-frost-gray dark:border-stone-gray text-slate-gray dark:text-silver-mist hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50'
                     }`}
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -369,7 +369,7 @@ export function CitationsPage() {
 
               {/* Index Filters Checklist */}
               {showFilters && (
-                <div className="flex flex-col gap-2 animate-in slide-in-from-top-2 duration-200 bg-cloud-canvas/20 dark:bg-stone-gray/10 p-3.5 rounded-xl border border-cloud-canvas dark:border-stone-gray">
+                <div className="flex flex-col gap-2 animate-in slide-in-from-top-2 duration-200 bg-cloud-canvas/20 dark:bg-stone-gray/10 p-3.5 rounded-xl border border-frost-gray dark:border-stone-gray">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase tracking-widest font-bold text-silver-mist">Index Filter</span>
                     {activeFilterCount > 0 && (
@@ -391,7 +391,7 @@ export function CitationsPage() {
                           className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
                             checked
                               ? 'bg-fuenzer-teal text-white border-fuenzer-teal'
-                              : 'border-cloud-canvas dark:border-stone-gray text-slate-gray dark:text-silver-mist hover:border-fuenzer-teal/60 hover:text-fuenzer-teal'
+                              : 'border-frost-gray dark:border-stone-gray text-slate-gray dark:text-silver-mist hover:border-fuenzer-teal/60 hover:text-fuenzer-teal'
                           }`}
                         >
                           {checked
@@ -408,7 +408,7 @@ export function CitationsPage() {
             </div>
 
             {/* Style switcher row */}
-            <div className="flex items-center justify-between pb-3 border-b border-cloud-canvas dark:border-stone-gray">
+            <div className="flex items-center justify-between pb-3 border-b border-frost-gray dark:border-stone-gray">
               <div className="flex items-center gap-2 flex-wrap">
                 {CITATION_STYLES.map((style) => (
                   <button
@@ -417,7 +417,7 @@ export function CitationsPage() {
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                       selectedStyle === style
                         ? 'bg-fuenzer-teal/10 text-fuenzer-teal border-fuenzer-teal/30 shadow-xs'
-                        : 'border-transparent text-slate-gray dark:text-silver-mist hover:text-fuenzer-teal hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50'
+                        : 'border-frost-gray dark:border-stone-gray text-slate-gray dark:text-silver-mist hover:text-fuenzer-teal hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50'
                     }`}
                   >
                     {style} Format
@@ -429,7 +429,7 @@ export function CitationsPage() {
             {/* List of generated citations */}
             <div className="space-y-4">
               {filteredSources.length === 0 ? (
-                <div className="text-center py-16 text-silver-mist text-sm bg-paper-white dark:bg-ink-black rounded-xl border border-cloud-canvas dark:border-stone-gray shadow-sm">
+                <div className="text-center py-16 text-silver-mist text-sm bg-paper-white dark:bg-ink-black rounded-xl border border-frost-gray dark:border-stone-gray shadow-sm">
                   No citations match your search and filter criteria.
                 </div>
               ) : (
@@ -439,7 +439,7 @@ export function CitationsPage() {
                   return (
                     <div
                       key={source.id}
-                      className="p-5 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray hover:border-silver-mist/50 dark:hover:border-stone-gray/70 rounded-2xl shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                      className="p-5 bg-paper-white dark:bg-ink-black border border-frost-gray dark:border-stone-gray hover:border-silver-mist/50 dark:hover:border-stone-gray/70 rounded-2xl shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
                     >
                       <div className="space-y-1.5 flex-1 min-w-0 pr-4">
                         <p className="text-xs font-bold text-fuenzer-teal-dark dark:text-fuenzer-teal uppercase tracking-wider font-sans">
@@ -455,7 +455,7 @@ export function CitationsPage() {
                         className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ml-auto border cursor-pointer ${
                           isCopied
                             ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30'
-                            : 'bg-cloud-canvas/30 hover:bg-cloud-canvas/70 dark:bg-stone-gray/20 dark:hover:bg-stone-gray/40 border-cloud-canvas dark:border-stone-gray text-slate-gray dark:text-silver-mist'
+                            : 'bg-cloud-canvas/30 hover:bg-cloud-canvas/70 dark:bg-stone-gray/20 dark:hover:bg-stone-gray/40 border-frost-gray dark:border-stone-gray text-slate-gray dark:text-silver-mist'
                         }`}
                       >
                         {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
