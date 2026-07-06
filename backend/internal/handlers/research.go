@@ -88,13 +88,9 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 
 	// Route based on Type and Index
 	if req.Index == "GARUDA" {
-		sources, err = h.garudaClient.Search(req.Query, req.Type)
-		if err != nil {
-			log.Printf("ERROR: Garuda SQLite search failed: %v", err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Query database lokal gagal.",
-			})
-		}
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+			"error": "Basis data lokal Garuda sedang dalam pemeliharaan sistem. Silakan pilih indeks 'Global' atau 'SINTA' untuk mencari artikel Indonesia.",
+		})
 	} else if req.Index == "SINTA" {
 		switch req.Type {
 		case "journal":

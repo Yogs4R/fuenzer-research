@@ -34,6 +34,7 @@ import {
   SlidersHorizontal,
   CheckSquare,
   Square,
+  AlertTriangle,
 } from 'lucide-react';
 
 type CitationStyle = 'APA' | 'Harvard' | 'MLA' | 'Chicago' | 'Vancouver';
@@ -62,10 +63,32 @@ export function PlaygroundPage() {
   const [contentTypeFilter, setContentTypeFilter] = useState<ContentTypeTab>('All');
 
   const navigate = useNavigate();
-  const { query, messages, isBookmarkedInAnyLibrary } = useResearchStore();
+  const {
+    query,
+    messages,
+    isBookmarkedInAnyLibrary,
+    searchAccreditation,
+    setSearchAccreditation,
+    executeSearch,
+  } = useResearchStore();
+
   const [bookmarkModalSource, setBookmarkModalSource] = useState<AcademicSource | null>(null);
   const { language } = useUiStore();
   const t = language === 'en' ? en.playground : id.playground;
+
+  const [showGarudaMaintenance, setShowGarudaMaintenance] = useState(false);
+
+  useEffect(() => {
+    if (searchAccreditation === 'GARUDA') {
+      setShowGarudaMaintenance(true);
+    }
+  }, [searchAccreditation]);
+
+  const handleSwitchToGlobal = async () => {
+    setSearchAccreditation('Global');
+    setShowGarudaMaintenance(false);
+    await executeSearch();
+  };
 
   useSEO({
     canonical: 'https://research.fuenzer.web.id/playground/'
@@ -570,6 +593,43 @@ export function PlaygroundPage() {
         onClose={() => setBookmarkModalSource(null)}
         source={bookmarkModalSource}
       />
+
+      {/* Garuda Database Maintenance Modal */}
+      {showGarudaMaintenance && (
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="absolute inset-0" onClick={() => setShowGarudaMaintenance(false)} />
+          <div className="relative w-full max-w-md bg-paper-white dark:bg-ink-black rounded-2xl border border-cloud-canvas dark:border-stone-gray shadow-xl overflow-hidden font-sans p-6 flex flex-col items-center text-center gap-4 animate-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500">
+              <AlertTriangle className="w-6 h-6 animate-pulse" />
+            </div>
+            
+            <h3 className="text-base font-bold text-ink-black dark:text-paper-white font-serif">
+              {language === 'en' ? 'Garuda Database Under Maintenance' : 'Database Garuda Sedang Pemeliharaan'}
+            </h3>
+            
+            <p className="text-xs text-slate-gray dark:text-silver-mist leading-relaxed">
+              {language === 'en' 
+                ? "We apologize for the inconvenience. The local Garuda database is currently undergoing performance optimization. As an alternative, you can still search Indonesian domestic publications by selecting 'Indonesia' as the location and 'Global' or 'SINTA' as the index."
+                : "Mohon maaf atas ketidaknyamanannya. Basis data lokal Garuda saat ini sedang dalam pemeliharaan sistem untuk optimasi performa. Sebagai alternatif, Anda tetap dapat mencari artikel lokal Indonesia dengan memilih lokasi 'Indonesia' dan indeks 'Global' atau 'SINTA'."}
+            </p>
+            
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={handleSwitchToGlobal}
+                className="flex-1 py-2 text-xs font-bold rounded-xl bg-fuenzer-teal text-white hover:bg-fuenzer-teal-dark transition-colors cursor-pointer"
+              >
+                {language === 'en' ? 'Switch to Global & Search' : 'Cari dengan Indeks Global'}
+              </button>
+              <button
+                onClick={() => setShowGarudaMaintenance(false)}
+                className="px-4 py-2 text-xs font-bold rounded-xl border border-cloud-canvas dark:border-stone-gray text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors cursor-pointer"
+              >
+                {language === 'en' ? 'Got It' : 'Paham'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
