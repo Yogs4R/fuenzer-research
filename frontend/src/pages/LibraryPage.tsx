@@ -707,7 +707,7 @@ export function LibraryPage() {
               {compareMessages.length === 0 && (
                 <div className="flex-1 flex flex-col items-center justify-center text-center gap-6 py-8">
                   <div className="flex flex-col items-center gap-2 select-none">
-                    <MessageSquare className="w-10 h-10 text-slate-gray/60 dark:text-stone-gray animate-bounce" strokeWidth={1.5} />
+                    <MessageSquare className="w-10 h-10 text-slate-gray/60 dark:text-stone-gray" strokeWidth={1.5} />
                     <p className="text-sm font-semibold text-silver-mist">
                       {t.askEmptyPlaceholder}
                     </p>

@@ -454,25 +454,25 @@ export function LandingPage() {
             <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
               <NumberScramble value="150M+" duration={1500} />
             </p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.globalPublications}</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.openalexBooks}</p>
           </div>
           <div>
             <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
-              <NumberScramble value="S1-S6" duration={1700} />
+              <NumberScramble value="7.7K+" duration={1700} />
             </p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.sintaAccredited}</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.sintaData}</p>
           </div>
           <div>
             <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
-              <NumberScramble value="100%" duration={1900} />
+              <NumberScramble value="652K+" duration={1900} />
             </p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.aiSynthesis}</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.garudaData}</p>
           </div>
           <div>
             <p className="text-3xl md:text-4xl font-bold font-serif dark:text-paper-white text-fuenzer-teal">
-              <NumberScramble value="5+" duration={2100} />
+              <NumberScramble value="100%" duration={2100} />
             </p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.supportedDatabases}</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-gray dark:text-silver-mist mt-2 font-bold">{t.landing.stats.freeSearch}</p>
           </div>
         </div>
         

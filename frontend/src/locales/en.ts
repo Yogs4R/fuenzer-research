@@ -184,10 +184,10 @@ export const en = {
     subtitle: 'Navigate millions of scientific papers with Fuenzer AI. Seamlessly search global databases and SINTA-indexed sources with unparalleled precision.',
     popularSearches: 'Popular Searches',
     stats: {
-      globalPublications: 'Global Publications',
-      sintaAccredited: 'SINTA Accredited',
-      aiSynthesis: 'AI-Assisted Synthesis',
-      supportedDatabases: 'Supported Databases'
+      openalexBooks: 'OpenAlex & Google Books',
+      sintaData: 'SINTA Journals & Articles',
+      freeSearch: 'Free Search & Synthesis',
+      garudaData: 'GARUDA Articles'
     },
     accreditedSources: 'Accredited Sources',
     about: {

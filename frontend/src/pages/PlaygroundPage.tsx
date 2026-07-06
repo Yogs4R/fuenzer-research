@@ -28,13 +28,13 @@ import {
   Download,
   Filter,
   ChevronDown,
-  PanelLeft,
   FileText,
   X,
   SlidersHorizontal,
   CheckSquare,
   Square,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
 
 type CitationStyle = 'APA' | 'Harvard' | 'MLA' | 'Chicago' | 'Vancouver';
@@ -324,7 +324,7 @@ export function PlaygroundPage() {
                 className="p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-lg hover:bg-cloud-canvas dark:hover:bg-stone-gray shrink-0"
                 title={t.sidebarToggle}
               >
-                <PanelLeft className="w-5 h-5" />
+                <Sparkles className="w-5 h-5 text-fuenzer-teal shrink-0" />
               </button>
 
               <h1 className="text-base md:text-2xl font-bold text-ink-black dark:text-paper-white font-serif shrink-0 mr-2">

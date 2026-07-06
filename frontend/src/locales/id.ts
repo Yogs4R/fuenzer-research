@@ -184,10 +184,10 @@ export const id = {
     subtitle: 'Jelajahi jutaan makalah ilmiah bersama Fuenzer AI. Cari database global dan sumber terindeks SINTA dengan presisi tak tertandingi secara mulus.',
     popularSearches: 'Pencarian Populer',
     stats: {
-      globalPublications: 'Publikasi Global',
-      sintaAccredited: 'Terakreditasi SINTA',
-      aiSynthesis: 'Sintesis Berbantuan AI',
-      supportedDatabases: 'Database Didukung'
+      openalexBooks: 'OpenAlex & Google Books',
+      sintaData: 'Jurnal & Artikel SINTA',
+      freeSearch: 'Gratis Akses & Sintesis',
+      garudaData: 'Artikel GARUDA'
     },
     accreditedSources: 'Sumber Terakreditasi',
     about: {
