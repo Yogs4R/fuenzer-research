@@ -58,6 +58,11 @@ func (m *Mapper) loadData(path string) error {
 					PIssn string `json:"p_issn"`
 				} `json:"identifiers"`
 			} `json:"basic_info"`
+			Metrics struct {
+				Citations struct {
+					Total int `json:"total"`
+				} `json:"citations"`
+			} `json:"metrics"`
 			Articles []struct {
 				Title       string `json:"title"`
 				Url         string `json:"url"`
@@ -109,6 +114,7 @@ func (m *Mapper) loadData(path string) error {
 			SubjectArea: j.BasicInfo.SubjectArea,
 			ISSN:        j.BasicInfo.Identifiers.PIssn,
 			URL:         j.BasicInfo.Url,
+			Citations:   j.Metrics.Citations.Total,
 		}
 
 		// Load articles inside this journal
@@ -256,6 +262,7 @@ func (m *Mapper) SearchJournals(query string, sintaRanks []string, limit int) []
 					{Provider: "SINTA", Tier: j.Tier},
 				},
 				ContentType: "journal",
+				Citations:   j.Citations,
 			}
 
 			results = append(results, source)

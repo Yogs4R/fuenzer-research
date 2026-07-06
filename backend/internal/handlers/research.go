@@ -174,6 +174,7 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 				URL:         url,
 				Indexes:     []models.IndexEntry{},
 				ContentType: contentType,
+				Citations:   p.CitedByCount,
 			}
 			if req.Scope == "indonesia" {
 				source.Indexes = append(source.Indexes, models.IndexEntry{Provider: "location", Tier: "Indonesia"})

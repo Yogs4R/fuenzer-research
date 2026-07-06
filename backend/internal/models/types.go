@@ -26,6 +26,7 @@ type AcademicSource struct {
 	Indexes     []IndexEntry `json:"indexes"`
 	URL         string       `json:"url"`
 	ContentType string       `json:"content_type,omitempty"` // "article", "book", "journal", etc.
+	Citations   int          `json:"citations"`
 }
 
 // ResearchResponse is the unified response sent back to the frontend.
@@ -88,6 +89,7 @@ type SintaJournal struct {
 	SubjectArea string `json:"subject_area"`
 	ISSN        string `json:"issn"`
 	URL         string `json:"url"`
+	Citations   int    `json:"citations"`
 }
 
 // GeminiAbstract is the lean struct sent to Gemini (token economy).

@@ -1,6 +1,7 @@
 import type { AcademicSource } from '../../types/research';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { getFormattedCitation } from '../../utils/citationFormatter';
+import { useUiStore } from '../../store/uiStore';
 
 interface JournalCardProps {
   source: AcademicSource;
@@ -19,6 +20,9 @@ export function JournalCard({
   onToggleBookmark,
   citationStyle = 'APA'
 }: JournalCardProps) {
+  const { language } = useUiStore();
+  const citationLabel = language === 'id' ? 'Sitasi' : 'Citations';
+
   const sintaIndex = source.indexes?.find((idx) => idx.provider.toLowerCase() === 'sinta');
   const garudaIndex = source.indexes?.find((idx) => idx.provider.toLowerCase() === 'garuda');
   const isSinta = !!sintaIndex;
@@ -47,6 +51,18 @@ export function JournalCard({
             {source.content_type === 'journal-article' ? (source.publisher || 'Unknown Journal') : source.title}
           </h3>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+            {source.citations !== undefined && source.citations > 0 && (
+              <>
+                <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 tracking-wide border border-emerald-200/50 dark:border-emerald-800/40" title={`${source.citations} ${citationLabel}`}>
+                  {source.citations} {citationLabel}
+                </span>
+                {source.citations > 50 && (
+                  <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 tracking-wide border border-amber-200/50 dark:border-amber-800/40 animate-pulse" title="High Impact Reference">
+                    High Impact
+                  </span>
+                )}
+              </>
+            )}
             {isSinta && (
                <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 tracking-wide border border-blue-200/50 dark:border-blue-800/40">
                  {sintaIndex.tier ? `SINTA ${sintaIndex.tier}` : 'SINTA'}
