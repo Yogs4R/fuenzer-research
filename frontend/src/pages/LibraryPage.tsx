@@ -89,6 +89,7 @@ export function LibraryPage() {
     togglePublicStatus,
     setActiveLibraryId,
     isBookmarkedInAnyLibrary,
+    toggleBookmarkInLibrary,
   } = useResearchStore();
   const [newFolderInput, setNewFolderInput] = useState('');
   const [copiedLibId, setCopiedLibId] = useState<string | null>(null);
@@ -193,6 +194,41 @@ export function LibraryPage() {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [compareMessages]);
+
+  const [selectedDeleteRefs, setSelectedDeleteRefs] = useState<Set<string>>(new Set());
+
+  // Reset delete selection when library or view mode changes
+  useEffect(() => {
+    setSelectedDeleteRefs(new Set());
+  }, [activeLibraryId, viewMode]);
+
+  const toggleDeleteRef = (id: string) => {
+    setSelectedDeleteRefs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedDeleteRefs.size === 0) return;
+    const confirmMsg = language === 'id'
+      ? `Apakah Anda yakin ingin menghapus ${selectedDeleteRefs.size} referensi terpilih dari pustaka ini?`
+      : `Are you sure you want to remove the ${selectedDeleteRefs.size} selected references from this library?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    for (const sourceId of selectedDeleteRefs) {
+      const source = bookmarkedSources.find((s) => s.id === sourceId);
+      if (source) {
+        await toggleBookmarkInLibrary(activeLibraryId, source);
+      }
+    }
+    setSelectedDeleteRefs(new Set());
+  };
 
   const handleSendCompare = async (promptText: string) => {
     if (promptText.trim().length < 3) return;
@@ -810,7 +846,14 @@ export function LibraryPage() {
                   </span>
                   {compareMessages.length > 0 && (
                     <button
-                      onClick={() => updateCompareMessages([])}
+                      onClick={() => {
+                        const confirmMsg = language === 'en' 
+                          ? 'Are you sure you want to clear the conversation history?' 
+                          : 'Apakah Anda yakin ingin menghapus riwayat percakapan?';
+                        if (window.confirm(confirmMsg)) {
+                          updateCompareMessages([]);
+                        }
+                      }}
                       className="flex items-center gap-1 text-red-500 hover:text-red-600 hover:underline cursor-pointer font-bold transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -968,6 +1011,50 @@ export function LibraryPage() {
                   </div>
                 </div>
               )}
+
+              {/* Bulk Actions Row */}
+              {filtered.length > 0 && (
+                <div className="flex items-center justify-between bg-cloud-canvas/10 dark:bg-stone-gray/5 border border-frost-gray dark:border-stone-gray/60 p-2.5 rounded-xl text-xs font-sans mt-2 select-none animate-in fade-in">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={filtered.length > 0 && filtered.every((s) => selectedDeleteRefs.has(s.id))}
+                      onChange={() => {
+                        const allSelected = filtered.every((s) => selectedDeleteRefs.has(s.id));
+                        if (allSelected) {
+                          setSelectedDeleteRefs((prev) => {
+                            const next = new Set(prev);
+                            filtered.forEach((s) => next.delete(s.id));
+                            return next;
+                          });
+                        } else {
+                          setSelectedDeleteRefs((prev) => {
+                            const next = new Set(prev);
+                            filtered.forEach((s) => next.add(s.id));
+                            return next;
+                          });
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-cloud-canvas text-fuenzer-teal focus:ring-fuenzer-teal focus:ring-offset-0 cursor-pointer"
+                    />
+                    <span className="font-semibold text-slate-gray dark:text-silver-mist">
+                      {selectedDeleteRefs.size > 0 
+                        ? (language === 'en' ? `${selectedDeleteRefs.size} selected` : `${selectedDeleteRefs.size} terpilih`) 
+                        : (language === 'en' ? 'Select All' : 'Pilih Semua')}
+                    </span>
+                  </div>
+
+                  {selectedDeleteRefs.size > 0 && (
+                    <button
+                      onClick={handleBulkDelete}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-xs font-bold transition-all cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      {language === 'en' ? 'Delete Selected' : 'Hapus Terpilih'}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {filtered.length === 0 ? (
@@ -982,6 +1069,8 @@ export function LibraryPage() {
                     source={source}
                     isBookmarked={isBookmarkedInAnyLibrary(source.id)}
                     onToggleBookmark={() => setBookmarkModalSource(source)}
+                    isSelected={selectedDeleteRefs.has(source.id)}
+                    onToggleSelect={() => toggleDeleteRef(source.id)}
                     citationStyle="APA"
                   />
                 ))}

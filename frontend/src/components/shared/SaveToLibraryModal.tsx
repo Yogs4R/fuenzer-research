@@ -47,6 +47,16 @@ export function SaveToLibraryModal({ isOpen, onClose, source }: SaveToLibraryMod
   };
 
   const handleToggle = async (libraryId: string) => {
+    const isSaved = savedIds.includes(libraryId);
+    if (isSaved) {
+      const lib = libraries.find(l => l.id === libraryId);
+      const confirmMsg = isLanguageId 
+        ? `Apakah Anda yakin ingin menghapus referensi ini dari pustaka "${lib?.name || 'Library'}"?` 
+        : `Are you sure you want to remove this reference from library "${lib?.name || 'Library'}"?`;
+      if (!window.confirm(confirmMsg)) {
+        return;
+      }
+    }
     setSavedIds(prev =>
       prev.includes(libraryId)
         ? prev.filter(id => id !== libraryId)
