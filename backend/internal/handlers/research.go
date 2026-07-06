@@ -81,9 +81,9 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 	var sources []models.AcademicSource
 	var err error
 
-	limit := 5
+	limit := 10
 	if req.Type == "" {
-		limit = 15
+		limit = 30
 	}
 
 	// Route based on Type and Index

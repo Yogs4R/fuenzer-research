@@ -52,9 +52,9 @@ func (c *Client) Search(query string, workType string) ([]models.AcademicSource,
 	defer db.Close()
 
 	// Adjust search limit based on type
-	limit := 5
+	limit := 10
 	if workType == "" {
-		limit = 15
+		limit = 30
 	}
 
 	// Sanitize and tokenize query for FTS5 MATCH syntax

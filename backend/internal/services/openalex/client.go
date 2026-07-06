@@ -15,7 +15,7 @@ import (
 const (
 	baseURL             = "https://api.openalex.org/works"
 	autocompleteBaseURL = "https://api.openalex.org/autocomplete/works"
-	defaultLimit        = 5
+	defaultLimit        = 10
 	requestTimeout      = 8 * time.Second
 	mailto              = "fuenzerofficial@gmail.com"
 )
@@ -39,7 +39,7 @@ func NewClient() *Client {
 // workType can be "article", "book", "journal", or "" for all types.
 func (c *Client) Search(query string, scope string, workType string) ([]models.OpenAlexWork, error) {
 	if workType == "" {
-		// Concurrently fetch 5 articles, 5 journals, and 5 books, then merge and deduplicate
+		// Concurrently fetch 10 articles, 10 journals, and 10 books, then merge and deduplicate
 		type result struct {
 			works []models.OpenAlexWork
 			err   error
@@ -49,7 +49,7 @@ func (c *Client) Search(query string, scope string, workType string) ([]models.O
 
 		for _, t := range types {
 			go func(wt string) {
-				works, err := c.searchWithLimit(query, scope, wt, 5)
+				works, err := c.searchWithLimit(query, scope, wt, 10)
 				ch <- result{works: works, err: err}
 			}(t)
 		}
