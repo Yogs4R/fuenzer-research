@@ -239,6 +239,11 @@ export const en = {
     title: 'Update Logs',
     logs: [
       {
+        date: '06 July 2026',
+        title: 'UI Refinements, Sizing, & Delete Confirmations',
+        desc: 'Added pop-up confirmation dialogs before deletions, bulk bookmark selection and deletion in library, improved contrast of borders in light mode, aligned Chatbox to Google Stitch design, updated user copy button in Assistant & Compare views, introduced Citation Quality Indicators (Citations & High Impact badges), raised search limits to 10 per type, added filter summary text in playground sidebar, and implemented persistent quick-action suggestion pills in Library Compare.'
+      },
+      {
         date: '03 July 2026',
         title: 'Collaborative Sharing & Library Folders',
         desc: 'Implemented Literature Matrix CSV export, introduced multi-library folders sidebar to organize sources, added public shareable links for libraries and workspace sessions with fork capability, secured resource routes with Firestore Rules, and implemented automatic background migration for legacy bookmarks.'
