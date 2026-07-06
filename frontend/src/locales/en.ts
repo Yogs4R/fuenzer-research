@@ -110,7 +110,18 @@ export const en = {
     titleMatrix: 'Literature Matrix',
     descMatrix: 'Generate comparison matrix table',
     promptMatrix: 'Generate a literature review matrix comparing the selected references. Format the output STRICTLY as a single Markdown table with the exact columns: | No | Title | Year | Methodology | Main Findings | Research Gap |. Do not include any intro or outro text.',
-    exportCSV: 'Export to CSV'
+    exportCSV: 'Export to CSV',
+    folderSettings: 'Library Folder Settings & Sharing',
+    shareNoticeGuest: '💡 Log in to make your libraries public and share links with others.',
+    loginRequired: 'Login required',
+    publicStatus: 'Public',
+    privateStatus: 'Private',
+    copyLink: 'Copy Link',
+    copiedLink: 'Copied',
+    deleteFolder: 'Delete Library',
+    deleteFolderConfirm: 'Are you sure you want to delete the library "{name}"? Bookmarks inside it will be permanently removed.',
+    loginToMakePublic: 'Log in to make public',
+    loginToCopyLink: 'Log in to copy public link'
   },
   citations: {
     badge: 'Citation Generator',

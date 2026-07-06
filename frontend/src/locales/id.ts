@@ -110,7 +110,18 @@ export const id = {
     titleMatrix: 'Matriks Literatur',
     descMatrix: 'Buat tabel komparasi matriks',
     promptMatrix: 'Buatlah matriks tinjauan literatur yang membandingkan referensi yang dipilih. Format output HARUS berupa tabel Markdown tunggal dengan kolom: | No | Judul | Tahun | Metodologi | Temuan Utama | Kesenjangan Riset (Gap) |. Jangan sertakan teks pengantar atau penutup apa pun.',
-    exportCSV: 'Ekspor ke CSV'
+    exportCSV: 'Ekspor ke CSV',
+    folderSettings: 'Pengaturan & Berbagi Folder Pustaka',
+    shareNoticeGuest: '💡 Masuk untuk menjadikan pustaka Anda publik dan membagikan tautan.',
+    loginRequired: 'Perlu login',
+    publicStatus: 'Publik',
+    privateStatus: 'Privat',
+    copyLink: 'Salin Tautan',
+    copiedLink: 'Tersalin',
+    deleteFolder: 'Hapus Pustaka',
+    deleteFolderConfirm: 'Apakah Anda yakin ingin menghapus pustaka "{name}"? Bookmark di dalamnya akan dihapus secara permanen.',
+    loginToMakePublic: 'Masuk untuk menjadikan publik',
+    loginToCopyLink: 'Masuk untuk menyalin tautan publik'
   },
   citations: {
     badge: 'Generator Sitasi',

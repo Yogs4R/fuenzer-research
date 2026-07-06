@@ -101,6 +101,7 @@ export function LibraryPage() {
   const t = language === 'en' ? en.library : id.library;
 
   const { user } = useAuthStore();
+  const activeLib = libraries.find((lib) => lib.id === activeLibraryId);
   const storageKey = user
     ? (user.isAnonymous ? `fuenzer_library_compare_chat_guest_${activeLibraryId}` : `fuenzer_library_compare_chat_${user.uid}_${activeLibraryId}`)
     : `fuenzer_library_compare_chat_guest_${activeLibraryId}`;
@@ -332,19 +333,7 @@ export function LibraryPage() {
             <div className="space-y-1 max-h-80 overflow-y-auto pr-1">
               {libraries.map((lib) => {
                 const isActive = activeLibraryId === lib.id;
-                const isDefault = lib.id === 'default';
                 const isPublic = lib.isPublic;
-                const isCopied = copiedLibId === lib.id;
-
-                const copyShareLink = (e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  if (!user) return;
-                  const shareUrl = `${window.location.origin}/shared/library/${user.uid}/${lib.id}`;
-                  navigator.clipboard.writeText(shareUrl).then(() => {
-                    setCopiedLibId(lib.id);
-                    setTimeout(() => setCopiedLibId(null), 2000);
-                  });
-                };
 
                 return (
                   <div
@@ -361,52 +350,23 @@ export function LibraryPage() {
                       <span className="truncate">{lib.name}</span>
                     </div>
 
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0">
-                      {/* Public/Private Toggle Icon (only if logged in & not anonymous) */}
-                      {user && !user.isAnonymous && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            togglePublicStatus(lib.id, !isPublic);
-                          }}
-                          className="p-1 rounded hover:bg-cloud-canvas/65 dark:hover:bg-stone-gray/25 text-slate-gray/80 dark:text-silver-mist hover:text-fuenzer-teal cursor-pointer"
-                          title={isPublic ? 'Make Private' : 'Make Public'}
-                        >
-                          {isPublic ? <Globe className="w-3.5 h-3.5 text-fuenzer-teal" /> : <Lock className="w-3.5 h-3.5" />}
-                        </button>
-                      )}
-
-                      {/* Copy Shareable Link (if public) */}
-                      {isPublic && user && (
-                        <button
-                          onClick={copyShareLink}
-                          className="p-1 rounded hover:bg-cloud-canvas/65 dark:hover:bg-stone-gray/25 text-slate-gray/80 dark:text-silver-mist hover:text-fuenzer-teal cursor-pointer"
-                          title="Copy Public Link"
-                        >
-                          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Link2 className="w-3.5 h-3.5" />}
-                        </button>
-                      )}
-
-                      {/* Delete folder (non-default) */}
-                      {!isDefault && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm(language === 'en' ? 'Are you sure you want to delete this folder? Bookmarks inside it will be removed.' : 'Apakah Anda yakin ingin menghapus folder ini? Bookmark di dalamnya akan ikut terhapus.')) {
-                              removeFolder(lib.id);
-                            }
-                          }}
-                          className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-gray/80 dark:text-silver-mist hover:text-red-500 cursor-pointer"
-                          title="Delete Library"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      {isPublic && (
+                        <span title={language === 'en' ? 'Public' : 'Publik'}>
+                          <Globe className="w-3.5 h-3.5 text-fuenzer-teal" />
+                        </span>
                       )}
                     </div>
                   </div>
                 );
               })}
             </div>
+
+            {(!user || user.isAnonymous) && (
+              <div className="mt-2 text-[10px] text-slate-gray/80 dark:text-silver-mist/80 bg-cloud-canvas/20 dark:bg-stone-gray/10 p-2.5 rounded-xl border border-cloud-canvas/30 dark:border-stone-gray/10 leading-normal font-sans">
+                {t.shareNoticeGuest}
+              </div>
+            )}
           </div>
 
           {/* Add Folder Form */}
@@ -441,6 +401,119 @@ export function LibraryPage() {
 
         {/* Right Content Area */}
         <div className="md:col-span-3 flex flex-col min-w-0">
+          {activeLib && (
+            <div className="mb-6 p-4 md:p-5 bg-paper-white dark:bg-ink-black rounded-2xl border border-cloud-canvas dark:border-stone-gray shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 select-none">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-fuenzer-teal/10 flex items-center justify-center shrink-0">
+                  <Folder className="w-5 h-5 text-fuenzer-teal" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-ink-black dark:text-paper-white font-sans flex items-center gap-2">
+                    {activeLib.name}
+                    {activeLib.id === 'default' && (
+                      <span className="text-[10px] bg-slate-gray/10 text-slate-gray px-1.5 py-0.5 rounded font-medium">
+                        {language === 'en' ? 'Default' : 'Bawaan'}
+                      </span>
+                    )}
+                  </h2>
+                  <p className="text-[11px] text-slate-gray dark:text-silver-mist font-sans">
+                    {t.folderSettings}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons with clear texts instead of only icons */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Public / Private Action */}
+                {user && !user.isAnonymous ? (
+                  <button
+                    onClick={() => togglePublicStatus(activeLib.id, !activeLib.isPublic)}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer font-sans ${
+                      activeLib.isPublic
+                        ? 'bg-fuenzer-teal/10 border-fuenzer-teal/30 text-fuenzer-teal hover:bg-fuenzer-teal/15'
+                        : 'border-cloud-canvas dark:border-stone-gray text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white hover:bg-cloud-canvas/30 dark:hover:bg-stone-gray/10'
+                    }`}
+                  >
+                    {activeLib.isPublic ? (
+                      <>
+                        <Globe className="w-3.5 h-3.5" />
+                        <span>{t.publicStatus}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>{t.privateStatus}</span>
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border border-cloud-canvas dark:border-stone-gray opacity-45 text-slate-gray dark:text-silver-mist cursor-not-allowed font-sans bg-cloud-canvas/10 dark:bg-stone-gray/5"
+                    title={t.loginToMakePublic}
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>{t.privateStatus} ({t.loginRequired})</span>
+                  </button>
+                )}
+
+                {/* Share Link Action */}
+                {activeLib.isPublic && user && (
+                  <button
+                    onClick={() => {
+                      const shareUrl = `${window.location.origin}/shared/library/${user.uid}/${activeLib.id}`;
+                      navigator.clipboard.writeText(shareUrl).then(() => {
+                        setCopiedLibId(activeLib.id);
+                        setTimeout(() => setCopiedLibId(null), 2000);
+                      });
+                    }}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border border-cloud-canvas dark:border-stone-gray text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white cursor-pointer bg-paper-white dark:bg-ink-black hover:bg-cloud-canvas/30 dark:hover:bg-stone-gray/10 transition-all font-sans"
+                  >
+                    {copiedLibId === activeLib.id ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-emerald-500">{t.copiedLink}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Link2 className="w-3.5 h-3.5" />
+                        <span>{t.copyLink}</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Share Link Action (disabled placeholder for guest) */}
+                {(!user || user.isAnonymous) && (
+                  <button
+                    disabled
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border border-cloud-canvas dark:border-stone-gray opacity-45 text-slate-gray dark:text-silver-mist cursor-not-allowed font-sans bg-cloud-canvas/10 dark:bg-stone-gray/5"
+                    title={t.loginToCopyLink}
+                  >
+                    <Link2 className="w-3.5 h-3.5" />
+                    <span>{t.copyLink}</span>
+                  </button>
+                )}
+
+                {/* Delete Active Library (if non-default) */}
+                {activeLib.id !== 'default' && (
+                  <button
+                    onClick={() => {
+                      const confirmMsg = t.deleteFolderConfirm.replace('{name}', activeLib.name);
+                      if (window.confirm(confirmMsg)) {
+                        removeFolder(activeLib.id);
+                      }
+                    }}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border border-red-200 dark:border-red-950/20 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/10 cursor-pointer transition-all font-sans"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{t.deleteFolder}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {bookmarkedSources.length === 0 ? (
             /* Empty state */
           <div className="flex-1 flex flex-col items-center justify-center py-20 text-center gap-6 max-w-md mx-auto">
