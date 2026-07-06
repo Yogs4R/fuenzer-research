@@ -844,27 +844,52 @@ export function LibraryPage() {
                 </div>
               )}
               {selectedCompareRefs.size > 0 && (
-                <div className="mb-2 px-2 flex justify-between items-center text-[10px] text-slate-gray dark:text-silver-mist font-semibold">
-                  <span>
-                    {selectedCompareRefs.size} {t.sourcesSelectedForAnalysis}
-                  </span>
-                  {compareMessages.length > 0 && (
-                    <button
-                      onClick={() => {
-                        const confirmMsg = language === 'en' 
-                          ? 'Are you sure you want to clear the conversation history?' 
-                          : 'Apakah Anda yakin ingin menghapus riwayat percakapan?';
-                        if (window.confirm(confirmMsg)) {
-                          updateCompareMessages([]);
-                        }
-                      }}
-                      className="flex items-center gap-1 text-red-500 hover:text-red-600 hover:underline cursor-pointer font-bold transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      {t.clearConversation}
-                    </button>
-                  )}
-                </div>
+                <>
+                  <div className="mb-2 px-2 flex justify-between items-center text-[10px] text-slate-gray dark:text-silver-mist font-semibold">
+                    <span>
+                      {selectedCompareRefs.size} {t.sourcesSelectedForAnalysis}
+                    </span>
+                    {compareMessages.length > 0 && (
+                      <button
+                        onClick={() => {
+                          const confirmMsg = language === 'en' 
+                            ? 'Are you sure you want to clear the conversation history?' 
+                            : 'Apakah Anda yakin ingin menghapus riwayat percakapan?';
+                          if (window.confirm(confirmMsg)) {
+                            updateCompareMessages([]);
+                          }
+                        }}
+                        className="flex items-center gap-1 text-red-500 hover:text-red-600 hover:underline cursor-pointer font-bold transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        {t.clearConversation}
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Quick Compare Action Pills */}
+                  <div 
+                    className="flex items-center gap-2 overflow-x-auto pb-2 mb-1 select-none max-w-full"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                    {[
+                      { title: t.titleMethodology, prompt: t.promptMethodology },
+                      { title: t.titleFindings, prompt: t.promptFindings },
+                      { title: t.titleLimitations, prompt: t.promptLimitations },
+                      { title: t.titleMatrix, prompt: t.promptMatrix },
+                    ].map((card, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSendCompare(card.prompt)}
+                        disabled={isCompareLoading}
+                        className="px-3.5 py-1.5 rounded-full text-[10px] font-bold border border-cloud-canvas dark:border-stone-gray bg-paper-white dark:bg-ink-black text-slate-gray hover:text-fuenzer-teal dark:text-silver-mist dark:hover:text-paper-white hover:border-fuenzer-teal transition-all shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none shadow-xs"
+                        title={card.prompt}
+                      >
+                        ✨ {card.title}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
               <div className="bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-2xl p-2 flex flex-col w-full relative">
                 <textarea
