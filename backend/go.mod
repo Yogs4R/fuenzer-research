@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	firebase.google.com/go/v4 v4.20.0
-	github.com/gofiber/fiber/v2 v2.52.13
+	github.com/gofiber/fiber/v2 v2.52.14
 	github.com/google/generative-ai-go v0.20.1
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/api v0.279.0
