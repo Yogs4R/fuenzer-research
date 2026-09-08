@@ -9,22 +9,26 @@ function extractDoi(url?: string): string | null {
   return match ? match[1] : null;
 }
 
+const BIBTEX_SPECIAL_CHAR_MAP: Record<string, string> = {
+  '\\': '\\textbackslash{}',
+  '{': '\\{',
+  '}': '\\}',
+  '~': '\\textasciitilde{}',
+  '^': '\\textasciicircum{}',
+  '%': '\\%',
+  '&': '\\&',
+  '_': '\\_',
+  '#': '\\#',
+  '$': '\\$',
+};
+
 /**
  * Sanitizes a string for safe inclusion in a BibTeX field value.
- * Escapes backslashes first, then braces, to avoid breaking .bib structure.
+ * Uses a single-pass regex with character mapping to avoid multi-pass double escaping
+ * and satisfy CodeQL incomplete string escaping / sanitization rules.
  */
 function sanitizeBibTexField(value: string): string {
-  return value
-    .replace(/\\/g, '\\textbackslash{}')  // Must come first
-    .replace(/\{/g, '\\{')
-    .replace(/\}/g, '\\}')
-    .replace(/~/g, '\\textasciitilde{}')
-    .replace(/\^/g, '\\textasciicircum{}')
-    .replace(/%/g, '\\%')
-    .replace(/&/g, '\\&')
-    .replace(/_/g, '\\_')
-    .replace(/#/g, '\\#')
-    .replace(/\$/g, '\\$');
+  return value.replace(/[\\{}~\^%&_#$]/g, (char) => BIBTEX_SPECIAL_CHAR_MAP[char] || char);
 }
 
 /**
