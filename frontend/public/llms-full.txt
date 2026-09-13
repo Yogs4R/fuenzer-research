@@ -1,0 +1,212 @@
+# Fuenzer Research - Full System & Academic Architecture Documentation
+
+> Comprehensive documentation for LLMs, AI agents, and academic search engines.
+> Standard specification: https://llmstxt.org/
+> For the concise summary version, see [llms.txt](https://research.fuenzer.web.id/llms.txt)
+
+---
+
+## 1. Executive Summary & Value Proposition
+
+**Fuenzer Research** (https://research.fuenzer.web.id/) is an AI-powered scientific discovery and academic research platform engineered to bridge the gap between global publication repositories and local Indonesian academic indexing frameworks.
+
+- **Primary Goal**: Accelerate literature review, reference discovery, citation generation, and academic synthesis for students, researchers, lecturers, and academic institutions.
+- **Founder & Maintainer**: Ridwan Yoga Suryantara
+- **Canonical Production URL**: `https://research.fuenzer.web.id/`
+- **Supported Languages**: Indonesian (primary interface and synthesis target), English (global metadata).
+
+---
+
+## 2. Core Academic Problems Solved
+
+### 2.1 Fragmented National & Global Indexing
+- **Global Repositories**: Platforms like Scopus, Google Scholar, and OpenAlex index global scientific output efficiently, but lack granular visibility into Indonesian national indexing schemes (specifically SINTA accreditation tiers).
+- **Indonesian Repositories**: The Indonesian National Database (Garuda / Garba Rujukan Digital) and SINTA (Science and Technology Index) possess rich local literature, but traditional portals lack fast programmable APIs, real-time cross-database federation, and full-text search indexing.
+- **Fuenzer Solution**: Fuenzer Research queries OpenAlex and a curated local Garuda SQLite database concurrently while dynamically checking SINTA journal accreditation mapping in real-time.
+
+### 2.2 SINTA Tier (1–6) Real-Time Verification
+- Indonesian higher education institutions mandate publication in specific SINTA tiers (SINTA 1 through SINTA 6, where S1 is the highest accreditation and S6 is entry-level).
+- Authors normally have to cross-check journal ISSNs manually across separate portals.
+- Fuenzer maps SINTA tiers on every search result card automatically via a pre-compiled JSON hash dictionary derived from official indexed records.
+
+### 2.3 Curated Garuda Database Search (SQLite FTS)
+- We transformed 652,144 cleaned Indonesian publications (filtered from an initial Kaggle scraping corpus of 3.6M records, focusing on recent and high-density publications) into a local SQLite database indexed for rapid sub-second full-text search.
+
+### 2.4 Abstract Review Overhead & Synthesis Bottleneck
+- Scanning dozens of abstracts to extract methodology, objectives, and conclusions consumes hours.
+- Fuenzer integrates Google Gemini 3.1 Flash Lite to generate an objective 150-word synthesis in under 5 seconds, restricted strictly to the user's selected abstracts.
+
+---
+
+## 3. Key Capabilities & Platform Features
+
+### 3.1 Concurrent Federated Academic Search
+A single search query triggers concurrent execution across multiple academic data providers:
+1. **OpenAlex API**: Accessing 200M+ global scholarly works, authors, and citations.
+2. **Garuda Local Database**: Accessing 652K+ curated Indonesian national scholarly papers via SQLite FTS.
+3. **Google Books API**: Querying 160M+ indexed volumes for high-density monograph and book references.
+4. **Scopus & SINTA Journal Cross-Matching**: Real-time ISSN and title mapping against ~700 accredited journals and ~7,000 articles.
+
+### 3.2 Dynamic AI Synthesis Engine
+- **Engine**: Google Gemini 3.1 Flash Lite
+- **Role**: Fuenzer Synthesis Engine
+- **Tone**: Rigorous, academic, neutral, concise (Indonesian).
+- **Format**: A single coherent paragraph of up to 150 words summarizing the core synthesis of selected literature.
+- **Anti-Hallucination Constraints**:
+  - The backend strictly tokenizes only `Title`, `Abstract`, and `Year`.
+  - The temperature is locked at `0.3` to eliminate creative divergence.
+  - The model prompt strictly dictates: *"DILARANG menggunakan pengetahuan eksternal. Jika jawaban tidak ada di abstrak yang diberikan, nyatakan: 'Literatur yang ditemukan tidak cukup untuk menyimpulkan hal ini.'"*
+
+### 3.3 Contextual Multi-Reference Comparative Q&A (Library Compare)
+- Within the Personal Library, users can select up to 5 specific saved references.
+- Users can query the AI with targeted research questions (e.g., *"Bandingkan metodologi yang digunakan antara paper A dan paper B"*).
+- The AI synthesizes comparative findings solely based on the text of the selected papers.
+
+### 3.4 Multi-Format Citation & Bibliography Exporter
+- **Citation Formats**: Real-time generation for:
+  - APA 7th Edition
+  - Harvard Reference Format
+  - MLA 9th Edition
+  - Chicago Manual of Style (Author-Date)
+  - Vancouver System
+- **File Exports**:
+  - **BibTeX (`.bib`)**: Formatted for LaTeX documents, Overleaf, and Zotero/Mendeley imports.
+  - **RIS Format (`.ris`)**: Standard format for EndNote and Reference Managers.
+  - **PDF Batch Export**: Generates formatted reference summaries bundled inside a single `.zip` archive.
+  - **Literature Review CSV Matrix**: Exports key fields (Title, Authors, Year, Index, Abstract snippet, Citations) for structured review tables.
+
+### 3.5 Personal Workspace & Cross-Device Sync
+- Firebase Authentication with Google OAuth and Email/Password.
+- Multi-folder library management with Firestore cloud synchronization.
+- Public read-only shareable links (`/shared/library/...` and `/shared/workspace/...`) with a "Fork Workspace" capability for peer collaboration.
+
+---
+
+## 4. Technical Architecture & Stack
+
+```mermaid
+graph TD
+    Client[React 19 Frontend SPA] -->|HTTPS / REST API| Fiber[Golang 1.25 Fiber Backend]
+    Fiber -->|Concurrent Goroutine 1| OpenAlex[OpenAlex API]
+    Fiber -->|Concurrent Goroutine 2| GBooks[Google Books API]
+    Fiber -->|Concurrent Goroutine 3| SQLite[Garuda SQLite DB 652K]
+    Fiber -->|In-Memory Map| SINTA[SINTA Dict Mapper]
+    Fiber -->|Prompt + Abstracts| Gemini[Google Gemini 3.1 Flash Lite]
+    Client -->|Direct SDK Auth & Sync| Firebase[Firebase Auth & Firestore]
+```
+
+### 4.1 Frontend
+- **Framework**: React 19, Vite, TypeScript
+- **Styling**: Tailwind CSS, Dark / Light mode persistence
+- **State Management**: Zustand (UI state, search parameters, library collections)
+- **Data Fetching**: TanStack React Query (caching and automatic deduplication)
+- **Icons**: Lucide React
+- **Export Utilities**: JSZip, jsPDF
+
+### 4.2 Backend
+- **Language & Runtime**: Golang 1.25
+- **Web Framework**: Fiber v2 (high-performance fasthttp engine)
+- **Concurrency**: Goroutines with sync.WaitGroup and timeout contexts for sub-second concurrent provider queries
+- **Security & Headers**: Strict CSP with Trusted Types (`require-trusted-types-for 'script'`), CORS restriction, HSTS, X-Content-Type-Options
+- **Deployment**: Google Cloud Run (Containerized Docker Alpine image, us-central1)
+
+### 4.3 Databases & Data Storage
+- **Garuda Database**: SQLite 3 database (`garuda_articles_data.db`) with FTS5 virtual tables for rapid keyword indexing.
+- **SINTA Mapping Table**: JSON in-memory hash map for O(1) journal ISSN and title matching.
+- **Firestore**: User library persistence, custom folders, and shared workspace snapshots.
+
+---
+
+## 5. API Reference (Public Endpoints)
+
+Base URL: `https://research.fuenzer.web.id/api/v1`
+
+### 5.1 POST `/research`
+Queries academic databases and optionally triggers Gemini synthesis.
+- **Payload**:
+  ```json
+  {
+    "query": "string (required, max 200 chars)",
+    "filter": "all | indonesia | global",
+    "sources": ["sinta", "garuda", "openalex", "googlebooks"],
+    "skip_synthesis": false
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "query": "string",
+    "total_results": 24,
+    "synthesis": "Sintesis literatur berbasis Gemini...",
+    "results": [
+      {
+        "id": "openalex:W123456",
+        "title": "Judul Publikasi",
+        "authors": ["Penulis 1", "Penulis 2"],
+        "year": 2024,
+        "source_type": "openalex",
+        "sinta_tier": "S1",
+        "citation_count": 12,
+        "abstract": "Abstrak artikel...",
+        "url": "https://doi.org/..."
+      }
+    ]
+  }
+  ```
+
+### 5.2 POST `/ask`
+Contextual comparative Q&A restricted to provided abstracts.
+- **Payload**:
+  ```json
+  {
+    "question": "Apa perbedaan metode penelitian yang digunakan?",
+    "papers": [
+      { "title": "Paper A", "abstract": "...", "year": 2023 },
+      { "title": "Paper B", "abstract": "...", "year": 2024 }
+    ]
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "answer": "Berdasarkan kedua paper yang dianalisis, Paper A menggunakan pendekatan..."
+  }
+  ```
+
+### 5.3 GET `/autocomplete?q={prefix}`
+Returns fast keyword suggestions derived from academic terms.
+
+---
+
+## 6. Frequently Asked Questions (FAQ)
+
+### Q1: Apa itu Fuenzer Research dan AI apa yang digunakannya?
+**Jawaban**: Fuenzer Research adalah mesin penemuan ilmiah bertenaga AI yang dirancang untuk menjembatani metodologi riset akademis dengan kecerdasan buatan tingkat lanjut. Platform ini menggunakan model **Google Gemini 3.1 Flash Lite** untuk mensintesis literatur akademis dengan ketelitian, kecepatan tinggi, dan akurasi yang dijamin bebas dari halusinasi eksternal.
+
+### Q2: Database global dan lokal apa saja yang diakses?
+**Jawaban**: Fuenzer Research mengintegrasikan repositori global terkemuka melalui **OpenAlex API** (200M+ publikasi) dan **Google Books API**, serta mengintegrasikan database nasional Indonesia yang mencakup repositori **SINTA** (~700 jurnal terakreditasi dan ~7.000 artikel) dan database lokal SQLite **Garuda** berisi 652.144 artikel ilmiah terindeks.
+
+### Q3: Bagaimana cara kerja integrasi akreditasi SINTA?
+**Jawaban**: Sistem melakukan pencarian paralel dan mencocokkan ISSN serta nama jurnal publikasi secara real-time dengan basis data akreditasi SINTA nasional. Setiap kartu referensi secara langsung menampilkan lencana akreditasi (SINTA 1 hingga SINTA 6).
+
+### Q4: Apakah sintesis AI dapat dipercaya bebas dari halusinasi?
+**Jawaban**: Ya. Arsitektur backend menerapkan *temperature setting* ketat pada nilai `0.3` dan aturan prompt imperatif yang melarang injeksi pengetahuan eksternal. Gemini hanya diizinkan menyimpulkan informasi berdasarkan teks abstrak yang secara eksplisit disuplai dalam payload.
+
+### Q5: Format ekspor apa saja yang didukung?
+**Jawaban**: Fuenzer Research mendukung salin instan dan unduh sitasi dalam 5 gaya standar (APA 7th, Harvard, MLA 9th, Chicago, Vancouver), ekspor bibliografi massal dalam format **BibTeX (`.bib`)** dan **RIS (`.ris`)**, berkas **PDF ringkasan batch (ZIP)**, serta file **CSV Matriks Tinjauan Literatur**.
+
+---
+
+## 7. Site Navigation & Public URLs
+
+- **Homepage & Search Engine**: https://research.fuenzer.web.id/
+- **Interactive Dual-Pane Playground**: https://research.fuenzer.web.id/playground/
+- **Saved Library & Comparative Workspace**: https://research.fuenzer.web.id/library/
+- **Citation Exporter Tool**: https://research.fuenzer.web.id/citations/
+- **Sign In Gateway**: https://research.fuenzer.web.id/login/
+- **Sign Up Portal**: https://research.fuenzer.web.id/signup/
+- **Terms of Service**: https://research.fuenzer.web.id/terms/
+- **Privacy Policy**: https://research.fuenzer.web.id/privacy/
+- **Concise LLM Manifest**: https://research.fuenzer.web.id/llms.txt
+- **Comprehensive LLM Documentation**: https://research.fuenzer.web.id/llms-full.txt
+- **Sitemap**: https://research.fuenzer.web.id/sitemap.xml

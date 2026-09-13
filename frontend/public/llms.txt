@@ -1,9 +1,11 @@
 # Fuenzer Research
 
-Fuenzer Research is an AI-powered scientific research assistant designed to accelerate Indonesian and global academic discovery. It allows researchers, students, and lecturers to search, map local and global databases concurrently, and generate structured literature synthesis using Google Gemini.
+> Fuenzer Research is an AI-powered scientific discovery and academic research platform designed to accelerate Indonesian and global academic discovery.
+> For the comprehensive, exhaustive system architecture, API schemas, and FAQ, see [llms-full.txt](https://research.fuenzer.web.id/llms-full.txt).
 
 Founder: Ridwan Yoga Suryantara
 Live App: https://research.fuenzer.web.id/
+Full Documentation: https://research.fuenzer.web.id/llms-full.txt
 
 ## The Problem We Solve
 - **SINTA Tier Verification**: Indonesian journals are accredited across SINTA tiers (1-6). Checking these manual tiers on separate platforms is tedious; Fuenzer Research solves this by automating tier mapping dynamically in real-time search results.
