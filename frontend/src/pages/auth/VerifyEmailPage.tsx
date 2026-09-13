@@ -12,6 +12,7 @@ import { id } from '../../locales/id';
 export function VerifyEmailPage() {
   useSEO({
     canonical: 'https://research.fuenzer.web.id/verify-email/',
+    noindex: true,
   });
   const navigate = useNavigate();
   const location = useLocation();

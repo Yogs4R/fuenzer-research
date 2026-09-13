@@ -158,11 +158,49 @@ export function LandingPage() {
     canonical: 'https://research.fuenzer.web.id/',
     schema: {
       "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Fuenzer Research",
-      "alternateName": "Fuenzer Scientific Research Assistant",
-      "url": "https://research.fuenzer.web.id/",
-      "description": "Fuenzer Research is a tool that helps researchers find scientific journal, articles, books references and get instant synthesis with Google Gemini!"
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Apa itu Fuenzer Research dan AI apa yang digunakannya?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Fuenzer Research adalah mesin penemuan ilmiah bertenaga AI yang menggunakan model Gemini 3.1 Flash Lite untuk mensintesis literatur akademis dengan ketelitian, kecepatan, dan akurasi tinggi tanpa halusinasi eksternal."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Database global apa saja yang diakses oleh Fuenzer Research?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Fuenzer Research melakukan pencarian real-time pada OpenAlex API (200M+ publikasi akademis) dan Google Books API untuk referensi buku komprehensif."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Bagaimana cara kerja integrasi database jurnal lokal (SINTA & Garuda)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Fuenzer Research mengintegrasikan repositori SINTA yang mencakup ~700 jurnal dan ~7.000 artikel serta database SQLite Garuda berisi 652.144 artikel ilmiah terindeks untuk pencarian presisi skala nasional dan pemetaan akreditasi SINTA (S1-S6)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Apakah sintesis AI ini dapat dipercaya bebas dari halusinasi?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ya, sistem backend menerapkan pembatasan suhu (temperature 0.3) dan aturan prompt ketat yang memaksa Gemini 3.1 Flash Lite hanya mensintesis temuan berdasarkan abstrak yang disediakan."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Format ekspor apa saja yang saat ini didukung?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Mendukung ekspor PDF (ringkasan & tinjauan literatur), BibTeX (.bib) untuk LaTeX, format RIS untuk EndNote, CSV Matriks Tinjauan Literatur, serta salin instan sitasi dalam format APA, Harvard, MLA, Chicago, dan Vancouver."
+          }
+        }
+      ]
     }
   });
 

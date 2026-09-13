@@ -44,6 +44,7 @@ export function SharedLibraryPage() {
 
   useSEO({
     canonical: window.location.href,
+    noindex: true,
   });
 
   // Redirect to login if not authenticated

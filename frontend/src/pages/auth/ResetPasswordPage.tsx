@@ -10,6 +10,7 @@ import { AuthLayout } from '../../components/shared/AuthLayout';
 export function ResetPasswordPage() {
   useSEO({
     canonical: 'https://research.fuenzer.web.id/reset-password/',
+    noindex: true,
   });
   const location = useLocation();
   const { language } = useUiStore();
