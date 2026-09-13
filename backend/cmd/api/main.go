@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"fuenzer-research/backend/internal/config"
@@ -83,8 +84,27 @@ func main() {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
-	// Middleware: Rate Limiting — 15 req/min per IP
+	// Middleware: Rate Limiting — 15 req/min per IP (excludes static assets & SEO files)
 	app.Use(limiter.New(limiter.Config{
+		Next: func(c *fiber.Ctx) bool {
+			path := c.Path()
+			// Exempt health check, SEO/GEO files, and static assets from rate limiting
+			if path == "/api/v1/health" ||
+				path == "/robots.txt" ||
+				path == "/sitemap.xml" ||
+				path == "/llms.txt" ||
+				path == "/llms-full.txt" ||
+				path == "/site.webmanifest" ||
+				strings.HasPrefix(path, "/assets/") ||
+				strings.HasSuffix(path, ".ico") ||
+				strings.HasSuffix(path, ".png") ||
+				strings.HasSuffix(path, ".webp") ||
+				strings.HasSuffix(path, ".js") ||
+				strings.HasSuffix(path, ".css") {
+				return true
+			}
+			return false
+		},
 		Max:        15,
 		Expiration: 1 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
