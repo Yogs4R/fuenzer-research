@@ -57,7 +57,7 @@ export function JournalCard({
                   {source.citations} {citationLabel}
                 </span>
                 {source.citations > 50 && (
-                  <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 tracking-wide border border-amber-200/50 dark:border-amber-800/40 animate-pulse" title="High Impact Reference">
+                  <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 tracking-wide border border-amber-200/50 dark:border-amber-800/40" title="High Impact Reference">
                     High Impact
                   </span>
                 )}
@@ -122,8 +122,9 @@ export function JournalCard({
           {/* Bookmark Button moved to bottom right */}
           {onToggleBookmark && (
             <button
+              type="button"
               onClick={onToggleBookmark}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold border ${
+              className={`min-h-11 md:min-h-8 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold border ${
                 isBookmarked
                   ? 'text-fuenzer-teal bg-fuenzer-teal/10 border-fuenzer-teal/20'
                   : 'text-slate-gray dark:text-silver-mist hover:text-fuenzer-teal hover:bg-fuenzer-teal/10 border-cloud-canvas dark:border-stone-gray hover:border-fuenzer-teal/20'
@@ -131,12 +132,12 @@ export function JournalCard({
             >
               {isBookmarked ? (
                 <>
-                  <BookmarkCheck className="w-3.5 h-3.5" />
+                  <BookmarkCheck className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Saved</span>
                 </>
               ) : (
                 <>
-                  <Bookmark className="w-3.5 h-3.5" />
+                  <Bookmark className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Save</span>
                 </>
               )}

@@ -29,7 +29,6 @@ import {
   Check,
   Download,
   ArrowRight,
-  Sparkles,
   Search,
   X,
   SlidersHorizontal,
@@ -135,7 +134,7 @@ export function CitationsPage() {
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-fuenzer-teal">
-              <Sparkles className="w-4 h-4 animate-pulse" />
+              <FileText className="w-4 h-4" aria-hidden="true" />
               <span className="text-[10px] font-bold tracking-widest uppercase font-sans">{t.badge}</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-ink-black dark:text-paper-white leading-tight">
@@ -246,8 +245,13 @@ export function CitationsPage() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     {searchQuery && (
-                      <button onClick={() => setSearchQuery('')} className="text-silver-mist hover:text-ink-black dark:hover:text-paper-white shrink-0">
-                        <X className="w-4 h-4" />
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        aria-label={language === 'en' ? 'Clear search' : 'Hapus pencarian'}
+                        className="p-1 text-silver-mist hover:text-ink-black dark:hover:text-paper-white shrink-0"
+                      >
+                        <X className="w-4 h-4" aria-hidden="true" />
                       </button>
                     )}
                   </div>

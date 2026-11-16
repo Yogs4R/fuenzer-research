@@ -246,11 +246,14 @@ export function PlaygroundPage() {
             {/* Row 1: Toggle + Title + Tabs + Citation + Export */}
             <div className="flex items-center gap-1.5 md:gap-3 flex-wrap md:flex-nowrap">
               <button
+                type="button"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-lg hover:bg-cloud-canvas dark:hover:bg-stone-gray shrink-0"
+                className="min-h-11 min-w-11 md:min-h-9 md:min-w-9 flex items-center justify-center p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-lg hover:bg-cloud-canvas dark:hover:bg-stone-gray shrink-0"
                 title={t.sidebarToggle}
+                aria-label={t.sidebarToggle}
+                aria-expanded={isSidebarOpen}
               >
-                <PanelLeft className="w-5 h-5 text-fuenzer-teal shrink-0" />
+                <PanelLeft className="w-5 h-5 text-fuenzer-teal shrink-0" aria-hidden="true" />
               </button>
 
               <h1 className="text-base md:text-2xl font-bold text-ink-black dark:text-paper-white font-serif shrink-0 mr-2">
@@ -319,8 +322,13 @@ export function PlaygroundPage() {
                   onChange={(e) => setSearchRef(e.target.value)}
                 />
                 {searchRef && (
-                  <button onClick={() => setSearchRef('')} className="text-silver-mist hover:text-ink-black dark:hover:text-paper-white shrink-0">
-                    <X className="w-3.5 h-3.5" />
+                  <button
+                    type="button"
+                    onClick={() => setSearchRef('')}
+                    aria-label={language === 'en' ? 'Clear search' : 'Hapus pencarian'}
+                    className="p-1 text-silver-mist hover:text-ink-black dark:hover:text-paper-white shrink-0"
+                  >
+                    <X className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 )}
               </div>

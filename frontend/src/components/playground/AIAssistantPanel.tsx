@@ -8,6 +8,8 @@ import { MarkdownMessage } from '../shared/MarkdownMessage';
 import { useUiStore } from '../../store/uiStore';
 import { useAuthStore } from '../../store/authStore';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useClickOutside } from '../../hooks/useClickOutside';
 import { updateHistoryPublicStatus } from '../../lib/firestore';
 import { en } from '../../locales/en';
 import { id } from '../../locales/id';
@@ -18,7 +20,7 @@ import {
   Edit2,
   ExternalLink,
   MoreVertical,
-  Sparkles,
+  BookOpen,
   X,
   Check,
   Share2,
@@ -52,7 +54,7 @@ function AIChatBubble({ message }: { message: ChatMessage }) {
   return (
     <div className="flex flex-col gap-1 w-full">
       <div className="flex items-center gap-1.5 mb-0.5">
-        <Sparkles className="w-3 h-3 text-fuenzer-teal shrink-0" />
+        <span className="w-1.5 h-1.5 rounded-full bg-fuenzer-teal shrink-0" aria-hidden="true" />
         <span className="text-[9px] font-bold text-fuenzer-teal tracking-wide uppercase">{t.fuenzerAI}</span>
       </div>
       {isLoading && <NarrativeSkeletonLoader phase={message.phase} />}
@@ -224,15 +226,9 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
     }
   }, [messages]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  useClickOutside(menuRef, () => setIsMenuOpen(false));
+  useEscapeKey(isMenuOpen, () => setIsMenuOpen(false));
+  useEscapeKey(isSidebarOpen && window.innerWidth < 768, () => setIsSidebarOpen(false));
 
   // When session title is committed, update the history entry in localStorage
   const commitTitle = (newTitle: string) => {
@@ -282,7 +278,7 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
       <section
         className={`${
           isSidebarOpen
-            ? 'fixed inset-0 h-dvh w-full z-50 md:relative md:h-auto md:w-[320px] lg:w-[380px] md:z-auto flex animate-in slide-in-from-bottom-full md:animate-none'
+            ? 'fixed inset-0 h-dvh w-full z-50 md:relative md:h-auto md:w-[320px] lg:w-95 md:z-auto flex animate-in slide-in-from-bottom-full md:animate-none'
             : 'hidden md:hidden'
         } flex-col bg-paper-white dark:bg-ink-black transition-colors shrink-0 max-w-full`}
       >
@@ -314,10 +310,12 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
             )}
           </div>
           <button
-            className="md:hidden text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white shrink-0"
+            type="button"
+            aria-label={language === 'en' ? 'Close AI Assistant panel' : 'Tutup panel AI Assistant'}
+            className="md:hidden min-h-11 min-w-11 flex items-center justify-center text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white shrink-0"
             onClick={() => setIsSidebarOpen(false)}
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -325,10 +323,15 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
         <div className="px-6 py-3 flex justify-between items-center shrink-0">
           <h1 className="text-xl font-bold text-ink-black dark:text-paper-white font-serif">{t.title}</h1>
           <div className="relative" ref={menuRef}>
-            <MoreVertical
-              className="w-5 h-5 text-slate-gray cursor-pointer dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white transition-colors"
+            <button
+              type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-            />
+              aria-label={language === 'en' ? 'Assistant options' : 'Opsi asisten'}
+              aria-expanded={isMenuOpen}
+              className="min-h-10 min-w-10 flex items-center justify-center rounded-lg text-slate-gray cursor-pointer dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/30 transition-colors"
+            >
+              <MoreVertical className="w-5 h-5" aria-hidden="true" />
+            </button>
             {isMenuOpen && (
               <div className="absolute top-8 right-0 w-52 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-xl py-2 z-50 animate-in fade-in zoom-in-95">
                 <button
@@ -437,7 +440,7 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
         >
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center gap-3 py-8">
-              <Sparkles className="w-8 h-8 text-cloud-canvas dark:text-stone-gray" />
+              <BookOpen className="w-8 h-8 text-cloud-canvas dark:text-stone-gray" aria-hidden="true" />
               <p className="text-sm text-silver-mist font-medium">{t.emptyPlaceholder}</p>
             </div>
           )}
@@ -471,7 +474,7 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
             <textarea
               ref={textareaRef}
               placeholder={aiMode === 'search' ? t.inputPlaceholder : (language === 'en' ? 'Ask a question about selected sources...' : 'Tanyakan tentang referensi terpilih...')}
-              className="w-full min-h-[60px] max-h-[200px] resize-none px-3 py-2 bg-transparent text-sm outline-none text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray overflow-y-auto"
+              className="w-full min-h-15 max-h-50 resize-none px-3 py-2 bg-transparent text-sm outline-none text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray overflow-y-auto"
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -491,25 +494,28 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
                 <button
                   type="button"
                   title={language === 'en' ? "Voice Input" : "Input Suara"}
+                  aria-label={language === 'en' ? "Voice Input" : "Input Suara"}
                   onClick={toggleListening}
-                  className={`p-1.5 rounded-full transition-colors cursor-pointer ${
+                  className={`min-h-10 min-w-10 md:min-h-8 md:min-w-8 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
                     isListening 
-                      ? 'text-red-500 bg-red-500/10 animate-pulse' 
+                      ? 'text-red-500 bg-red-500/10' 
                       : 'text-slate-gray hover:text-fuenzer-teal hover:bg-cloud-canvas/50 dark:text-silver-mist dark:hover:bg-stone-gray/50'
                   }`}
                 >
-                  <Mic className="w-4 h-4" />
+                  <Mic className="w-4 h-4" aria-hidden="true" />
                 </button>
                 <button
+                  type="button"
+                  aria-label={language === 'en' ? "Send prompt" : "Kirim pertanyaan"}
                   onClick={handleSend}
                   disabled={
                     inputVal.trim().length < 3 || 
                     isAnythingLoading || 
                     (aiMode === 'ask' && selectedRefs.size === 0)
                   }
-                  className="w-7 h-7 shrink-0 rounded-full bg-fuenzer-teal text-white flex items-center justify-center hover:bg-fuenzer-teal-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  className="w-10 h-10 md:w-8 md:h-8 shrink-0 rounded-full bg-fuenzer-teal text-white flex items-center justify-center hover:bg-fuenzer-teal-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 >
-                  <ArrowUp className="w-4 h-4" strokeWidth={2.5} />
+                  <ArrowUp className="w-4 h-4" strokeWidth={2.5} aria-hidden="true" />
                 </button>
               </div>
             </div>

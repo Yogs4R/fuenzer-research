@@ -380,26 +380,28 @@ export function LandingPage() {
                 <button
                   type="button"
                   title={language === 'en' ? "Voice Input" : "Input Suara"}
+                  aria-label={language === 'en' ? "Voice Input" : "Input Suara"}
                   onClick={toggleListening}
-                  className={`p-2 rounded-full transition-colors cursor-pointer ${
+                  className={`min-h-11 min-w-11 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
                     isListening 
-                      ? 'text-red-500 bg-red-500/10 animate-pulse' 
+                      ? 'text-red-500 bg-red-500/10' 
                       : 'text-slate-gray hover:text-fuenzer-teal hover:bg-cloud-canvas/50 dark:text-silver-mist dark:hover:bg-stone-gray/50'
                   }`}
                 >
-                  <Mic className="w-5 h-5" />
+                  <Mic className="w-5 h-5" aria-hidden="true" />
                 </button>
                 <button
+                  type="button"
                   onClick={handleSearch}
                   disabled={!canSearch}
                   aria-label="Search"
-                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 ${
+                  className={`w-11 h-11 flex items-center justify-center rounded-full transition-all duration-200 ${
                     canSearch
                       ? 'bg-fuenzer-teal-dark text-white hover:bg-fuenzer-teal cursor-pointer shadow-md transform hover:scale-105 active:scale-95'
                       : 'bg-fuenzer-teal-dark/30 text-white/50 cursor-not-allowed'
                   }`}
                 >
-                  <ArrowUp className="w-5 h-5" strokeWidth={2.5} />
+                  <ArrowUp className="w-5 h-5" strokeWidth={2.5} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -489,6 +491,8 @@ export function LandingPage() {
                   <img 
                     src={source.src} 
                     alt={source.name} 
+                    width={120}
+                    height={40}
                     className="h-8 md:h-10 w-auto object-contain max-w-[150px] drop-shadow-sm" 
                   />
                 </div>
@@ -519,24 +523,20 @@ export function LandingPage() {
             
             {/* Visual element on the right */}
             <FadeIn delay={300} direction="up" className="flex-1 w-full max-w-md relative aspect-square md:aspect-auto md:h-80 rounded-2xl border border-cloud-canvas dark:border-stone-gray/50 bg-[#F1F5F9] dark:bg-[#121212] overflow-hidden flex items-center justify-center">
-              {/* Decorative nodes */}
-              <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-fuenzer-teal/30 dark:bg-fuenzer-teal/20 rounded-full blur-2xl animate-pulse" />
-              <div className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-code-blue/30 dark:bg-code-blue/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
-              
               <div className="relative z-10 grid grid-cols-2 gap-4 p-8 w-full">
-                <div className="bg-white/80 dark:bg-black/40 backdrop-blur-md rounded-xl p-4 shadow-lg border border-white/50 dark:border-white/10 transform translate-y-4 group-hover:-translate-y-2 transition-transform duration-500">
+                <div className="bg-paper-white dark:bg-[#1A1A1A] rounded-xl p-4 shadow-md border border-cloud-canvas dark:border-stone-gray/60 transform translate-y-4 group-hover:-translate-y-1 transition-transform duration-500">
                   <div className="h-2 w-12 bg-cloud-canvas dark:bg-stone-gray rounded-full mb-3" />
                   <div className="h-2 w-full bg-slate-200 dark:bg-stone-gray/50 rounded-full mb-2" />
                   <div className="h-2 w-4/5 bg-slate-200 dark:bg-stone-gray/50 rounded-full" />
                 </div>
-                <div className="bg-white/80 dark:bg-black/40 backdrop-blur-md rounded-xl p-4 shadow-lg border border-white/50 dark:border-white/10 transform -translate-y-2 group-hover:translate-y-2 transition-transform duration-500 delay-100">
+                <div className="bg-paper-white dark:bg-[#1A1A1A] rounded-xl p-4 shadow-md border border-cloud-canvas dark:border-stone-gray/60 transform -translate-y-2 group-hover:translate-y-1 transition-transform duration-500 delay-100">
                   <div className="h-2 w-16 bg-fuenzer-teal/50 rounded-full mb-3" />
                   <div className="h-2 w-full bg-slate-200 dark:bg-stone-gray/50 rounded-full mb-2" />
                   <div className="h-2 w-5/6 bg-slate-200 dark:bg-stone-gray/50 rounded-full" />
                 </div>
-                <div className="bg-white/80 dark:bg-black/40 backdrop-blur-md rounded-xl p-4 shadow-lg border border-white/50 dark:border-white/10 transform translate-y-2 group-hover:-translate-y-1 transition-transform duration-500 delay-150 col-span-2 flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-fuenzer-teal/20 flex items-center justify-center">
-                    <Zap className="w-4 h-4 text-fuenzer-teal" />
+                <div className="bg-paper-white dark:bg-[#1A1A1A] rounded-xl p-4 shadow-md border border-cloud-canvas dark:border-stone-gray/60 transform translate-y-2 group-hover:-translate-y-1 transition-transform duration-500 delay-150 col-span-2 flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full bg-fuenzer-teal/15 flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-fuenzer-teal" aria-hidden="true" />
                   </div>
                   <div className="flex-1">
                     <div className="h-2 w-24 bg-cloud-canvas dark:bg-stone-gray rounded-full mb-2" />
@@ -567,19 +567,17 @@ export function LandingPage() {
               desc: t.landing.features.globalDesc, 
               className: 'md:col-span-2 lg:col-span-1 lg:row-span-2 flex flex-col',
               visual: (
-                <div className="mt-8 flex-1 flex flex-col items-center justify-center relative min-h-[160px] opacity-80 group-hover:opacity-100 transition-opacity">
-                  {/* Orbiting rings */}
-                  <div className="absolute w-32 h-32 border border-fuenzer-teal/20 rounded-full animate-[spin_10s_linear_infinite]" />
-                  <div className="absolute w-24 h-24 border border-fuenzer-teal/30 rounded-full animate-[spin_8s_linear_infinite_reverse]" />
-                  <Globe className="w-10 h-10 text-fuenzer-teal/50" />
+                <div className="mt-8 flex-1 flex flex-col items-center justify-center relative min-h-[160px] opacity-85 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute w-32 h-32 border border-fuenzer-teal/20 rounded-full" />
+                  <div className="absolute w-24 h-24 border border-fuenzer-teal/30 rounded-full" />
+                  <Globe className="w-10 h-10 text-fuenzer-teal/60" aria-hidden="true" />
                   
-                  {/* Floating tags */}
                   <div className="absolute w-full flex justify-between px-6">
-                    <span className="px-2.5 py-1 rounded-full bg-slate-100/80 dark:bg-[#2A2A2A]/80 backdrop-blur-sm text-[10px] font-bold text-slate-700 dark:text-paper-white shadow-sm animate-[bounce_3s_infinite]">IDN</span>
-                    <span className="px-2.5 py-1 rounded-full bg-slate-100/80 dark:bg-[#2A2A2A]/80 backdrop-blur-sm text-[10px] font-bold text-slate-700 dark:text-paper-white shadow-sm animate-[bounce_4s_infinite]" style={{animationDelay:'0.5s'}}>USA</span>
+                    <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-[#2A2A2A] border border-cloud-canvas dark:border-stone-gray text-[10px] font-bold text-slate-700 dark:text-paper-white shadow-sm">IDN</span>
+                    <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-[#2A2A2A] border border-cloud-canvas dark:border-stone-gray text-[10px] font-bold text-slate-700 dark:text-paper-white shadow-sm">USA</span>
                   </div>
                   <div className="absolute top-0 w-full flex justify-center">
-                    <span className="px-2.5 py-1 rounded-full bg-fuenzer-teal/10 border border-fuenzer-teal/20 text-[10px] font-bold text-fuenzer-teal animate-[pulse_3s_infinite]">Global</span>
+                    <span className="px-2.5 py-1 rounded-full bg-fuenzer-teal/10 border border-fuenzer-teal/20 text-[10px] font-bold text-fuenzer-teal">Global</span>
                   </div>
                 </div>
               )
@@ -618,25 +616,19 @@ export function LandingPage() {
         </FadeIn>
         <div className="relative z-0 flex flex-col md:flex-row justify-center gap-12 md:gap-8 lg:gap-16 items-center w-full py-8">
           
-          {/* Animated connection lines (Desktop) */}
-          <div className="hidden md:block absolute top-1/2 -translate-y-1/2 left-[10%] right-[10%] h-[2px] z-0 bg-cloud-canvas dark:bg-stone-gray/30 overflow-hidden rounded-full">
-            <div className="absolute inset-0 h-full bg-[linear-gradient(90deg,transparent_0%,var(--color-fuenzer-teal)_50%,transparent_100%)] w-1/2 animate-[progress_3s_linear_infinite]" />
-          </div>
+          {/* Static connection lines (Desktop) */}
+          <div className="hidden md:block absolute top-1/2 -translate-y-1/2 left-[10%] right-[10%] h-[2px] z-0 bg-cloud-canvas dark:bg-stone-gray/40 rounded-full" />
 
-          {/* Animated connection lines (Mobile) */}
-          <div className="md:hidden absolute left-1/2 -translate-x-1/2 top-[15%] bottom-[15%] w-[2px] z-0 bg-cloud-canvas dark:bg-stone-gray/30 overflow-hidden rounded-full">
-            <div className="absolute inset-0 w-full bg-[linear-gradient(180deg,transparent_0%,var(--color-fuenzer-teal)_50%,transparent_100%)] h-1/2 animate-[progress-vertical_3s_linear_infinite]" />
-          </div>
+          {/* Static connection lines (Mobile) */}
+          <div className="md:hidden absolute left-1/2 -translate-x-1/2 top-[15%] bottom-[15%] w-[2px] z-0 bg-cloud-canvas dark:bg-stone-gray/40 rounded-full" />
 
           {[
-            { step: '1', title: t.landing.workflow.step1Title, desc: t.landing.workflow.step1Desc, icon: <Search className="w-6 h-6" /> },
-            { step: '2', title: t.landing.workflow.step2Title, desc: t.landing.workflow.step2Desc, icon: <Cpu className="w-6 h-6" /> },
-            { step: '3', title: t.landing.workflow.step3Title, desc: t.landing.workflow.step3Desc, icon: <FileText className="w-6 h-6" /> },
+            { step: '1', title: t.landing.workflow.step1Title, desc: t.landing.workflow.step1Desc, icon: <Search className="w-6 h-6" aria-hidden="true" /> },
+            { step: '2', title: t.landing.workflow.step2Title, desc: t.landing.workflow.step2Desc, icon: <Cpu className="w-6 h-6" aria-hidden="true" /> },
+            { step: '3', title: t.landing.workflow.step3Title, desc: t.landing.workflow.step3Desc, icon: <FileText className="w-6 h-6" aria-hidden="true" /> },
           ].map((item, i) => (
             <FadeIn key={item.step} delay={i * 200} className="relative flex flex-col items-center bg-paper-white dark:bg-[#1A1A1A] p-8 rounded-3xl border border-cloud-canvas dark:border-stone-gray shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-fuenzer-teal/40 transition-all duration-300 w-full md:w-80 mb-8 md:mb-0 z-10 group">
-              <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-fuenzer-teal/10 to-transparent border border-fuenzer-teal/20 text-fuenzer-teal flex items-center justify-center mb-6 relative overflow-hidden group-hover:scale-110 transition-transform duration-500">
-                {/* scanning effect inside icon */}
-                <div className="absolute inset-0 bg-linear-to-b from-transparent via-fuenzer-teal/20 dark:via-fuenzer-teal/40 to-transparent -translate-y-full group-hover:animate-[slideInFromTop_1.5s_infinite]" />
+              <div className="w-20 h-20 rounded-2xl bg-fuenzer-teal/10 border border-fuenzer-teal/20 text-fuenzer-teal flex items-center justify-center mb-6 relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
                 {item.icon}
               </div>
               <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-paper-white dark:bg-[#1A1A1A] border border-cloud-canvas dark:border-stone-gray flex items-center justify-center text-xs font-bold text-slate-gray dark:text-silver-mist shadow-sm">
@@ -664,8 +656,10 @@ export function LandingPage() {
           ].map((item, i) => (
             <FadeIn key={i} delay={i * 100} direction="up" className="bg-paper-white dark:bg-ink-black rounded-xl shadow-sm border border-cloud-canvas dark:border-stone-gray overflow-hidden transition-colors">
               <button
+                type="button"
+                aria-expanded={openFaq === i}
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="w-full flex items-center gap-4 px-6 py-5 text-left hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-colors font-sans group"
+                className="w-full min-h-14 flex items-center gap-4 px-6 py-5 text-left hover:bg-cloud-canvas/50 dark:hover:bg-stone-gray/50 transition-colors font-sans group"
               >
                 <div className="w-6 h-6 rounded-full bg-fuenzer-teal/10 border border-fuenzer-teal/30 text-fuenzer-teal flex items-center justify-center shrink-0">
                   <span className="italic font-bold text-xs font-serif">i</span>
@@ -692,11 +686,7 @@ export function LandingPage() {
       {/* CTA Section */}
       <section className="max-w-4xl mx-auto px-6 pb-24 relative z-10">
         <FadeIn direction="up">
-          <div className="bg-paper-white dark:bg-ink-black rounded-3xl p-10 md:p-14 text-center border border-cloud-canvas dark:border-stone-gray shadow-xl relative overflow-hidden group transition-colors duration-200">
-            {/* Subtle animated background gradients */}
-            <div className="absolute -top-24 -left-24 w-48 h-48 bg-fuenzer-teal/10 dark:bg-fuenzer-teal/20 rounded-full blur-3xl pointer-events-none transition-all duration-300 group-hover:scale-110" />
-            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-code-blue/5 dark:bg-code-blue/10 rounded-full blur-3xl pointer-events-none transition-all duration-300 group-hover:scale-110" />
-
+          <div className="bg-paper-white dark:bg-ink-black rounded-3xl p-10 md:p-14 text-center border border-cloud-canvas dark:border-stone-gray shadow-xl relative overflow-hidden transition-colors duration-200">
             <div className="relative z-10 space-y-6 max-w-2xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold font-serif text-ink-black dark:text-paper-white leading-tight">
                 {t.landing.ctaTitle}

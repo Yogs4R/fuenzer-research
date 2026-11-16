@@ -8,12 +8,16 @@ export function Footer() {
           <img 
             src="/assets/light/fuenzer-research-logo-light.webp" 
             alt="Fuenzer Research" 
-            className="h-10 md:h-12 object-contain dark:hidden" 
+            width={160}
+            height={48}
+            className="h-10 md:h-12 w-auto object-contain dark:hidden" 
           />
           <img 
             src="/assets/dark/fuenzer-research-logo-dark.webp" 
             alt="Fuenzer Research" 
-            className="h-10 md:h-12 object-contain hidden dark:block" 
+            width={160}
+            height={48}
+            className="h-10 md:h-12 w-auto object-contain hidden dark:block" 
           />
         </div>
         <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6 uppercase tracking-widest font-semibold font-sans text-[10px] md:text-xs">

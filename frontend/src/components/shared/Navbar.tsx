@@ -4,6 +4,7 @@ import { Moon, Sun, Bell, History, Globe, Menu, X } from 'lucide-react';
 import { useUiStore } from '../../store/uiStore';
 import { useResearchStore, getCurrentHistoryKey } from '../../store/researchStore';
 import { useAuthStore } from '../../store/authStore';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { en } from '../../locales/en';
 import { id } from '../../locales/id';
 import { UpdateLogModal } from './UpdateLogModal';
@@ -32,6 +33,10 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
   
   const notifRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
+
+  useEscapeKey(isMobileMenuOpen, () => setIsMobileMenuOpen(false));
+  useEscapeKey(isHistoryOpen, () => setIsHistoryOpen(false));
+  useEscapeKey(isNotifOpen, () => setIsNotifOpen(false));
 
   const readRecentHistory = () => {
     const stored = localStorage.getItem(getCurrentHistoryKey());
@@ -109,19 +114,27 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
     <>
       <nav className="w-full h-16 md:h-20 flex items-center justify-between px-6 md:px-8 bg-paper-white dark:bg-ink-black border-b border-cloud-canvas dark:border-stone-gray shrink-0 transition-colors z-50 sticky top-0">
         {/* Logo */}
-        <div className="flex items-center gap-2 cursor-pointer w-[150px] shrink-0" onClick={handleLogoClick}>
+        <button
+          type="button"
+          onClick={handleLogoClick}
+          aria-label="Fuenzer Research Home"
+          className="flex items-center gap-2 cursor-pointer w-[135px] sm:w-[150px] shrink-0 text-left"
+        >
           <img 
             src={theme === 'dark' ? '/assets/dark/fuenzer-research-logo-dark.webp' : '/assets/light/fuenzer-research-logo-light.webp'} 
             alt="Fuenzer Research Logo" 
+            width={150}
+            height={40}
             className="w-full h-auto object-contain object-left"
           />
-        </div>
+        </button>
 
         {/* Center Links (Desktop) */}
         <div className="hidden xl:flex absolute left-1/2 -translate-x-1/2 justify-center items-center gap-8 h-full">
           {currentLinks.map((link) => (
-            <div
+            <button
               key={link.key}
+              type="button"
               onClick={() => {
                 if (mode === 'landing') {
                   handleScrollTo(link.key);
@@ -136,7 +149,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
               }`}
             >
               {link.label}
-            </div>
+            </button>
           ))}
         </div>
 
@@ -145,15 +158,17 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
           {/* History / Recent Dropdown (Desktop) */}
           <div className="relative hidden xl:block" ref={historyRef}>
             <button 
+              type="button"
               onClick={() => {
                 const next = !isHistoryOpen;
                 if (next) readRecentHistory();
                 setIsHistoryOpen(next);
               }}
-              className="p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray"
+              className="min-h-10 min-w-10 flex items-center justify-center p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray"
               aria-label="History"
+              aria-expanded={isHistoryOpen}
             >
-              <History className="w-4 h-4 md:w-5 md:h-5" />
+              <History className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
             </button>
             {isHistoryOpen && (
               <div className="absolute top-12 right-0 w-72 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-xl overflow-hidden animate-in fade-in">
@@ -206,22 +221,25 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
 
           {/* Theme Toggle */}
           <button 
+            type="button"
             onClick={toggleTheme}
-            className="p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray"
+            className="min-h-11 min-w-11 xl:min-h-10 xl:min-w-10 flex items-center justify-center p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray"
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {theme === 'dark' ? <Sun className="w-4 h-4 md:w-5 md:h-5" /> : <Moon className="w-4 h-4 md:w-5 md:h-5" />}
+            {theme === 'dark' ? <Sun className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" /> : <Moon className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />}
           </button>
 
           {/* Notification Dropdown */}
           <div className="relative hidden xl:block" ref={notifRef}>
              <button 
+              type="button"
               onClick={() => setIsNotifOpen(!isNotifOpen)}
-              className="relative p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray"
+              className="relative min-h-10 min-w-10 flex items-center justify-center p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray"
               aria-label="Notifications"
+              aria-expanded={isNotifOpen}
              >
-               <Bell className="w-4 h-4 md:w-5 md:h-5" />
-               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-paper-white dark:border-ink-black"></span>
+               <Bell className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
+               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-paper-white dark:border-ink-black" aria-hidden="true"></span>
              </button>
              {isNotifOpen && (
               <div className="absolute top-12 right-0 w-72 bg-paper-white dark:bg-ink-black border border-cloud-canvas dark:border-stone-gray shadow-xl rounded-xl p-4 animate-in fade-in">
@@ -264,22 +282,29 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
 
           {/* Mobile Menu Hamburger */}
           <button 
-            className="xl:hidden p-2 text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray transition-colors flex items-center justify-center"
+            type="button"
+            className="xl:hidden min-h-11 min-w-11 p-2 text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray transition-colors flex items-center justify-center"
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle mobile menu"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav-drawer"
           >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMobileMenuOpen ? <X className="w-6 h-6" aria-hidden="true" /> : <Menu className="w-6 h-6" aria-hidden="true" />}
           </button>
         </div>
       </nav>
 
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
-        <div className="xl:hidden fixed top-16 md:top-20 left-0 w-full bg-paper-white dark:bg-ink-black border-b border-cloud-canvas dark:border-stone-gray shadow-xl flex flex-col p-6 z-40 animate-in slide-in-from-top-2 max-h-[calc(100vh-4rem)] overflow-y-auto">
-          <div className="flex flex-col gap-4 mb-6">
+        <div
+          id="mobile-nav-drawer"
+          className="xl:hidden fixed top-16 md:top-20 left-0 w-full bg-paper-white dark:bg-ink-black border-b border-cloud-canvas dark:border-stone-gray shadow-xl flex flex-col p-6 z-40 animate-in slide-in-from-top-2 max-h-[calc(100dvh-4rem)] overflow-y-auto"
+        >
+          <div className="flex flex-col gap-2 mb-6">
             {currentLinks.map((link) => (
-              <div
+              <button
                 key={link.key}
+                type="button"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
                   if (mode === 'landing') {
@@ -288,43 +313,46 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
                     navigate(link.path);
                   }
                 }}
-                className="text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer hover:text-fuenzer-teal transition-colors"
+                className="min-h-11 text-left text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer hover:text-fuenzer-teal transition-colors flex items-center"
               >
                 {link.label}
-              </div>
+              </button>
             ))}
           </div>
 
-          <div className="flex flex-col gap-4 pt-4 border-t border-cloud-canvas dark:border-stone-gray">
+          <div className="flex flex-col gap-2 pt-4 border-t border-cloud-canvas dark:border-stone-gray">
              <button 
+              type="button"
               onClick={() => {
                 setIsMobileMenuOpen(false);
                 toggleLanguage();
               }}
-              className="flex items-center gap-3 text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer"
+              className="min-h-11 flex items-center gap-3 text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer text-left"
             >
-              <Globe className="w-5 h-5 text-slate-gray" />
+              <Globe className="w-5 h-5 text-slate-gray" aria-hidden="true" />
               {t.changeLanguage} ({language === 'en' ? 'EN' : 'ID'})
             </button>
             <button 
+              type="button"
               onClick={() => {
                 setIsMobileMenuOpen(false);
                 setIsLogModalOpen(true);
               }}
-              className="flex items-center gap-3 text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer hover:text-fuenzer-teal"
+              className="min-h-11 flex items-center gap-3 text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer hover:text-fuenzer-teal text-left"
             >
-              <Bell className="w-5 h-5 text-slate-gray" />
+              <Bell className="w-5 h-5 text-slate-gray" aria-hidden="true" />
               {t.viewNotifications}
             </button>
             <div className="flex flex-col gap-2">
               <button 
+                type="button"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
                   setIsHistoryModalOpen(true);
                 }}
-                className="flex items-center gap-3 text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer hover:text-fuenzer-teal"
+                className="min-h-11 flex items-center gap-3 text-lg font-semibold text-ink-black dark:text-cloud-canvas cursor-pointer hover:text-fuenzer-teal text-left"
               >
-                <History className="w-5 h-5 text-slate-gray" />
+                <History className="w-5 h-5 text-slate-gray" aria-hidden="true" />
                 {t.history}
               </button>
             </div>
