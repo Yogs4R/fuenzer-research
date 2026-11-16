@@ -1,4 +1,5 @@
-import { create } from 'zustand';
+import axios from 'axios';
+import { create, type StoreApi } from 'zustand';
 import type {
   SearchScope,
   LoadingPhase,
@@ -66,12 +67,22 @@ function saveLocalHistory(history: HistoryEntry[]): void {
   }
 }
 
-function handleStateError(err: unknown, msgId: string, set: any) {
-  const message = err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.';
-  set((state: any) => ({
+function extractErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const apiMsg = (err.response?.data as { error?: unknown } | undefined)?.error;
+    if (typeof apiMsg === 'string' && apiMsg.trim()) {
+      return apiMsg;
+    }
+  }
+  return err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.';
+}
+
+function handleStateError(err: unknown, msgId: string, set: StoreApi<ResearchState>['setState']) {
+  const message = extractErrorMessage(err);
+  set((state) => ({
     error: message,
     loadingPhase: 'error',
-    messages: state.messages.map((m: any) =>
+    messages: state.messages.map((m) =>
       m.id === `${msgId}-ai`
         ? { ...m, error: message, phase: 'error' }
         : m
@@ -570,11 +581,13 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     const librariesKey = getCurrentLibrariesKey();
 
     // 1. Local Cache Load First (Instantly responsive UI)
-    let localLibraries: Library[] = [];
+    let localLibraries: Library[];
     try {
       const stored = localStorage.getItem(librariesKey);
       localLibraries = stored ? JSON.parse(stored) : [];
-    } catch {}
+    } catch {
+      localLibraries = [];
+    }
 
     // Ensure default exists locally if empty
     if (localLibraries.length === 0) {
@@ -583,11 +596,13 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
 
     const activeId = get().activeLibraryId || 'default';
     const cacheKey = getLibraryBookmarksKey(activeId);
-    let localBookmarks: AcademicSource[] = [];
+    let localBookmarks: AcademicSource[];
     try {
       const stored = localStorage.getItem(cacheKey);
       localBookmarks = stored ? JSON.parse(stored) : [];
-    } catch {}
+    } catch {
+      localBookmarks = [];
+    }
 
     set({
       libraries: localLibraries,
@@ -635,16 +650,18 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         localStorage.setItem(librariesKey, JSON.stringify(firestoreLibs));
         set({ libraries: firestoreLibs });
 
-        // D. Load bookmarks for all libraries and cache them locally
-        for (const lib of firestoreLibs) {
-          const freshBookmarks = await loadBookmarksFromLibrary(userId, lib.id);
-          const libCacheKey = getLibraryBookmarksKey(lib.id);
-          localStorage.setItem(libCacheKey, JSON.stringify(freshBookmarks));
-          
-          if (get().activeLibraryId === lib.id) {
-            set({ bookmarkedSources: freshBookmarks });
-          }
-        }
+        // D. Load bookmarks for all libraries in parallel and cache them locally
+        await Promise.all(
+          firestoreLibs.map(async (lib) => {
+            const freshBookmarks = await loadBookmarksFromLibrary(userId, lib.id);
+            const libCacheKey = getLibraryBookmarksKey(lib.id);
+            localStorage.setItem(libCacheKey, JSON.stringify(freshBookmarks));
+
+            if (get().activeLibraryId === lib.id) {
+              set({ bookmarkedSources: freshBookmarks });
+            }
+          })
+        );
       } catch (err) {
         console.warn('Failed to sync from Firestore:', err);
       }
@@ -655,9 +672,8 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     const { query, scope } = get();
     if (query.trim().length < 3) return;
 
-    let sessionId = get().currentSessionId;
-    if (!sessionId) {
-      sessionId = get().initSession(query.trim());
+    if (!get().currentSessionId) {
+      get().initSession(query.trim());
     }
 
     const msgId = `msg-${Date.now()}`;
@@ -751,9 +767,8 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     if (question.trim().length < 3) return;
     if (selectedRefs.length === 0) return;
 
-    let sessionId = get().currentSessionId;
-    if (!sessionId) {
-      sessionId = get().initSession(question.trim());
+    if (!get().currentSessionId) {
+      get().initSession(question.trim());
     }
 
     const msgId = `msg-${Date.now()}`;

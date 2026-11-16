@@ -16,31 +16,25 @@ export function ResetPasswordPage() {
   const { language } = useUiStore();
   const isEn = language === 'en';
 
-  const [oobCode, setOobCode] = useState<string | null>(null);
+  const oobCode = new URLSearchParams(location.search).get('oobCode');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  
-  const [verifying, setVerifying] = useState(true);
+
+  const [verifying, setVerifying] = useState(Boolean(oobCode));
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() =>
+    oobCode ? null : (isEn ? 'Invalid or expired password reset link.' : 'Tautan reset password tidak valid atau telah kedaluwarsa.')
+  );
   const [validationError, setValidationError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Parse oobCode from URL query parameters
+  // Verify reset code with Firebase
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const code = queryParams.get('oobCode');
-    if (!code) {
-      setError(isEn ? 'Invalid or expired password reset link.' : 'Tautan reset password tidak valid atau telah kedaluwarsa.');
-      setVerifying(false);
-      return;
-    }
-    setOobCode(code);
+    if (!oobCode) return;
 
-    // Verify reset code with Firebase
-    verifyPasswordResetCode(auth, code)
+    verifyPasswordResetCode(auth, oobCode)
       .then((userEmail) => {
         setEmail(userEmail);
         setVerifying(false);
@@ -50,7 +44,7 @@ export function ResetPasswordPage() {
         setError(isEn ? 'This reset link has expired or already been used.' : 'Tautan reset ini telah kedaluwarsa atau sudah digunakan.');
         setVerifying(false);
       });
-  }, [location.search, isEn]);
+  }, [oobCode, isEn]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +62,7 @@ export function ResetPasswordPage() {
       await confirmPasswordReset(auth, oobCode, password);
       setSuccess(true);
       setSubmitting(false);
-    } catch (err: any) {
+    } catch {
       setError(isEn ? 'Failed to reset password. Please try again.' : 'Gagal mereset password. Silakan coba lagi.');
       setSubmitting(false);
     }

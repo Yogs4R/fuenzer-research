@@ -15,9 +15,14 @@ import {
   type SortOption,
   type FilterIndex,
   INDEX_FILTERS,
-  sortSources,
-  filterByIndexes,
 } from '../utils/researchFilters';
+import {
+  type ContentTypeFilter,
+  SORT_OPTION_LABELS,
+  toggleIndexFilterValue,
+  filterAndSortSources,
+  downloadTextFile,
+} from '../utils/sourcePipeline';
 import {
   FileText,
   Copy,
@@ -56,7 +61,7 @@ export function CitationsPage() {
   const [selectedStyle, setSelectedStyle] = useState<CitationStyle>('APA');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
-  const [contentTypeFilter, setContentTypeFilter] = useState<'All' | 'Articles' | 'Journals' | 'Books'>('All');
+  const [contentTypeFilter, setContentTypeFilter] = useState<ContentTypeFilter>('All');
   
   // Search, Sort, Filters States
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,51 +73,17 @@ export function CitationsPage() {
   const t = language === 'en' ? en.citations : id.citations;
 
   const toggleIndexFilter = (f: FilterIndex) => {
-    setIndexFilters((prev) => {
-      const next = new Set(prev);
-      if (f === 'All') {
-        return new Set<FilterIndex>(['All']);
-      }
-      next.delete('All');
-      if (next.has(f)) {
-        next.delete(f);
-        if (next.size === 0) next.add('All');
-      } else {
-        next.add(f);
-      }
-      return next;
-    });
+    setIndexFilters((prev) => toggleIndexFilterValue(prev, f));
   };
 
   const activeFilterCount = indexFilters.has('All') ? 0 : indexFilters.size;
 
-  // Pipeline execution
-  const afterContentType = bookmarkedSources.filter((s) => {
-    if (contentTypeFilter !== 'All') {
-      const ct = s.content_type?.toLowerCase() || '';
-      switch (contentTypeFilter) {
-        case 'Articles': return ct === 'article' || ct === 'journal-article';
-        case 'Journals': return ct === 'journal' || ct === 'journal-article';
-        case 'Books': return ct === 'book' || ct === 'book-chapter';
-      }
-    }
-    return true;
+  const filteredSources = filterAndSortSources(bookmarkedSources, {
+    contentType: contentTypeFilter,
+    indexFilters,
+    searchQuery,
+    sort,
   });
-
-  const afterIndexFilter = filterByIndexes(afterContentType, indexFilters);
-
-  const afterSearch = searchQuery.trim()
-    ? afterIndexFilter.filter((s) => {
-        const query = searchQuery.toLowerCase();
-        return (
-          s.title.toLowerCase().includes(query) ||
-          s.authors.join(' ').toLowerCase().includes(query) ||
-          (s.publisher && s.publisher.toLowerCase().includes(query))
-        );
-      })
-    : afterIndexFilter;
-
-  const filteredSources = sortSources(afterSearch, sort);
 
   // Copy single citation to clipboard
   const handleCopySingle = async (source: AcademicSource) => {
@@ -144,42 +115,16 @@ export function CitationsPage() {
   // Download BibTeX file
   const handleDownloadBibTeX = () => {
     if (filteredSources.length === 0) return;
-    const bibText = generateBibTeX(filteredSources);
-    const blob = new Blob([bibText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'fuenzer_citations.bib';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadTextFile(generateBibTeX(filteredSources), 'fuenzer_citations.bib');
   };
 
   // Download RIS file
   const handleDownloadRIS = () => {
     if (filteredSources.length === 0) return;
-    const risText = generateRIS(filteredSources);
-    const blob = new Blob([risText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'fuenzer_citations.ris';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadTextFile(generateRIS(filteredSources), 'fuenzer_citations.ris');
   };
 
-  const sortOptionLabels: Record<SortOption, string> = {
-    relevance: 'Most Relevant',
-    newest: 'Newest First',
-    oldest: 'Oldest First',
-    citations: 'Most Cited',
-    title: 'Title (A-Z)',
-  };
-
-  const currentSortLabel = sortOptionLabels[sort] ?? 'Sort';
+  const currentSortLabel = SORT_OPTION_LABELS[sort] ?? 'Sort';
 
   return (
     <div className="min-h-screen flex flex-col bg-cloud-canvas dark:bg-[#121212] font-serif transition-colors duration-200">
@@ -339,7 +284,7 @@ export function CitationsPage() {
                     }
                   >
                     {SORT_OPTIONS.map((o) => (
-                      <DropdownItem key={o.value} label={sortOptionLabels[o.value]} active={sort === o.value} onClick={() => setSort(o.value)} />
+                      <DropdownItem key={o.value} label={SORT_OPTION_LABELS[o.value]} active={sort === o.value} onClick={() => setSort(o.value)} />
                     ))}
                   </Dropdown>
 

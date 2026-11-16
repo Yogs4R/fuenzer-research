@@ -24,8 +24,10 @@ export function VerifyEmailPage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [statusMsg, setStatusMsg] = useState('');
 
+  const oobCode = new URLSearchParams(location.search).get('oobCode');
+
   // Auto-verification states
-  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(Boolean(oobCode));
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
 
@@ -39,8 +41,7 @@ export function VerifyEmailPage() {
 
   // Protect normal page view: redirect if user verified or not signed in (unless processing link)
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    if (queryParams.get('oobCode')) return; // bypass protection during auto-verification
+    if (oobCode) return; // bypass protection during auto-verification
 
     if (!user) {
       navigate('/login');
@@ -49,35 +50,37 @@ export function VerifyEmailPage() {
     } else if (user.emailVerified) {
       navigate('/');
     }
-  }, [user, navigate, location.search]);
+  }, [user, navigate, oobCode]);
 
   // Process oobCode on mount if present
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const code = queryParams.get('oobCode');
-    if (code) {
-      setVerifyingCode(true);
-      setVerificationError(null);
+    if (!oobCode) return;
+    let active = true;
 
-      applyActionCode(auth, code)
-        .then(async () => {
-          setVerificationSuccess(true);
-          setVerifyingCode(false);
-          // Sync with the local auth store if logged in
-          if (auth.currentUser) {
-            await reloadUser();
-            setTimeout(() => {
-              navigate('/');
-            }, 3000);
-          }
-        })
-        .catch((err) => {
-          console.error('[Auth] Email verification failed:', err);
-          setVerificationError(t.auth.invalidLink);
-          setVerifyingCode(false);
-        });
-    }
-  }, [location.search, reloadUser, navigate]);
+    applyActionCode(auth, oobCode)
+      .then(async () => {
+        if (!active) return;
+        setVerificationSuccess(true);
+        setVerifyingCode(false);
+        // Sync with the local auth store if logged in
+        if (auth.currentUser) {
+          await reloadUser();
+          setTimeout(() => {
+            navigate('/');
+          }, 3000);
+        }
+      })
+      .catch((err) => {
+        if (!active) return;
+        console.error('[Auth] Email verification failed:', err);
+        setVerificationError(t.auth.invalidLink);
+        setVerifyingCode(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [oobCode, reloadUser, navigate, t.auth.invalidLink]);
 
   const handleCheckVerification = async () => {
     clearError();
@@ -105,7 +108,7 @@ export function VerifyEmailPage() {
       await sendVerificationEmail();
       setSuccessMsg(t.auth.newVerificationSent);
       setCooldown(60); // 60 seconds cooldown
-    } catch (err) {
+    } catch {
       // Error is set in store
     }
   };

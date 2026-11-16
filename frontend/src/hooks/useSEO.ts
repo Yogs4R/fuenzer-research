@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 
+type JsonLdSchema = Record<string, unknown>;
+
 interface UseSEOProps {
   canonical?: string;
-  schema?: Record<string, any> | Record<string, any>[];
+  schema?: JsonLdSchema | JsonLdSchema[];
   noindex?: boolean;
 }
 

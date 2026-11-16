@@ -18,12 +18,9 @@ export function CookieConsent() {
   }, []);
 
   useEffect(() => {
-    if (showBanner) {
-      const animTimer = setTimeout(() => setAnimate(true), 100);
-      return () => clearTimeout(animTimer);
-    } else {
-      setAnimate(false);
-    }
+    if (!showBanner) return;
+    const animTimer = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(animTimer);
   }, [showBanner]);
 
   const handleConsent = (accepted: boolean) => {
@@ -31,8 +28,9 @@ export function CookieConsent() {
     localStorage.setItem('cookie-consent', status);
 
     // Sync with Google Tag Manager
-    if ((window as any).gtag) {
-      (window as any).gtag('consent', 'update', {
+    const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag;
+    if (gtag) {
+      gtag('consent', 'update', {
         'analytics_storage': accepted ? 'granted' : 'denied',
         'ad_storage': accepted ? 'granted' : 'denied',
         'personalization_storage': accepted ? 'granted' : 'denied'

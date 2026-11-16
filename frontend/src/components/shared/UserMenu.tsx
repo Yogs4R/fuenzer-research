@@ -44,7 +44,7 @@ export function UserMenu() {
       await deleteAccount();
       setShowConfirmDelete(false);
       navigate('/');
-    } catch (err: any) {
+    } catch {
       const translatedError = useAuthStore.getState().error || (language === 'en' ? "Failed to delete account." : "Gagal menghapus akun.");
       setDeleteError(translatedError);
     } finally {

@@ -11,7 +11,7 @@ export function NumberScramble({ value, duration = 1500 }: NumberScrambleProps) 
   const [displayText, setDisplayText] = useState(value);
 
   useEffect(() => {
-    let start = Date.now();
+    const start = Date.now();
     let frameId: number;
 
     const animate = () => {

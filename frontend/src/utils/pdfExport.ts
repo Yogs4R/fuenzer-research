@@ -129,7 +129,7 @@ export function generatePdfDocument(source: AcademicSource, citationStyle: Citat
   }
 
   // Footer & Page Numbers
-  const totalPages = (doc as any).internal.getNumberOfPages();
+  const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
     doc.setFont('Helvetica', 'normal');

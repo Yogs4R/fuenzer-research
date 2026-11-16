@@ -4,7 +4,7 @@
  * Manages user session, loading state, and auth actions.
  * Auto-initializes anonymous session if no user is logged in.
  */
-import { create } from 'zustand';
+import { create, type StoreApi } from 'zustand';
 import {
   onAuthChange,
   signInAsGuest,
@@ -77,7 +77,7 @@ function mapUser(user: User): AuthUser {
   };
 }
 
-function handleAuthError(err: unknown, set: any, shouldThrow = false) {
+function handleAuthError(err: unknown, set: StoreApi<AuthState>['setState'], shouldThrow = false) {
   const lang = useUiStore.getState().language;
   const message = getFriendlyErrorMessage(err, lang);
   set({ error: message, loading: false });

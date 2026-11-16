@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useResearchStore } from '../store/researchStore';
 import { useUiStore } from '../store/uiStore';
 import { useSEO } from '../hooks/useSEO';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { en } from '../locales/en';
 import { id } from '../locales/id';
 import { Navbar } from '../components/shared/Navbar';
@@ -112,47 +113,18 @@ export function LandingPage() {
   const { language } = useUiStore();
   const t = language === 'en' ? en : id;
 
-  // Speech-to-Text state
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  // "Did you mean?" state
+  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [typedQuery, setTypedQuery] = useState(query);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      
-      recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => setIsListening(false);
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        const currentQuery = useResearchStore.getState().query;
-        const newQuery = currentQuery ? `${currentQuery} ${transcript}` : transcript;
-        setQuery(newQuery);
-        setTypedQuery(newQuery);
-      };
-      recognition.onerror = (event: any) => {
-        console.error('Speech recognition error', event.error);
-        setIsListening(false);
-      };
-      
-      recognitionRef.current = recognition;
-    }
-  }, [setQuery]);
-
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
-      alert(language === 'en' ? "Your browser does not support Voice Input." : "Browser anda tidak mendukung fitur Voice Input.");
-      return;
-    }
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      recognitionRef.current.lang = language === 'id' ? 'id-ID' : 'en-US';
-      recognitionRef.current.start();
-    }
-  };
+  const { isListening, toggleListening } = useSpeechRecognition(language, (transcript) => {
+    const currentQuery = useResearchStore.getState().query;
+    const newQuery = currentQuery ? `${currentQuery} ${transcript}` : transcript;
+    setQuery(newQuery);
+    setTypedQuery(newQuery);
+  });
 
   useSEO({
     canonical: 'https://research.fuenzer.web.id/',
@@ -204,21 +176,10 @@ export function LandingPage() {
     }
   });
 
-  // "Did you mean?" state
-  const [suggestion, setSuggestion] = useState<string | null>(null);
-  const [typedQuery, setTypedQuery] = useState(query);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Reset the store state when returning to the landing page so search query starts empty
-  useEffect(() => {
-    reset();
-    setTypedQuery('');
-  }, [reset]);
-
   // Derived state: check if current query is a valid academic keyword
   const extractedKeywords = extractKeywords(query);
   const isValidKeyword = extractedKeywords.length >= 3 && !checkIfGibberish(extractedKeywords);
+  const activeSuggestion = isValidKeyword ? suggestion : null;
 
   // Auto-resize textarea whenever query changes
   useEffect(() => {
@@ -231,10 +192,7 @@ export function LandingPage() {
   // Extract keywords and fetch autocomplete on query change
   useEffect(() => {
     const extracted = extractKeywords(query);
-    
-    // If nothing meaningful extracted or too short, reset suggestion and stop
     if (extracted.length < 3 || checkIfGibberish(extracted)) {
-      setSuggestion(null);
       return;
     }
 
@@ -245,7 +203,6 @@ export function LandingPage() {
         const suggestions = await fetchAutocomplete(extracted);
         if (suggestions.length > 0) {
           const topSuggestion = suggestions[0];
-          // If the suggestion differs from input, show "Did you mean?"
           if (topSuggestion.toLowerCase() !== extracted.toLowerCase()) {
             setSuggestion(topSuggestion);
           } else {
@@ -266,12 +223,17 @@ export function LandingPage() {
 
   // Apply suggestion when user clicks "Did you mean?"
   const applySuggestion = useCallback(() => {
-    if (suggestion) {
-      setQuery(suggestion);
-      setTypedQuery(suggestion);
+    if (activeSuggestion) {
+      setQuery(activeSuggestion);
+      setTypedQuery(activeSuggestion);
       setSuggestion(null);
     }
-  }, [suggestion, setQuery]);
+  }, [activeSuggestion, setQuery]);
+
+  // Reset the store state when returning to the landing page so search query starts empty
+  useEffect(() => {
+    reset();
+  }, [reset]);
 
   // Determine if search button should be enabled
   const canSearch = query.trim().length >= 3 && isValidKeyword;
@@ -359,22 +321,23 @@ export function LandingPage() {
             />
 
             {/* Validation Feedback Warning (Gibberish) */}
-            {!isValidKeyword && !suggestion && query.trim().length >= 3 && (
+            {!isValidKeyword && !activeSuggestion && query.trim().length >= 3 && (
               <div className="w-full px-6 mb-2 text-red-500 font-semibold dark:text-red-400 text-xs font-sans animate-in fade-in">
                 {t.hero.invalidQuery}
               </div>
             )}
             
             {/* "Did you mean?" Suggestion */}
-            {suggestion && (
+            {activeSuggestion && (
               <div className="w-full px-6 mb-2 animate-in fade-in">
                 <button
+                  type="button"
                   onClick={applySuggestion}
                   className="text-sm font-sans text-slate-gray dark:text-silver-mist hover:text-fuenzer-teal transition-colors cursor-pointer"
                 >
                   Did you mean:{' '}
                   <span className="text-fuenzer-teal font-semibold italic underline underline-offset-2">
-                    {suggestion}
+                    {activeSuggestion}
                   </span>
                   ?
                 </button>
@@ -641,8 +604,7 @@ export function LandingPage() {
                   <h3 className="font-bold text-xl dark:text-paper-white group-hover:text-fuenzer-teal transition-colors">{item.title}</h3>
                 </div>
                 <p className="text-sm text-slate-gray dark:text-silver-mist leading-relaxed font-sans flex-1">{item.desc}</p>
-                {/* @ts-ignore */}
-                {item.visual && item.visual}
+                {'visual' in item && item.visual}
               </div>
             </FadeIn>
           ))}

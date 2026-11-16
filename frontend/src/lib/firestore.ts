@@ -126,7 +126,7 @@ export interface Library {
   id: string;
   name: string;
   isPublic: boolean;
-  createdAt?: any;
+  createdAt?: unknown;
 }
 
 // ─── Libraries ────────────────────────────────────────────────────────────────

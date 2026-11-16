@@ -27,31 +27,29 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [recentHistory, setRecentHistory] = useState<Array<{id: string; query: string; title: string; timestamp: number}>>([]);
   const { loadSession } = useResearchStore();
+  const { user } = useAuthStore();
+  const isAuthenticated = Boolean(user && !user.isAnonymous);
   
   const notifRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
 
-  // Load history from localStorage when dropdown opens
-  useEffect(() => {
-    if (isHistoryOpen) {
-      const stored = localStorage.getItem(getCurrentHistoryKey());
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          // Support both old (string[]) and new (HistoryEntry[]) format
-          if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'string') {
-            setRecentHistory(parsed.map((q: string) => ({ id: q, query: q, title: q, timestamp: Date.now() })));
-          } else {
-            setRecentHistory(parsed);
-          }
-        } catch {
-          setRecentHistory([]);
-        }
-      } else {
-        setRecentHistory([]);
-      }
+  const readRecentHistory = () => {
+    const stored = localStorage.getItem(getCurrentHistoryKey());
+    if (!stored) {
+      setRecentHistory([]);
+      return;
     }
-  }, [isHistoryOpen]);
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'string') {
+        setRecentHistory(parsed.map((q: string) => ({ id: q, query: q, title: q, timestamp: Date.now() })));
+      } else {
+        setRecentHistory(Array.isArray(parsed) ? parsed : []);
+      }
+    } catch {
+      setRecentHistory([]);
+    }
+  };
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -67,14 +65,14 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const navLinksLanding = [
+  const navLinksLanding: Array<{ key: string; label: string; path?: string }> = [
     { key: 'about', label: t.about },
     { key: 'features', label: t.features },
     { key: 'workflow', label: t.workflow },
     { key: 'faq', label: t.faq },
   ];
 
-  const navLinksPlayground = [
+  const navLinksPlayground: Array<{ key: string; label: string; path?: string }> = [
     { key: 'home', label: 'Home', path: '/' },
     { key: 'library', label: t.library, path: '/library' },
     { key: 'citations', label: t.citations, path: '/citations' },
@@ -127,13 +125,11 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
               onClick={() => {
                 if (mode === 'landing') {
                   handleScrollTo(link.key);
-                } else {
-                  // @ts-ignore
+                } else if (link.path) {
                   navigate(link.path);
                 }
               }}
               className={`h-full flex items-center text-sm font-semibold cursor-pointer border-b-2 px-1 transition-colors ${
-                // @ts-ignore
                 (mode === 'playground' && location.pathname === link.path)
                   ? 'border-fuenzer-teal text-fuenzer-teal-dark dark:text-fuenzer-teal'
                   : 'border-transparent text-slate-gray dark:text-silver-mist hover:text-ink-black dark:hover:text-paper-white'
@@ -149,7 +145,11 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
           {/* History / Recent Dropdown (Desktop) */}
           <div className="relative hidden xl:block" ref={historyRef}>
             <button 
-              onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+              onClick={() => {
+                const next = !isHistoryOpen;
+                if (next) readRecentHistory();
+                setIsHistoryOpen(next);
+              }}
               className="p-2 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-colors rounded-full hover:bg-cloud-canvas dark:hover:bg-stone-gray"
               aria-label="History"
             >
@@ -242,32 +242,24 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
           
           
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
-            {(() => {
-              const { user } = useAuthStore();
-              const isAuthenticated = user && !user.isAnonymous;
-
-              if (isAuthenticated) {
-                return <UserMenu />;
-              }
-
-              // Not authenticated (anonymous or no user) - Centered & shrinkable layout
-              return (
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="text-xs md:text-sm font-semibold text-fuenzer-teal-dark dark:text-fuenzer-teal hover:text-fuenzer-teal cursor-pointer h-9 flex items-center"
-                  >
-                    {t.login}
-                  </button>
-                  <button
-                    onClick={() => navigate('/signup')}
-                    className="px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-fuenzer-teal-dark text-white text-xs md:text-sm font-bold tracking-wide hover:bg-fuenzer-teal hover:text-white transition-all cursor-pointer h-9 flex items-center justify-center shrink-0"
-                  >
-                    {t.signup}
-                  </button>
-                </div>
-              );
-            })()}
+            {isAuthenticated ? (
+              <UserMenu />
+            ) : (
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  onClick={() => navigate('/login')}
+                  className="text-xs md:text-sm font-semibold text-fuenzer-teal-dark dark:text-fuenzer-teal hover:text-fuenzer-teal cursor-pointer h-9 flex items-center"
+                >
+                  {t.login}
+                </button>
+                <button
+                  onClick={() => navigate('/signup')}
+                  className="px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-fuenzer-teal-dark text-white text-xs md:text-sm font-bold tracking-wide hover:bg-fuenzer-teal hover:text-white transition-all cursor-pointer h-9 flex items-center justify-center shrink-0"
+                >
+                  {t.signup}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Hamburger */}
@@ -292,8 +284,7 @@ export function Navbar({ mode = 'landing' }: NavbarProps) {
                   setIsMobileMenuOpen(false);
                   if (mode === 'landing') {
                     handleScrollTo(link.key);
-                  } else {
-                    // @ts-ignore
+                  } else if (link.path) {
                     navigate(link.path);
                   }
                 }}

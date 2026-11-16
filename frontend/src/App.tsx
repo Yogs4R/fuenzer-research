@@ -65,7 +65,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   // Dynamic Page Title Updater
   useEffect(() => {
     const baseTitle = 'Fuenzer Research';
-    let pageTitle = '';
+    let pageTitle: string;
 
     // Normalize path to ignore trailing slashes (except for root '/')
     const path = location.pathname.endsWith('/') && location.pathname.length > 1

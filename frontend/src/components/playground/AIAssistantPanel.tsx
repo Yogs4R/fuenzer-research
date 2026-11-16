@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import DOMPurify from 'dompurify';
 import { useResearchStore, getCurrentHistoryKey } from '../../store/researchStore';
 import type { ChatMessage } from '../../store/researchStore';
 import { NarrativeSkeletonLoader } from '../shared/NarrativeSkeletonLoader';
 import { UserMessageCopyButton } from '../shared/UserMessageCopyButton';
+import { CopyTextButton } from '../shared/CopyTextButton';
+import { MarkdownMessage } from '../shared/MarkdownMessage';
 import { useUiStore } from '../../store/uiStore';
 import { useAuthStore } from '../../store/authStore';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { updateHistoryPublicStatus } from '../../lib/firestore';
 import { en } from '../../locales/en';
 import { id } from '../../locales/id';
@@ -18,11 +20,9 @@ import {
   MoreVertical,
   Sparkles,
   X,
-  Copy,
   Check,
   Share2,
 } from 'lucide-react';
-import { marked } from 'marked';
 
 
 
@@ -40,7 +40,6 @@ interface AIAssistantPanelProps {
 }
 
 function AIChatBubble({ message }: { message: ChatMessage }) {
-  const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   const { language } = useUiStore();
   const t = language === 'en' ? en.aiAssistant : id.aiAssistant;
@@ -66,45 +65,24 @@ function AIChatBubble({ message }: { message: ChatMessage }) {
         <div className="flex flex-col gap-1.5 w-full">
           {/* Text Box */}
           <div className="bg-cloud-canvas dark:bg-stone-gray/60 rounded-2xl rounded-tl-sm p-3 shadow-sm border border-cloud-canvas/50 dark:border-stone-gray/30">
-            <div
-              className="prose prose-xs prose-slate dark:prose-invert max-w-none text-ink-black dark:text-slate-100 leading-relaxed text-xs [&>p]:mb-2 [&>ul]:mt-1 [&>ul]:mb-2 [&>ol]:mt-1 [&>ol]:mb-2"
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(
-                  marked.parse(message.response.synthesis, { async: false }) as string
-                ),
-              }}
-            />
+            <MarkdownMessage content={message.response.synthesis} />
           </div>
           
           {/* Metadata & Actions row (Outside the box) */}
           <div className="flex items-center justify-between px-1 text-[10px] text-slate-gray/70 dark:text-silver-mist/50 font-sans">
             {/* Timer Response */}
             <div className="flex items-center gap-1 font-medium select-none text-[9px] uppercase tracking-wider dark:text-slate-400">
-              <Clock className="w-2.5 h-2.5 text-silver-mist shrink-0" strokeWidth={2.5} />
+              <Clock className="w-2.5 h-2.5 text-silver-mist shrink-0" strokeWidth={2.5} aria-hidden="true" />
               <span>{(message.response.latency_ms / 1000).toFixed(1)}s</span>
             </div>
 
             {/* Actions (Copy + Share) */}
             <div className="flex items-center gap-1">
-              {/* Copy Button */}
-              <button
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(message.response?.synthesis || '');
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  } catch (e) {
-                    console.error(e);
-                  }
-                }}
-                className="p-1.5 rounded-lg hover:bg-cloud-canvas dark:hover:bg-stone-gray/50 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-all cursor-pointer"
-                title={t.copyTitle}
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
+              <CopyTextButton text={message.response.synthesis} label={t.copyTitle} />
 
               {/* Share Button */}
               <button
+                type="button"
                 onClick={async () => {
                   const shareData = {
                     title: t.shareDataTitle,
@@ -131,8 +109,9 @@ function AIChatBubble({ message }: { message: ChatMessage }) {
                 }}
                 className="p-1.5 rounded-lg hover:bg-cloud-canvas dark:hover:bg-stone-gray/50 text-slate-gray hover:text-ink-black dark:text-silver-mist dark:hover:text-paper-white transition-all cursor-pointer"
                 title={t.shareTitle}
+                aria-label={t.shareTitle}
               >
-                {shared ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
+                {shared ? <Check className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" /> : <Share2 className="w-3.5 h-3.5" aria-hidden="true" />}
               </button>
             </div>
           </div>
@@ -172,44 +151,9 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Speech-to-Text state
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
-
-  useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      
-      recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => setIsListening(false);
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInputVal((prev) => prev ? `${prev} ${transcript}` : transcript);
-      };
-      recognition.onerror = (event: any) => {
-        console.error('Speech recognition error', event.error);
-        setIsListening(false);
-      };
-      
-      recognitionRef.current = recognition;
-    }
-  }, []);
-
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
-      alert(language === 'en' ? "Your browser does not support Voice Input." : "Browser anda tidak mendukung fitur Voice Input.");
-      return;
-    }
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      recognitionRef.current.lang = language === 'id' ? 'id-ID' : 'en-US';
-      recognitionRef.current.start();
-    }
-  };
+  const { isListening, toggleListening } = useSpeechRecognition(language, (transcript) => {
+    setInputVal((prev) => (prev ? `${prev} ${transcript}` : transcript));
+  });
 
   // Auto-resize textarea whenever inputVal changes
   useEffect(() => {
@@ -238,30 +182,23 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
     }
   };
 
-  const [sessionTitle, setSessionTitle] = useState(t.newTopic);
-
-  // Sync sessionTitle whenever the session ID or query changes
-  useEffect(() => {
-    if (!currentSessionId) {
-      setSessionTitle(t.newTopic);
-      return;
-    }
-    const historyKey = getCurrentHistoryKey();
-    const stored = localStorage.getItem(historyKey);
+  const resolveSessionTitle = (): string => {
+    if (!currentSessionId) return t.newTopic;
+    const stored = localStorage.getItem(getCurrentHistoryKey());
     if (stored) {
       try {
         const history: HistoryEntry[] = JSON.parse(stored);
         const found = history.find((h) => h.id === currentSessionId);
-        if (found) {
-          setSessionTitle(found.title);
-          return;
-        }
+        if (found) return found.title;
       } catch (e) {
         console.error(e);
       }
     }
-    setSessionTitle(query || t.newTopic);
-  }, [currentSessionId, query, t.newTopic]);
+    return query || t.newTopic;
+  };
+
+  const [draftTitle, setDraftTitle] = useState<string | null>(null);
+  const sessionTitle = draftTitle ?? resolveSessionTitle();
 
   const isMountedRef = useRef(false);
 
@@ -300,7 +237,7 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
   // When session title is committed, update the history entry in localStorage
   const commitTitle = (newTitle: string) => {
     setIsEditingTitle(false);
-    setSessionTitle(newTitle);
+    setDraftTitle(null);
     updateSessionTitle(newTitle);
   };
 
@@ -357,19 +294,23 @@ export function AIAssistantPanel({ isSidebarOpen, setIsSidebarOpen, selectedRefs
                 type="text"
                 autoFocus
                 value={sessionTitle}
-                onChange={(e) => setSessionTitle(e.target.value)}
+                onChange={(e) => setDraftTitle(e.target.value)}
                 onBlur={() => commitTitle(sessionTitle)}
                 onKeyDown={(e) => e.key === 'Enter' && commitTitle(sessionTitle)}
                 className="text-sm font-bold bg-transparent border-b border-fuenzer-teal outline-none text-ink-black dark:text-cloud-canvas font-serif w-full"
               />
             ) : (
-              <h2
-                className="text-sm font-bold text-ink-black dark:text-cloud-canvas flex items-center gap-2 font-serif cursor-pointer group truncate"
-                onClick={() => setIsEditingTitle(true)}
+              <button
+                type="button"
+                className="text-sm font-bold text-ink-black dark:text-cloud-canvas flex items-center gap-2 font-serif cursor-pointer group truncate max-w-full text-left"
+                onClick={() => {
+                  setDraftTitle(sessionTitle);
+                  setIsEditingTitle(true);
+                }}
               >
                 <span className="truncate">{sessionTitle.length > 28 ? sessionTitle.substring(0, 28) + '...' : sessionTitle}</span>
-                <Edit2 className="w-3 h-3 text-silver-mist group-hover:text-ink-black dark:group-hover:text-paper-white transition-colors shrink-0" />
-              </h2>
+                <Edit2 className="w-3 h-3 text-silver-mist group-hover:text-ink-black dark:group-hover:text-paper-white transition-colors shrink-0" aria-hidden="true" />
+              </button>
             )}
           </div>
           <button

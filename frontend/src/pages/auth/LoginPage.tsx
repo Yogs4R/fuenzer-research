@@ -53,7 +53,7 @@ export function LoginPage() {
     try {
       await sendResetEmail(email.trim());
       setResetSuccess(true);
-    } catch (err) {
+    } catch {
       // Error is set in the store
     }
   };

@@ -28,7 +28,7 @@ const BIBTEX_SPECIAL_CHAR_MAP: Record<string, string> = {
  * and satisfy CodeQL incomplete string escaping / sanitization rules.
  */
 function sanitizeBibTexField(value: string): string {
-  return value.replace(/[\\{}~\^%&_#$]/g, (char) => BIBTEX_SPECIAL_CHAR_MAP[char] || char);
+  return value.replace(/[\\{}~^%&_#$]/g, (char) => BIBTEX_SPECIAL_CHAR_MAP[char] || char);
 }
 
 /**

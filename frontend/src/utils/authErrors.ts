@@ -3,9 +3,16 @@
  * Maps standard Firebase Auth error codes to human-readable Indonesian or English messages.
  */
 
-export function getFriendlyErrorMessage(error: any, lang: 'en' | 'id' = 'id'): string {
+interface ErrorWithResponse {
+  response?: { data?: { error?: unknown } };
+  code?: unknown;
+  message?: unknown;
+}
+
+export function getFriendlyErrorMessage(error: unknown, lang: 'en' | 'id' = 'id'): string {
+  const errObj = typeof error === 'object' && error !== null ? (error as ErrorWithResponse) : undefined;
   // Extract error from Axios response if available
-  const axiosError = error?.response?.data?.error;
+  const axiosError = errObj?.response?.data?.error;
   if (axiosError && typeof axiosError === 'string') {
     // If the backend provided a custom error message, we can return it directly
     // since our backend already returns friendly messages in Indonesian (mostly).
@@ -20,7 +27,7 @@ export function getFriendlyErrorMessage(error: any, lang: 'en' | 'id' = 'id'): s
     return axiosError;
   }
 
-  const code = error?.code || (typeof error === 'string' ? error : '');
+  const code = typeof errObj?.code === 'string' ? errObj.code : (typeof error === 'string' ? error : '');
   const isEn = lang === 'en';
 
   switch (code) {
@@ -78,15 +85,16 @@ export function getFriendlyErrorMessage(error: any, lang: 'en' | 'id' = 'id'): s
       return isEn
         ? 'For security reasons, this action requires you to log out and log back in before trying again.'
         : 'Demi keamanan, tindakan ini memerlukan Anda untuk keluar (log out) dan masuk kembali sebelum mencoba lagi.';
-    default:
-      if (error?.message) {
+    default: {
+      const errMsg = typeof errObj?.message === 'string' ? errObj.message : '';
+      if (errMsg) {
         // Fallback for Network Error specifically
-        if (error.message === 'Network Error') {
+        if (errMsg === 'Network Error') {
           return isEn 
             ? 'Network error. Please check your internet connection.' 
             : 'Koneksi jaringan bermasalah. Periksa koneksi internet Anda.';
         }
-        const cleanMsg = error.message.replace(/^Firebase:\s*/, '');
+        const cleanMsg = errMsg.replace(/^Firebase:\s*/, '');
         if (cleanMsg.includes('popup-closed-by-user')) {
           return isEn 
             ? 'Sign in was cancelled because the login window was closed.' 
@@ -100,5 +108,6 @@ export function getFriendlyErrorMessage(error: any, lang: 'en' | 'id' = 'id'): s
       return isEn 
         ? 'Authentication error occurred. Please try again.' 
         : 'Terjadi kesalahan autentikasi. Silakan coba lagi.';
+    }
   }
 }

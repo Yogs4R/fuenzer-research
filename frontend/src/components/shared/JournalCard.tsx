@@ -1,6 +1,6 @@
 import type { AcademicSource } from '../../types/research';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
-import { getFormattedCitation } from '../../utils/citationFormatter';
+import { getFormattedCitation, type CitationStyle } from '../../utils/citationFormatter';
 import { useUiStore } from '../../store/uiStore';
 
 interface JournalCardProps {
@@ -9,7 +9,7 @@ interface JournalCardProps {
   onToggleSelect?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
-  citationStyle?: string;
+  citationStyle?: CitationStyle;
 }
 
 export function JournalCard({ 
@@ -101,7 +101,7 @@ export function JournalCard({
         {source.content_type !== 'journal-article' && (
           <div className="text-[11px] text-slate-gray dark:text-silver-mist/80 bg-cloud-canvas/30 dark:bg-stone-gray/30 p-2.5 rounded-lg mb-4 font-sans leading-relaxed border border-cloud-canvas/50 dark:border-stone-gray/50">
             <span className="font-semibold text-ink-black dark:text-cloud-canvas mb-1 block">{citationStyle} Citation:</span>
-            {getFormattedCitation(source, citationStyle as any)}
+            {getFormattedCitation(source, citationStyle)}
           </div>
         )}
 

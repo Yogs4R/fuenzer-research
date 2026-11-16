@@ -12,6 +12,7 @@ import { loadPublicLibrary, type Library } from '../lib/firestore';
 import type { AcademicSource } from '../types/research';
 import { getFormattedCitation, type CitationStyle, CITATION_STYLES } from '../utils/citationFormatter';
 import { generateBibTeX, generateRIS } from '../utils/citationExporter';
+import { filterAndSortSources, downloadTextFile } from '../utils/sourcePipeline';
 import { Dropdown, DropdownItem } from '../components/shared/Dropdown';
 import { Globe, Lock, BookOpen, Download, Copy, Check, ChevronDown, Search } from 'lucide-react';
 import { en } from '../locales/en';
@@ -36,8 +37,6 @@ export function SharedLibraryPage() {
 
   // Filter/Sort States
   const [searchQuery, setSearchQuery] = useState('');
-  const contentTypeFilter = 'All';
-  const sort: string = 'relevance';
   const [selectedStyle, setSelectedStyle] = useState<CitationStyle>('APA');
   const [copiedAll, setCopiedAll] = useState(false);
   const [bookmarkModalSource, setBookmarkModalSource] = useState<AcademicSource | null>(null);
@@ -57,52 +56,33 @@ export function SharedLibraryPage() {
   // Load shared library — only after user is confirmed authenticated
   useEffect(() => {
     if (!hostUserId || !libraryId || !user) return;
-    setLoading(true);
-    setError(null);
+    let active = true;
 
     loadPublicLibrary(hostUserId, libraryId)
-      .then(({ library, bookmarks }) => {
-        setLibrary(library);
-        setBookmarks(bookmarks);
+      .then(({ library: lib, bookmarks: items }) => {
+        if (!active) return;
+        setLibrary(lib);
+        setBookmarks(items);
+        setError(null);
       })
       .catch((err) => {
+        if (!active) return;
         setError(err instanceof Error ? err.message : 'Gagal memuat pustaka.');
       })
       .finally(() => {
-        setLoading(false);
+        if (active) setLoading(false);
       });
+
+    return () => {
+      active = false;
+    };
   }, [hostUserId, libraryId, user]);
 
-  // Filter and Sort Pipeline
-  const filteredBookmarks = bookmarks
-    .filter((s) => {
-      if (contentTypeFilter !== 'All') {
-        const ct = s.content_type?.toLowerCase() || '';
-        switch (contentTypeFilter) {
-          case 'Articles': return ct === 'article' || ct === 'journal-article';
-          case 'Journals': return ct === 'journal' || ct === 'journal-article';
-          case 'Books': return ct === 'book' || ct === 'book-chapter';
-        }
-      }
-      return true;
-    })
-    .filter((s) => {
-      if (!searchQuery.trim()) return true;
-      const query = searchQuery.toLowerCase();
-      return (
-        s.title.toLowerCase().includes(query) ||
-        s.authors.join(' ').toLowerCase().includes(query) ||
-        (s.publisher && s.publisher.toLowerCase().includes(query))
-      );
-    })
-    .sort((a, b) => {
-      if (sort === 'newest') return b.year - a.year;
-      if (sort === 'oldest') return a.year - b.year;
-      if (sort === 'title') return a.title.localeCompare(b.title);
-      return 0; // Relevance is default / unsorted
-    });
-
-  // Copy Actions
+  const filteredBookmarks = filterAndSortSources(bookmarks, {
+    contentType: 'All',
+    searchQuery,
+    sort: 'relevance',
+  });
 
   const handleCopyAll = () => {
     const allCitations = filteredBookmarks
@@ -115,25 +95,11 @@ export function SharedLibraryPage() {
   };
 
   const handleDownloadBibTeX = () => {
-    const bibtex = generateBibTeX(filteredBookmarks);
-    const blob = new Blob([bibtex], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `citations_${library?.name || 'shared'}.bib`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(generateBibTeX(filteredBookmarks), `citations_${library?.name || 'shared'}.bib`);
   };
 
   const handleDownloadRIS = () => {
-    const ris = generateRIS(filteredBookmarks);
-    const blob = new Blob([ris], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `citations_${library?.name || 'shared'}.ris`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(generateRIS(filteredBookmarks), `citations_${library?.name || 'shared'}.ris`);
   };
 
   if (loading) {

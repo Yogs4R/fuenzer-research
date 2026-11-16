@@ -7,8 +7,7 @@ import { useSEO } from '../hooks/useSEO';
 import { Navbar } from '../components/shared/Navbar';
 import { Footer } from '../components/shared/Footer';
 import { loadPublicSession } from '../lib/firestore';
-import DOMPurify from 'dompurify';
-import { marked } from 'marked';
+import { MarkdownMessage } from '../components/shared/MarkdownMessage';
 import { Globe, Lock, GitFork, Check, Clock } from 'lucide-react';
 
 export function SharedWorkspacePage() {
@@ -42,22 +41,28 @@ export function SharedWorkspacePage() {
   // Load public workspace session — only after user is confirmed authenticated
   useEffect(() => {
     if (!hostUserId || !sessionId || !user) return;
-    setLoading(true);
-    setError(null);
+    let active = true;
 
     loadPublicSession(hostUserId, sessionId)
       .then((session) => {
+        if (!active) return;
         setSessionData({
           query: session.query,
           messages: session.messages || [],
         });
+        setError(null);
       })
       .catch((err) => {
+        if (!active) return;
         setError(err instanceof Error ? err.message : 'Gagal memuat sesi workspace.');
       })
       .finally(() => {
-        setLoading(false);
+        if (active) setLoading(false);
       });
+
+    return () => {
+      active = false;
+    };
   }, [hostUserId, sessionId, user]);
 
   const handleFork = async () => {
@@ -180,14 +185,7 @@ export function SharedWorkspacePage() {
                   {isUser ? (
                     <span>{msg.query}</span>
                   ) : (
-                    <div
-                      className="prose prose-xs prose-slate dark:prose-invert max-w-none text-ink-black dark:text-slate-100 leading-relaxed text-xs [&>p]:mb-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:mb-2 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:mb-2 [&>ul>li]:mb-1 [&>ol>li]:mb-1"
-                      dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(
-                          marked.parse(msg.response?.synthesis || '', { async: false }) as string
-                        ),
-                      }}
-                    />
+                    <MarkdownMessage content={msg.response?.synthesis || ''} />
                   )}
                 </div>
 

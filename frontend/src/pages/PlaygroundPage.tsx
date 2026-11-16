@@ -19,9 +19,12 @@ import {
   type SortOption,
   type FilterIndex,
   INDEX_FILTERS,
-  sortSources,
-  filterByIndexes,
 } from '../utils/researchFilters';
+import {
+  toggleIndexFilterValue,
+  filterAndSortSources,
+  downloadTextFile,
+} from '../utils/sourcePipeline';
 import {
   Search,
   BookOpen,
@@ -105,50 +108,19 @@ export function PlaygroundPage() {
 
   // Multi-select index filter toggle
   const toggleIndexFilter = (f: FilterIndex) => {
-    setIndexFilters((prev) => {
-      const next = new Set(prev);
-      if (f === 'All') {
-        return new Set<FilterIndex>(['All']);
-      }
-      next.delete('All');
-      if (next.has(f)) {
-        next.delete(f);
-        if (next.size === 0) next.add('All');
-      } else {
-        next.add(f);
-      }
-      return next;
-    });
+    setIndexFilters((prev) => toggleIndexFilterValue(prev, f));
   };
 
   const activeFilterCount = indexFilters.has('All') ? 0 : indexFilters.size;
 
   // Process references pipeline
   const allRefs = latestResponse?.references ?? [];
-  const afterIndexFilter = filterByIndexes(allRefs, indexFilters);
-  
-  // Content type filtering
-  const afterContentType = contentTypeFilter === 'All'
-    ? afterIndexFilter
-    : afterIndexFilter.filter((s) => {
-        const ct = s.content_type?.toLowerCase() || '';
-        switch (contentTypeFilter) {
-          case 'Articles': return ct === 'article' || ct === 'journal-article';
-          case 'Journals': return ct === 'journal' || ct === 'journal-article';
-          case 'Books': return ct === 'book' || ct === 'book-chapter';
-          default: return true;
-        }
-      });
-
-  const afterSearch = searchRef.trim()
-    ? afterContentType.filter(
-        (s) =>
-            s.title.toLowerCase().includes(searchRef.toLowerCase()) ||
-            s.authors.join(' ').toLowerCase().includes(searchRef.toLowerCase())
-      )
-    : afterContentType;
-  const sorted = sortSources(afterSearch, sort);
-  const displayedRefs = sorted;
+  const displayedRefs = filterAndSortSources(allRefs, {
+    contentType: contentTypeFilter,
+    indexFilters,
+    searchQuery: searchRef,
+    sort,
+  });
 
   const sortOptionLabels: Record<SortOption, string> = {
     relevance: t.sortRelevance,
@@ -162,12 +134,9 @@ export function PlaygroundPage() {
 
   const handleExportPDF = async () => {
     // 1. Resolve references to export (use selection, fallback to displayed)
-    let sourcesToExport: AcademicSource[] = [];
-    if (selectedRefs.size > 0) {
-      sourcesToExport = allRefs.filter((s) => selectedRefs.has(s.id));
-    } else {
-      sourcesToExport = displayedRefs;
-    }
+    const sourcesToExport: AcademicSource[] = selectedRefs.size > 0
+      ? allRefs.filter((s) => selectedRefs.has(s.id))
+      : displayedRefs;
 
     if (sourcesToExport.length === 0) {
       alert(language === 'en' ? 'No references available to export.' : 'Tidak ada referensi untuk diekspor.');
@@ -234,15 +203,8 @@ export function PlaygroundPage() {
     }
   };
 
-  const getSourcesToExport = (): AcademicSource[] => {
-    let sources: AcademicSource[] = [];
-    if (selectedRefs.size > 0) {
-      sources = allRefs.filter((s) => selectedRefs.has(s.id));
-    } else {
-      sources = displayedRefs;
-    }
-    return sources;
-  };
+  const getSourcesToExport = (): AcademicSource[] =>
+    selectedRefs.size > 0 ? allRefs.filter((s) => selectedRefs.has(s.id)) : displayedRefs;
 
   const handleExportBibTeX = () => {
     const sources = getSourcesToExport();
@@ -250,16 +212,7 @@ export function PlaygroundPage() {
       alert(language === 'en' ? 'No references available to export.' : 'Tidak ada referensi untuk diekspor.');
       return;
     }
-    const bibText = generateBibTeX(sources);
-    const blob = new Blob([bibText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'fuenzer_references.bib';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadTextFile(generateBibTeX(sources), 'fuenzer_references.bib');
   };
 
   const handleExportRIS = () => {
@@ -268,16 +221,7 @@ export function PlaygroundPage() {
       alert(language === 'en' ? 'No references available to export.' : 'Tidak ada referensi untuk diekspor.');
       return;
     }
-    const risText = generateRIS(sources);
-    const blob = new Blob([risText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'fuenzer_references.ris';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadTextFile(generateRIS(sources), 'fuenzer_references.ris');
   };
 
   return (
