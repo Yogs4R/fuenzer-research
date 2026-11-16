@@ -46,8 +46,8 @@ func main() {
 		log.Fatalf("Failed to load GARUDA SQLite client: %v", err)
 	}
 
-	// Resolve sinta_data.json path — check multiple locations
-	sintaDataPath := resolveSintaPath()
+	// Resolve sinta_journals_data.json path — check multiple locations
+	sintaDataPath := config.ResolveDataFile("sinta_journals_data.json")
 	sintaMapper, err := sinta.GetMapper(sintaDataPath)
 	if err != nil {
 		log.Fatalf("Failed to load SINTA data: %v", err)
@@ -60,8 +60,10 @@ func main() {
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
-		AppName:      "Fuenzer Research API v1",
-		ServerHeader: "Fuenzer",
+		AppName:                 "Fuenzer Research API v1",
+		ServerHeader:            "Fuenzer",
+		EnableTrustedProxyCheck: true,
+		ProxyHeader:             fiber.HeaderXForwardedFor,
 	})
 
 	// Middleware: Logger
@@ -74,7 +76,7 @@ func main() {
 		c.Set("X-Content-Type-Options", "nosniff")
 		c.Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		c.Set("Permissions-Policy", "geolocation=(), microphone=(), camera=(), interest-cohort=()")
-		c.Set("Content-Security-Policy", "default-src 'self'; script-src 'self' https://apis.google.com https://www.gstatic.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://lh3.googleusercontent.com https://images.unsplash.com https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://*.analytics.google.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://*.analytics.google.com; frame-src 'self' https://fuenzer-research.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content; require-trusted-types-for 'script'; trusted-types default appPolicy;")
+		c.Set("Content-Security-Policy", "default-src 'self'; script-src 'self' https://apis.google.com https://www.gstatic.com https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://lh3.googleusercontent.com https://images.unsplash.com https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://*.analytics.google.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://*.analytics.google.com https://cloudflareinsights.com; frame-src 'self' https://fuenzer-research.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; block-all-mixed-content; require-trusted-types-for 'script'; trusted-types default appPolicy;")
 		return c.Next()
 	})
 
@@ -105,11 +107,9 @@ func main() {
 			}
 			return false
 		},
-		Max:        15,
-		Expiration: 1 * time.Minute,
-		KeyGenerator: func(c *fiber.Ctx) string {
-			return c.IP()
-		},
+		Max:          15,
+		Expiration:   1 * time.Minute,
+		KeyGenerator: clientIP,
 		LimitReached: func(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
 				"error": "Terlalu banyak permintaan. Silakan coba lagi dalam 1 menit.",
@@ -130,11 +130,9 @@ func main() {
 
 	// Auth Routes — stricter rate limit: 3 req / 5 min per IP to prevent email bombing
 	authLimiter := limiter.New(limiter.Config{
-		Max:        3,
-		Expiration: 5 * time.Minute,
-		KeyGenerator: func(c *fiber.Ctx) string {
-			return c.IP()
-		},
+		Max:          3,
+		Expiration:   5 * time.Minute,
+		KeyGenerator: clientIP,
 		LimitReached: func(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
 				"error": "Terlalu banyak permintaan. Silakan coba lagi dalam 5 menit.",
@@ -168,18 +166,15 @@ func main() {
 	log.Fatal(app.Listen(":" + port))
 }
 
-// resolveSintaPath checks several locations for sinta_journals_data.json.
-func resolveSintaPath() string {
-	paths := []string{
-		"data/sinta_journals_data.json",    // relative to working directory (production Docker)
-		"../data/sinta_journals_data.json", // relative to cmd/api/
-		"backend/data/sinta_journals_data.json", // from project root
+// clientIP extracts the real client IP behind Cloudflare and Cloud Run proxies.
+func clientIP(c *fiber.Ctx) string {
+	if ip := strings.TrimSpace(c.Get("CF-Connecting-IP")); ip != "" {
+		return ip
 	}
-	for _, p := range paths {
-		if _, err := os.Stat(p); err == nil {
-			return p
+	if xff := c.Get("X-Forwarded-For"); xff != "" {
+		if first, _, _ := strings.Cut(xff, ","); strings.TrimSpace(first) != "" {
+			return strings.TrimSpace(first)
 		}
 	}
-	// Default fallback
-	return "data/sinta_journals_data.json"
+	return c.IP()
 }

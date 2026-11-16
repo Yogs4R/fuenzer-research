@@ -3,6 +3,8 @@ package config
 import (
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -56,4 +58,29 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+// ResolveDataFile finds a file in backend/data across working-directory layouts.
+func ResolveDataFile(filename string) string {
+	paths := []string{
+		filepath.Join("data", filename),
+		filepath.Join("..", "data", filename),
+		filepath.Join("backend", "data", filename),
+	}
+	for _, p := range paths {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	return filepath.Join("data", filename)
+}
+
+// ContainsAll returns true when slice contains "all" (case-insensitive).
+func ContainsAll(slice []string) bool {
+	for _, s := range slice {
+		if strings.EqualFold(strings.TrimSpace(s), "all") {
+			return true
+		}
+	}
+	return false
 }
