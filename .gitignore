@@ -26,7 +26,11 @@ Thumbs.db
 # BMad internal
 _bmad-output/
 _bmad/
+
+# Skills
 .agent/
+.agents/
+skills-lock.json
 
 # Go
 backend/vendor/
