@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"fuenzer-research/backend/internal/config"
 	"fuenzer-research/backend/internal/models"
 )
 
@@ -198,91 +199,94 @@ func (m *Mapper) LookupTier(publisher string) models.IndexEntry {
 	}
 }
 
+// matchesAllTokens returns true when every whitespace-delimited token in query appears in the combined fields.
+func matchesAllTokens(query string, fields ...string) bool {
+	tokens := strings.Fields(strings.ToLower(strings.TrimSpace(query)))
+	if len(tokens) == 0 {
+		return false
+	}
+	haystack := strings.ToLower(strings.Join(fields, " "))
+	for _, tok := range tokens {
+		if !strings.Contains(haystack, tok) {
+			return false
+		}
+	}
+	return true
+}
+
+// MatchesRank returns true when tier matches any requested rank (or when all ranks are allowed).
+func MatchesRank(tier string, sintaRanks []string) bool {
+	if len(sintaRanks) == 0 || config.ContainsAll(sintaRanks) {
+		return true
+	}
+	normalizedTier := strings.TrimSpace(tier)
+	for _, rank := range sintaRanks {
+		normRank := strings.TrimSpace(strings.ReplaceAll(strings.ToLower(rank), "sinta", ""))
+		if normRank == normalizedTier {
+			return true
+		}
+	}
+	return false
+}
+
 // SearchJournals searches the local SINTA database directly using keyword queries.
 // Matches against journal name, institution, or subject areas.
 func (m *Mapper) SearchJournals(query string, sintaRanks []string, limit int) []models.AcademicSource {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	queryLower := strings.ToLower(strings.TrimSpace(query))
 	var results []models.AcademicSource
 
-	// Filter rank helpers
-	hasRankFilter := len(sintaRanks) > 0 && !containsAll(sintaRanks)
-
 	for _, j := range m.journals {
-		// Keyword matching specifically against Title (Publisher in struct represents journal name)
-		nameMatch := strings.Contains(strings.ToLower(j.Publisher), queryLower)
+		if !matchesAllTokens(query, j.Publisher, j.Field, j.SubjectArea) {
+			continue
+		}
+		if !MatchesRank(j.Tier, sintaRanks) {
+			continue
+		}
 
-		if nameMatch {
-			// Apply tier filter if requested
-			if hasRankFilter {
-				matchTierFound := false
-				for _, rank := range sintaRanks {
-					normRank := strings.TrimSpace(strings.ReplaceAll(strings.ToLower(rank), "sinta", ""))
-					if normRank == j.Tier {
-						matchTierFound = true
-						break
-					}
+		// Map SINTA journal info to AcademicSource structure
+		idVal := fmt.Sprintf("sinta-%s", j.ISSN)
+		if j.ISSN == "" {
+			// Fallback to name-based ID
+			sanitized := strings.Map(func(r rune) rune {
+				if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+					return r
 				}
-				if !matchTierFound {
-					continue
-				}
-			}
+				return '-'
+			}, j.Publisher)
+			idVal = fmt.Sprintf("sinta-%s", strings.ToLower(sanitized))
+		}
 
-			// Map SINTA journal info to AcademicSource structure
-			idVal := fmt.Sprintf("sinta-%s", j.ISSN)
-			if j.ISSN == "" {
-				// Fallback to name-based ID
-				sanitized := strings.Map(func(r rune) rune {
-					if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
-						return r
-					}
-					return '-'
-				}, j.Publisher)
-				idVal = fmt.Sprintf("sinta-%s", strings.ToLower(sanitized))
-			}
+		abstractText := fmt.Sprintf("Jurnal terakreditasi Sinta %s bidang %s. Diterbitkan oleh %s.", j.Tier, j.SubjectArea, j.Field)
 
-			abstractText := fmt.Sprintf("Jurnal terakreditasi Sinta %s bidang %s. Diterbitkan oleh %s.", j.Tier, j.SubjectArea, j.Field)
+		urlVal := j.URL
+		if urlVal == "" {
+			urlVal = "https://sinta.kemdiktisaintek.go.id"
+		}
 
-			urlVal := j.URL
-			if urlVal == "" {
-				urlVal = "https://sinta.kemdiktisaintek.go.id"
-			}
+		source := models.AcademicSource{
+			ID:          idVal,
+			Title:       j.Publisher,
+			Authors:     []string{}, // Journals have no authors, they are publications
+			Year:        2025,       // Current database version year
+			Publisher:   j.Field,
+			Abstract:    abstractText,
+			URL:         urlVal,
+			Indexes: []models.IndexEntry{
+				{Provider: "SINTA", Tier: j.Tier},
+			},
+			ContentType: "journal",
+			Citations:   j.Citations,
+		}
 
-			source := models.AcademicSource{
-				ID:          idVal,
-				Title:       j.Publisher,
-				Authors:     []string{}, // Journals have no authors, they are publications
-				Year:        2025,       // Current database version year
-				Publisher:   j.Field,
-				Abstract:    abstractText,
-				URL:         urlVal,
-				Indexes: []models.IndexEntry{
-					{Provider: "SINTA", Tier: j.Tier},
-				},
-				ContentType: "journal",
-				Citations:   j.Citations,
-			}
-
-			results = append(results, source)
-			if len(results) >= limit {
-				break
-			}
+		results = append(results, source)
+		if len(results) >= limit {
+			break
 		}
 	}
 
 	return results
-}
-
-// containsAll checks if Sinta rank slice has "all"
-func containsAll(slice []string) bool {
-	for _, s := range slice {
-		if strings.ToLower(strings.TrimSpace(s)) == "all" {
-			return true
-		}
-	}
-	return false
 }
 
 // MapPapers enriches a slice of AcademicSource with SINTA index data.
@@ -299,37 +303,23 @@ func (m *Mapper) SearchArticles(query string, sintaRanks []string, limit int) []
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	queryLower := strings.ToLower(strings.TrimSpace(query))
 	var results []models.AcademicSource
 
-	// Filter rank helpers
-	hasRankFilter := len(sintaRanks) > 0 && !containsAll(sintaRanks)
-
 	for _, art := range m.articles {
-		// Keyword matching against Title or parent journal publisher name
-		titleMatch := strings.Contains(strings.ToLower(art.Title), queryLower)
-		publisherMatch := strings.Contains(strings.ToLower(art.Publisher), queryLower)
+		if !matchesAllTokens(query, art.Title, art.Publisher) {
+			continue
+		}
+		tier := ""
+		if len(art.Indexes) > 0 {
+			tier = art.Indexes[0].Tier
+		}
+		if !MatchesRank(tier, sintaRanks) {
+			continue
+		}
 
-		if titleMatch || publisherMatch {
-			// Apply tier filter if requested
-			if hasRankFilter {
-				matchTierFound := false
-				for _, rank := range sintaRanks {
-					normRank := strings.TrimSpace(strings.ReplaceAll(strings.ToLower(rank), "sinta", ""))
-					if len(art.Indexes) > 0 && normRank == art.Indexes[0].Tier {
-						matchTierFound = true
-						break
-					}
-				}
-				if !matchTierFound {
-					continue
-				}
-			}
-
-			results = append(results, art)
-			if len(results) >= limit {
-				break
-			}
+		results = append(results, art)
+		if len(results) >= limit {
+			break
 		}
 	}
 

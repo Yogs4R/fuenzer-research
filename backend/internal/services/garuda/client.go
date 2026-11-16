@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"fuenzer-research/backend/internal/config"
 	"fuenzer-research/backend/internal/models"
 
 	_ "modernc.org/sqlite"
@@ -15,41 +16,42 @@ import (
 // Client handles local SQLite queries against the garuda_articles_data.db.
 type Client struct {
 	dbPath string
+	db     *sql.DB
 }
 
-// NewClient initializes a new Garuda SQLite database client.
+// NewClient initializes a new Garuda SQLite database client with a pooled connection.
 func NewClient() (*Client, error) {
-	dbPath := resolveGarudaPath()
+	dbPath := config.ResolveDataFile("garuda_articles_data.db")
 	if _, err := os.Stat(dbPath); err != nil {
 		return nil, fmt.Errorf("garuda database not found at %s: %w", dbPath, err)
 	}
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open garuda SQLite db: %w", err)
+	}
+	db.SetMaxOpenConns(4)
+	if err := db.Ping(); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("failed to ping garuda SQLite db: %w", err)
+	}
 	log.Printf("📂 Garuda local database client loaded from %s", dbPath)
-	return &Client{dbPath: dbPath}, nil
+	return &Client{dbPath: dbPath, db: db}, nil
 }
 
-// resolveGarudaPath searches in several locations to find garuda_articles_data.db.
-func resolveGarudaPath() string {
-	paths := []string{
-		"data/garuda_articles_data.db",          // production / Docker
-		"../data/garuda_articles_data.db",       // relative to cmd/api
-		"backend/data/garuda_articles_data.db",  // root execution
+// Close closes the underlying SQLite connection pool.
+func (c *Client) Close() error {
+	if c.db != nil {
+		return c.db.Close()
 	}
-	for _, p := range paths {
-		if _, err := os.Stat(p); err == nil {
-			return p
-		}
-	}
-	return "data/garuda_articles_data.db" // default fallback
+	return nil
 }
 
 // Search queries the SQLite table `artikel` for matching keyword search.
 // It maps the results to modern models.AcademicSource structure.
 func (c *Client) Search(query string, workType string) ([]models.AcademicSource, error) {
-	db, err := sql.Open("sqlite", c.dbPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open garuda SQLite db: %w", err)
+	if c.db == nil {
+		return nil, fmt.Errorf("garuda SQLite db is not initialized")
 	}
-	defer db.Close()
 
 	// Adjust search limit based on type
 	limit := 10
@@ -80,8 +82,9 @@ func (c *Client) Search(query string, workType string) ([]models.AcademicSource,
 	}
 
 	var rows *sql.Rows
+	var err error
 	if workType == "journal" {
-		rows, err = db.Query(
+		rows, err = c.db.Query(
 			`SELECT a.article_title, a.title, a.article_abstract, a.article_year, a.doi, a.url, a.source
 			 FROM artikel_fts f
 			 JOIN artikel a ON a.id = f.rowid
@@ -90,7 +93,7 @@ func (c *Client) Search(query string, workType string) ([]models.AcademicSource,
 			matchQuery, limit,
 		)
 	} else {
-		rows, err = db.Query(
+		rows, err = c.db.Query(
 			`SELECT a.article_title, a.title, a.article_abstract, a.article_year, a.doi, a.url, a.source
 			 FROM artikel_fts f
 			 JOIN artikel a ON a.id = f.rowid
