@@ -204,61 +204,12 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 						break
 					}
 				}
-				if isSintaMatch {
-					if len(req.SintaRank) == 0 || containsAll(req.SintaRank) {
-						filteredSources = append(filteredSources, src)
-					} else {
-						normalizedTier := strings.TrimSpace(matchedTier)
-						matchTierFound := false
-						for _, rank := range req.SintaRank {
-							normRank := strings.TrimSpace(strings.ReplaceAll(strings.ToLower(rank), "sinta", ""))
-							if normRank == normalizedTier {
-								matchTierFound = true
-								break
-							}
-						}
-						if matchTierFound {
-							filteredSources = append(filteredSources, src)
-						}
-					}
+				if isSintaMatch && sinta.MatchesRank(matchedTier, req.SintaRank) {
+					filteredSources = append(filteredSources, src)
 				}
 			}
 			sources = filteredSources
 		}
-	}
-
-
-	// Strict title check for book type searches: title must contain the query
-	if req.Type == "book" {
-		var filtered []models.AcademicSource
-		for _, src := range sources {
-			if strings.Contains(strings.ToLower(src.Title), strings.ToLower(req.Query)) {
-				filtered = append(filtered, src)
-			}
-		}
-		sources = filtered
-	}
-
-	// Strict title check for journal type searches: title must contain the query
-	if req.Type == "journal" {
-		var filtered []models.AcademicSource
-		for _, src := range sources {
-			if strings.Contains(strings.ToLower(src.Title), strings.ToLower(req.Query)) {
-				filtered = append(filtered, src)
-			}
-		}
-		sources = filtered
-	}
-
-	// Strict title check for article type searches: title must contain the query
-	if req.Type == "article" {
-		var filtered []models.AcademicSource
-		for _, src := range sources {
-			if strings.Contains(strings.ToLower(src.Title), strings.ToLower(req.Query)) {
-				filtered = append(filtered, src)
-			}
-		}
-		sources = filtered
 	}
 
 	// Short-circuit: empty results — do NOT call Gemini
@@ -309,16 +260,6 @@ func respondOpenAlexError(c *fiber.Ctx, op string, err error) error {
 	return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
 		"error": "Pencarian OpenAlex gagal sementara. Silakan coba lagi.",
 	})
-}
-
-// containsAll checks if the rank selection contains "All" or "all" case insensitively.
-func containsAll(slice []string) bool {
-	for _, s := range slice {
-		if strings.ToLower(strings.TrimSpace(s)) == "all" {
-			return true
-		}
-	}
-	return false
 }
 
 // isGibberish checks if a string is a keyboard smash, gibberish, or random repetition.
@@ -401,6 +342,7 @@ func (h *ResearchHandler) HandleAsk(c *fiber.Ctx) error {
 
 	answer, err := h.geminiClient.Ask(req.Question, req.References)
 	if err != nil {
+		log.Printf("ERROR: Gemini Ask failed: %v", err)
 		answer = "Sistem Tanya Jawab AI sedang tidak tersedia saat ini. Silakan coba beberapa saat lagi."
 	}
 

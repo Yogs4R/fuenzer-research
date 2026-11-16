@@ -56,7 +56,7 @@ func main() {
 	// Initialize handler
 	researchHandler := handlers.NewResearchHandler(openalexClient, geminiClient, sintaMapper, garudaClient, googleBooksClient)
 	autocompleteHandler := handlers.NewAutocompleteHandler(openalexClient)
-	authHandler := handlers.NewAuthHandler(firebaseClient, emailClient)
+	authHandler := handlers.NewAuthHandler(firebaseClient, emailClient, cfg.AllowedOrigins)
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
