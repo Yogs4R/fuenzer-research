@@ -1,7 +1,11 @@
 package handlers
 
 import (
+	"context"
+	"errors"
 	"log"
+	"net"
+	"net/http"
 	"strings"
 	"time"
 
@@ -88,9 +92,13 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 
 	// Route based on Type and Index
 	if req.Index == "GARUDA" {
-		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-			"error": "Basis data lokal Garuda sedang dalam pemeliharaan sistem. Silakan pilih indeks 'Global' atau 'SINTA' untuk mencari artikel Indonesia.",
-		})
+		sources, err = h.garudaClient.Search(req.Query, req.Type)
+		if err != nil {
+			log.Printf("ERROR: Garuda search failed: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Pencarian basis data Garuda gagal. Silakan coba lagi.",
+			})
+		}
 	} else if req.Index == "SINTA" {
 		switch req.Type {
 		case "journal":
@@ -109,10 +117,7 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 	} else if req.Type == "journal" {
 		sources, err = h.openalexClient.SearchSources(req.Query, req.Scope, limit)
 		if err != nil {
-			log.Printf("ERROR: OpenAlex Sources search failed: %v", err)
-			return c.Status(fiber.StatusGatewayTimeout).JSON(fiber.Map{
-				"error": "Database timeout. Please try again.",
-			})
+			return respondOpenAlexError(c, "OpenAlex Sources search", err)
 		}
 	} else if (req.Type == "book" && req.Index == "Google Books") || (req.Index == "Google Books" && req.Type == "") {
 		// Use Google Books client for book searches
@@ -127,9 +132,7 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 		// Default Works search (Articles/All) via OpenAlex
 		papers, err := h.openalexClient.Search(req.Query, req.Scope, req.Type)
 		if err != nil {
-			return c.Status(fiber.StatusGatewayTimeout).JSON(fiber.Map{
-				"error": "Database timeout. Please try again.",
-			})
+			return respondOpenAlexError(c, "OpenAlex Works search", err)
 		}
 
 		// Convert OpenAlexWork → AcademicSource
@@ -283,6 +286,28 @@ func (h *ResearchHandler) Handle(c *fiber.Ctx) error {
 		Synthesis:  synthesis,
 		References: sources,
 		LatencyMs:  time.Since(start).Milliseconds(),
+	})
+}
+
+func respondOpenAlexError(c *fiber.Ctx, op string, err error) error {
+	log.Printf("ERROR: %s failed: %v", op, err)
+
+	var apiErr *openalex.APIError
+	if errors.As(err, &apiErr) && apiErr.StatusCode == http.StatusTooManyRequests {
+		return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+			"error": "Kuota pencarian OpenAlex sementara tercapai. Silakan coba beberapa saat lagi atau gunakan indeks 'SINTA' / 'Google Books'.",
+		})
+	}
+
+	var netErr net.Error
+	if errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &netErr) && netErr.Timeout()) {
+		return c.Status(fiber.StatusGatewayTimeout).JSON(fiber.Map{
+			"error": "Database timeout. Please try again.",
+		})
+	}
+
+	return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
+		"error": "Pencarian OpenAlex gagal sementara. Silakan coba lagi.",
 	})
 }
 

@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -20,9 +21,20 @@ const (
 	mailto              = "fuenzerofficial@gmail.com"
 )
 
+// APIError represents a non-200 HTTP response from OpenAlex.
+type APIError struct {
+	StatusCode int
+	Body       string
+}
+
+func (e *APIError) Error() string {
+	return fmt.Sprintf("openalex returned status %d: %s", e.StatusCode, e.Body)
+}
+
 // Client handles communication with the OpenAlex API.
 type Client struct {
 	httpClient *http.Client
+	apiKey     string
 }
 
 // NewClient creates a new OpenAlex API client with an 8s timeout.
@@ -31,7 +43,17 @@ func NewClient() *Client {
 		httpClient: &http.Client{
 			Timeout: requestTimeout,
 		},
+		apiKey: strings.TrimSpace(os.Getenv("OPENALEX_API_KEY")),
 	}
+}
+
+func (c *Client) baseParams() url.Values {
+	params := url.Values{}
+	params.Set("mailto", mailto)
+	if c.apiKey != "" {
+		params.Set("api_key", c.apiKey)
+	}
+	return params
 }
 
 // Search queries OpenAlex. If scope is "indonesia", it appends
@@ -90,10 +112,9 @@ func (c *Client) searchWithLimit(query string, scope string, workType string, li
 		}
 	}
 
-	params := url.Values{}
+	params := c.baseParams()
 	params.Set("search", searchQuery)
 	params.Set("per-page", fmt.Sprintf("%d", limit))
-	params.Set("mailto", mailto)
 
 	// Apply type and scope filters dynamically
 	var filterParts []string
@@ -127,7 +148,7 @@ func (c *Client) searchWithLimit(query string, scope string, workType string, li
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("openalex returned status %d: %s", resp.StatusCode, string(body))
+		return nil, &APIError{StatusCode: resp.StatusCode, Body: string(body)}
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -156,9 +177,8 @@ type AutocompleteResponse struct {
 // Autocomplete fetches search suggestions from the OpenAlex autocomplete API.
 // Returns up to 5 display_name suggestions for "Did you mean?" functionality.
 func (c *Client) Autocomplete(query string) ([]string, error) {
-	params := url.Values{}
+	params := c.baseParams()
 	params.Set("q", query)
-	params.Set("mailto", mailto)
 
 	reqURL := fmt.Sprintf("%s?%s", autocompleteBaseURL, params.Encode())
 
@@ -255,10 +275,9 @@ type OpenAlexSourcesResponse struct {
 // SearchSources queries the OpenAlex Sources API specifically for journal publications.
 // Filters by country_code:ID if the scope is indonesia.
 func (c *Client) SearchSources(query string, scope string, limit int) ([]models.AcademicSource, error) {
-	params := url.Values{}
+	params := c.baseParams()
 	params.Set("search", query)
 	params.Set("per-page", fmt.Sprintf("%d", limit))
-	params.Set("mailto", mailto)
 
 	// Filter by type:journal and optionally country_code:ID for Indonesian scope
 	if scope == "indonesia" {
@@ -277,7 +296,7 @@ func (c *Client) SearchSources(query string, scope string, limit int) ([]models.
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("openalex sources returned status %d: %s", resp.StatusCode, string(body))
+		return nil, &APIError{StatusCode: resp.StatusCode, Body: string(body)}
 	}
 
 	body, err := io.ReadAll(resp.Body)
