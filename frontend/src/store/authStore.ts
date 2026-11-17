@@ -212,7 +212,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const currentUser = auth.currentUser;
       if (!currentUser || !currentUser.email) throw new Error('No user or email is currently signed in.');
-      await sendVerificationManual(currentUser.email);
+      await sendVerificationManual(currentUser);
       set({ loading: false });
     } catch (err: unknown) {
       handleAuthError(err, set, true);

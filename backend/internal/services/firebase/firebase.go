@@ -72,3 +72,12 @@ func (c *Client) GeneratePasswordResetLink(ctx context.Context, email string) (s
 	}
 	return link, nil
 }
+
+// VerifyIDToken verifies a Firebase ID token issued to a signed-in client and returns its parsed token claims.
+func (c *Client) VerifyIDToken(ctx context.Context, idToken string) (*auth.Token, error) {
+	token, err := c.auth.VerifyIDToken(ctx, idToken)
+	if err != nil {
+		return nil, fmt.Errorf("firebase admin: failed to verify ID token: %w", err)
+	}
+	return token, nil
+}

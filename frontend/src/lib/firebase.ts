@@ -82,7 +82,7 @@ export async function signUpWithEmail(email: string, password: string, displayNa
   const result = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(result.user, { displayName });
   try {
-    await sendVerificationManual(email);
+    await sendVerificationManual(result.user);
   } catch (err) {
     console.error('[Auth] Failed to send verification email on registration:', err);
   }
@@ -97,8 +97,17 @@ export async function resetPassword(email: string): Promise<void> {
 }
 
 /** Manually send verification email to current user */
-export async function sendVerificationManual(email: string): Promise<void> {
-  await api.post('/api/v1/auth/send-verification', { email });
+export async function sendVerificationManual(userOverride?: User | null): Promise<void> {
+  const targetUser = userOverride ?? auth.currentUser;
+  if (!targetUser) {
+    throw new Error('No user is currently signed in.');
+  }
+  const idToken = await targetUser.getIdToken();
+  await api.post(
+    '/api/v1/auth/send-verification',
+    {},
+    { headers: { Authorization: `Bearer ${idToken}` } }
+  );
 }
 
 /** Sign out the current user */

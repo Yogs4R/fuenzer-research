@@ -57,7 +57,7 @@ func main() {
 	// Initialize handler
 	researchHandler := handlers.NewResearchHandler(openalexClient, geminiClient, sintaMapper, garudaClient, googleBooksClient)
 	autocompleteHandler := handlers.NewAutocompleteHandler(openalexClient)
-	authHandler := handlers.NewAuthHandler(firebaseClient, emailClient, cfg.AllowedOrigins)
+	authHandler := handlers.NewAuthHandler(firebaseClient, emailClient, cfg.AllowedOrigins, strings.ToLower(strings.TrimSpace(cfg.Env)) != "production")
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -82,7 +82,7 @@ func main() {
 	// Middleware: CORS — strict per security-policy.md
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: cfg.AllowedOrigins,
-		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
 
 	// Middleware: Rate Limiting — 15 req/min per IP (excludes static assets & SEO files)

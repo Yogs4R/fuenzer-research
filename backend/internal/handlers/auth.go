@@ -11,6 +11,7 @@ import (
 	"fuenzer-research/backend/internal/services/email"
 	firebaseService "fuenzer-research/backend/internal/services/firebase"
 
+	"firebase.google.com/go/v4/auth"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -28,18 +29,38 @@ func isValidEmail(addr string) bool {
 	return emailRegex.MatchString(addr)
 }
 
-type AuthHandler struct {
-	firebaseClient *firebaseService.Client
-	emailClient    *email.Client
-	allowedOrigins []string
+type firebaseAuthClient interface {
+	GenerateEmailVerificationLink(ctx context.Context, email string) (string, error)
+	GeneratePasswordResetLink(ctx context.Context, email string) (string, error)
+	VerifyIDToken(ctx context.Context, idToken string) (*auth.Token, error)
 }
 
-func NewAuthHandler(fbClient *firebaseService.Client, emailClient *email.Client, allowedOriginsCSV string) *AuthHandler {
+type AuthHandler struct {
+	firebaseClient firebaseAuthClient
+	emailClient    *email.Client
+	allowedOrigins []string
+	allowLocalhost bool
+}
+
+func NewAuthHandler(fbClient *firebaseService.Client, emailClient *email.Client, allowedOriginsCSV string, allowLocalhost bool) *AuthHandler {
+	var fb firebaseAuthClient
+	if fbClient != nil {
+		fb = fbClient
+	}
+	return newAuthHandlerWithClient(fb, emailClient, allowedOriginsCSV, allowLocalhost)
+}
+
+func newAuthHandlerWithClient(fb firebaseAuthClient, emailClient *email.Client, allowedOriginsCSV string, allowLocalhost bool) *AuthHandler {
 	var allowed []string
 	for _, raw := range strings.Split(allowedOriginsCSV, ",") {
-		if trimmed := strings.TrimSpace(raw); trimmed != "" {
-			allowed = append(allowed, trimmed)
+		trimmed := strings.TrimSpace(raw)
+		if trimmed == "" {
+			continue
 		}
+		if !allowLocalhost && isLocalhostOrigin(trimmed) {
+			continue
+		}
+		allowed = append(allowed, trimmed)
 	}
 	if len(allowed) == 0 {
 		allowed = []string{
@@ -48,10 +69,18 @@ func NewAuthHandler(fbClient *firebaseService.Client, emailClient *email.Client,
 		}
 	}
 	return &AuthHandler{
-		firebaseClient: fbClient,
+		firebaseClient: fb,
 		emailClient:    emailClient,
 		allowedOrigins: allowed,
+		allowLocalhost: allowLocalhost,
 	}
+}
+
+func isLocalhostOrigin(origin string) bool {
+	return strings.HasPrefix(origin, "http://localhost:") ||
+		strings.HasPrefix(origin, "http://127.0.0.1:") ||
+		origin == "http://localhost" ||
+		origin == "http://127.0.0.1"
 }
 
 type ForgotPasswordRequest struct {
@@ -59,15 +88,15 @@ type ForgotPasswordRequest struct {
 }
 
 type authEmailKind struct {
-	routePath       string
-	subject         string
-	logLabel        string
-	enumeratedMsg   string
-	genLinkFailMsg  string
-	sendFailMsg     string
-	successMsg      string
-	templateConfig  authEmailTemplateConfig
-	generateLink    func(ctx context.Context, addr string) (string, error)
+	routePath      string
+	subject        string
+	logLabel       string
+	enumeratedMsg  string
+	genLinkFailMsg string
+	sendFailMsg    string
+	successMsg     string
+	templateConfig authEmailTemplateConfig
+	generateLink   func(ctx context.Context, addr string) (string, error)
 }
 
 type authEmailTemplateConfig struct {
@@ -82,9 +111,12 @@ type authEmailTemplateConfig struct {
 	idNote    string
 }
 
-func resolveAllowedOrigin(origin string, allowedOrigins []string) string {
+func resolveAllowedOrigin(origin string, allowedOrigins []string, allowLocalhost bool) string {
 	origin = strings.TrimSpace(origin)
 	if origin == "" {
+		return defaultFrontendOrigin
+	}
+	if !allowLocalhost && isLocalhostOrigin(origin) {
 		return defaultFrontendOrigin
 	}
 	for _, allowed := range allowedOrigins {
@@ -92,7 +124,7 @@ func resolveAllowedOrigin(origin string, allowedOrigins []string) string {
 			return origin
 		}
 	}
-	if strings.HasPrefix(origin, "http://localhost:") || strings.HasPrefix(origin, "http://127.0.0.1:") {
+	if allowLocalhost && isLocalhostOrigin(origin) {
 		return origin
 	}
 	return defaultFrontendOrigin
@@ -103,6 +135,34 @@ func formatCustomRedirectLink(origin, routePath, rawLink string) string {
 		return fmt.Sprintf("%s%s%s", origin, routePath, rawLink[idx:])
 	}
 	return rawLink
+}
+
+func (h *AuthHandler) sendAuthEmail(c *fiber.Ctx, addr string, kind authEmailKind) error {
+	origin := resolveAllowedOrigin(c.Get("Origin"), h.allowedOrigins, h.allowLocalhost)
+
+	link, err := kind.generateLink(context.Background(), addr)
+	if err != nil {
+		// Log without PII — do not include the full email address in logs
+		log.Printf("[Auth] Error generating %s link: %v", kind.logLabel, err)
+		if strings.Contains(err.Error(), "EMAIL_NOT_FOUND") {
+			return c.JSON(fiber.Map{"message": kind.enumeratedMsg})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": kind.genLinkFailMsg,
+		})
+	}
+
+	customLink := formatCustomRedirectLink(origin, kind.routePath, link)
+	emailBody := renderAuthEmailHTML(kind.templateConfig, customLink)
+
+	if err := h.emailClient.SendEmail(addr, kind.subject, emailBody); err != nil {
+		log.Printf("[Auth] Error sending %s email: %v", kind.logLabel, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": kind.sendFailMsg,
+		})
+	}
+
+	return c.JSON(fiber.Map{"message": kind.successMsg})
 }
 
 func (h *AuthHandler) handleEmailAction(c *fiber.Ctx, kind authEmailKind) error {
@@ -126,31 +186,7 @@ func (h *AuthHandler) handleEmailAction(c *fiber.Ctx, kind authEmailKind) error 
 		})
 	}
 
-	origin := resolveAllowedOrigin(c.Get("Origin"), h.allowedOrigins)
-
-	link, err := kind.generateLink(context.Background(), req.Email)
-	if err != nil {
-		// Log without PII — do not include the full email address in logs
-		log.Printf("[Auth] Error generating %s link: %v", kind.logLabel, err)
-		if strings.Contains(err.Error(), "EMAIL_NOT_FOUND") {
-			return c.JSON(fiber.Map{"message": kind.enumeratedMsg})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": kind.genLinkFailMsg,
-		})
-	}
-
-	customLink := formatCustomRedirectLink(origin, kind.routePath, link)
-	emailBody := renderAuthEmailHTML(kind.templateConfig, customLink)
-
-	if err := h.emailClient.SendEmail(req.Email, kind.subject, emailBody); err != nil {
-		log.Printf("[Auth] Error sending %s email: %v", kind.logLabel, err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": kind.sendFailMsg,
-		})
-	}
-
-	return c.JSON(fiber.Map{"message": kind.successMsg})
+	return h.sendAuthEmail(c, req.Email, kind)
 }
 
 func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
@@ -162,7 +198,9 @@ func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
 		genLinkFailMsg: "Gagal menghasilkan tautan reset password. Silakan coba beberapa saat lagi.",
 		sendFailMsg:    "Gagal mengirimkan email reset password. Silakan hubungi dukungan.",
 		successMsg:     "Tautan reset password telah dikirim ke email Anda.",
-		generateLink:   h.firebaseClient.GeneratePasswordResetLink,
+		generateLink: func(ctx context.Context, addr string) (string, error) {
+			return h.firebaseClient.GeneratePasswordResetLink(ctx, addr)
+		},
 		templateConfig: authEmailTemplateConfig{
 			htmlTitle: "Reset Your Password",
 			enTitle:   "Reset Your Password",
@@ -178,7 +216,44 @@ func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
 }
 
 func (h *AuthHandler) SendVerification(c *fiber.Ctx) error {
-	return h.handleEmailAction(c, authEmailKind{
+	if h.firebaseClient == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Layanan autentikasi tidak tersedia saat ini. Silakan coba beberapa saat lagi.",
+		})
+	}
+
+	authHeader := strings.TrimSpace(c.Get("Authorization"))
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Autentikasi diperlukan untuk mengirim verifikasi email.",
+		})
+	}
+	idToken := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+	if idToken == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Autentikasi diperlukan untuk mengirim verifikasi email.",
+		})
+	}
+
+	decoded, err := h.firebaseClient.VerifyIDToken(c.Context(), idToken)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Sesi tidak valid atau telah berakhir. Silakan login kembali.",
+		})
+	}
+
+	emailAddr, _ := decoded.Claims["email"].(string)
+	emailAddr = strings.TrimSpace(emailAddr)
+	if !isValidEmail(emailAddr) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Email tidak ditemukan pada akun.",
+		})
+	}
+	if verified, _ := decoded.Claims["email_verified"].(bool); verified {
+		return c.JSON(fiber.Map{"message": "Email Anda sudah terverifikasi."})
+	}
+
+	return h.sendAuthEmail(c, emailAddr, authEmailKind{
 		routePath:      "/verify-email",
 		subject:        "Verifikasi Email Akun Fuenzer Research Anda",
 		logLabel:       "email verification",
