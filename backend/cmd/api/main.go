@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -60,10 +61,8 @@ func main() {
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
-		AppName:                 "Fuenzer Research API v1",
-		ServerHeader:            "Fuenzer",
-		EnableTrustedProxyCheck: true,
-		ProxyHeader:             fiber.HeaderXForwardedFor,
+		AppName:      "Fuenzer Research API v1",
+		ServerHeader: "Fuenzer",
 	})
 
 	// Middleware: Logger
@@ -166,15 +165,60 @@ func main() {
 	log.Fatal(app.Listen(":" + port))
 }
 
-// clientIP extracts the real client IP behind Cloudflare and Cloud Run proxies.
-func clientIP(c *fiber.Ctx) string {
-	if ip := strings.TrimSpace(c.Get("CF-Connecting-IP")); ip != "" {
-		return ip
+// Official Cloudflare edge CIDR ranges (https://www.cloudflare.com/ips/).
+var cloudflareNets = func() []*net.IPNet {
+	cidrs := []string{
+		"173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22",
+		"141.101.64.0/18", "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20",
+		"197.234.240.0/22", "198.41.128.0/17", "162.158.0.0/15", "104.16.0.0/13",
+		"104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22",
+		"2400:cb00::/32", "2606:4700::/32", "2803:f800::/32", "2405:b500::/32",
+		"2405:8100::/32", "2a06:98c0::/29", "2c0f:f248::/32",
 	}
-	if xff := c.Get("X-Forwarded-For"); xff != "" {
-		if first, _, _ := strings.Cut(xff, ","); strings.TrimSpace(first) != "" {
-			return strings.TrimSpace(first)
+	nets := make([]*net.IPNet, 0, len(cidrs))
+	for _, cidr := range cidrs {
+		if _, ipNet, err := net.ParseCIDR(cidr); err == nil {
+			nets = append(nets, ipNet)
 		}
+	}
+	return nets
+}()
+
+func isCloudflareIP(ip net.IP) bool {
+	if ip == nil {
+		return false
+	}
+	for _, n := range cloudflareNets {
+		if n.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+// lastForwardedIP returns the rightmost IP in X-Forwarded-For, which Cloud Run's
+// Google Front End appends from the actual immediate TCP peer.
+func lastForwardedIP(xff string) net.IP {
+	parts := strings.Split(xff, ",")
+	for i := len(parts) - 1; i >= 0; i-- {
+		if parsed := net.ParseIP(strings.TrimSpace(parts[i])); parsed != nil {
+			return parsed
+		}
+	}
+	return nil
+}
+
+// clientIP extracts the client IP safely: CF-Connecting-IP is trusted only when
+// the immediate peer IP recorded by Cloud Run's proxy belongs to Cloudflare.
+func clientIP(c *fiber.Ctx) string {
+	peerIP := lastForwardedIP(c.Get("X-Forwarded-For"))
+	if isCloudflareIP(peerIP) {
+		if cfIP := net.ParseIP(strings.TrimSpace(c.Get("CF-Connecting-IP"))); cfIP != nil {
+			return cfIP.String()
+		}
+	}
+	if peerIP != nil {
+		return peerIP.String()
 	}
 	return c.IP()
 }
