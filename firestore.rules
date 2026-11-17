@@ -1,9 +1,40 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isValidHistoryDoc(data) {
+      return data.keys().hasAll(['id', 'query', 'title', 'timestamp'])
+        && data.id is string && data.id.size() > 0 && data.id.size() <= 128
+        && data.query is string && data.query.size() <= 1000
+        && data.title is string && data.title.size() <= 500
+        && data.timestamp is number
+        && (!('isPublic' in data) || data.isPublic is bool)
+        && (!('messages' in data) || (data.messages is list && data.messages.size() <= 200))
+        && (!('scope' in data) || data.scope in ['global', 'indonesia']);
+    }
+
+    function isValidLibraryDoc(data) {
+      return data.keys().hasAll(['id', 'name', 'isPublic'])
+        && data.id is string && data.id.size() > 0 && data.id.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && data.isPublic is bool;
+    }
+
+    function isValidBookmarkDoc(data) {
+      return data.keys().hasAll(['id', 'title'])
+        && data.id is string && data.id.size() > 0 && data.id.size() <= 512
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 1000
+        && (!('url' in data) || (data.url is string && data.url.size() <= 1000))
+        && (!('abstract' in data) || data.abstract == null || (data.abstract is string && data.abstract.size() <= 20000))
+        && (!('authors' in data) || (data.authors is list && data.authors.size() <= 100));
+    }
+
     match /users/{userId} {
       // Allow users to read and write only their own document
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
 
       match /history/{sessionId} {
         // Owner can always read/write their own sessions
@@ -12,12 +43,17 @@ service cloud.firestore {
           request.auth.uid == userId ||
           resource.data.isPublic == true
         );
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if isOwner(userId)
+          && sessionId.size() <= 128
+          && isValidHistoryDoc(request.resource.data);
+        allow delete: if isOwner(userId);
       }
 
       match /bookmarks/{sourceId} {
         // Allow users to read and write only their own bookmarked sources
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidBookmarkDoc(request.resource.data);
+        allow delete: if isOwner(userId);
       }
 
       match /libraries/{libraryId} {
@@ -27,7 +63,10 @@ service cloud.firestore {
           request.auth.uid == userId ||
           resource.data.isPublic == true
         );
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if isOwner(userId)
+          && libraryId.size() <= 128
+          && isValidLibraryDoc(request.resource.data);
+        allow delete: if isOwner(userId);
 
         match /bookmarks/{sourceId} {
           // Anyone who can read the parent library can also read its bookmarks
@@ -36,7 +75,8 @@ service cloud.firestore {
             get(/databases/$(database)/documents/users/$(userId)/libraries/$(libraryId)).data.isPublic == true
           );
           // Only the owner can write bookmarks
-          allow write: if request.auth != null && request.auth.uid == userId;
+          allow create, update: if isOwner(userId) && isValidBookmarkDoc(request.resource.data);
+          allow delete: if isOwner(userId);
         }
       }
     }

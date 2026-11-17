@@ -94,7 +94,7 @@ export interface Library {
 
 /** Create a new library folder for a user */
 export async function createLibrary(userId: string, name: string, isPublic: boolean = false, customId?: string): Promise<Library> {
-  const libraryId = customId || `lib-${Date.now()}`;
+  const libraryId = customId || `lib-${crypto.randomUUID()}`;
   const ref = doc(db, 'users', userId, 'libraries', libraryId);
   const newLib: Library = {
     id: libraryId,

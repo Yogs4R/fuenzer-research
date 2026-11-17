@@ -422,7 +422,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   setAiMode: (mode: 'search' | 'ask') => set({ aiMode: mode }),
 
   initSession: (queryText: string) => {
-    const sessionId = `h-${Date.now()}`;
+    const sessionId = `h-${crypto.randomUUID()}`;
     const history = getLocalHistory();
     
     const newEntry: HistoryEntry = {
@@ -464,7 +464,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   },
 
   forkSharedSession: (queryText: string, messages: ChatMessage[]) => {
-    const sessionId = `h-${Date.now()}`;
+    const sessionId = `h-${crypto.randomUUID()}`;
     const history = getLocalHistory();
     
     const newEntry: HistoryEntry = {
