@@ -18,8 +18,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /api ./cmd/api
 
 # ---- Production Stage ----
 FROM alpine:3.20
-RUN apk --no-cache upgrade && apk --no-cache add ca-certificates
-
+RUN apk --no-cache upgrade && apk --no-cache add ca-certificates \
+    && adduser -S -D -H appuser
 
 WORKDIR /app
 
@@ -33,5 +33,7 @@ COPY --from=backend-builder /api ./api
 COPY --from=frontend-builder /app/frontend/dist ./public
 
 EXPOSE 8080
+
+USER appuser
 
 CMD ["./api"]
