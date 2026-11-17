@@ -18,7 +18,7 @@ import { MarkdownMessage } from '../shared/MarkdownMessage';
 import { en } from '../../locales/en';
 import { id } from '../../locales/id';
 
-export interface CompareMessage {
+interface CompareMessage {
   id: string;
   role: 'user' | 'ai';
   content: string;
@@ -230,7 +230,7 @@ export function LibraryCompareView({
       </div>
 
       {/* Chat Timeline / Messages */}
-      <div className="flex-1 min-h-[300px] border border-cloud-canvas dark:border-stone-gray/60 bg-cloud-canvas/10 dark:bg-[#121212]/30 rounded-2xl p-5 overflow-y-auto flex flex-col gap-6 mb-36 shadow-inner">
+      <div className="flex-1 min-h-75 border border-cloud-canvas dark:border-stone-gray/60 bg-cloud-canvas/10 dark:bg-[#121212]/30 rounded-2xl p-5 overflow-y-auto flex flex-col gap-6 mb-36 shadow-inner">
         {compareMessages.length === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-6 py-8">
             <div className="flex flex-col items-center gap-2 select-none">

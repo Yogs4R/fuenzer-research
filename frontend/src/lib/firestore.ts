@@ -75,45 +75,6 @@ export async function clearAllHistory(userId: string): Promise<void> {
 
 // ─── Bookmarks ────────────────────────────────────────────────────────────────
 
-/** Save a bookmark for the user */
-export async function saveBookmark(userId: string, source: AcademicSource): Promise<void> {
-  // Use a sanitized ID (OpenAlex IDs contain slashes, so encode them)
-  const docId = encodeURIComponent(source.id);
-  const ref = doc(db, 'users', userId, 'bookmarks', docId);
-  await setDoc(ref, {
-    ...source,
-    savedAt: serverTimestamp(),
-  });
-}
-
-/** Remove a bookmark */
-export async function removeBookmark(userId: string, sourceId: string): Promise<void> {
-  const docId = encodeURIComponent(sourceId);
-  const ref = doc(db, 'users', userId, 'bookmarks', docId);
-  await deleteDoc(ref);
-}
-
-/** Load all bookmarks for a user */
-export async function loadBookmarks(userId: string): Promise<AcademicSource[]> {
-  const colRef = collection(db, 'users', userId, 'bookmarks');
-  const snapshot = await getDocs(colRef);
-
-  return snapshot.docs.map((d) => {
-    const data = d.data() as DocumentData;
-    return {
-      id: data.id || '',
-      title: data.title || '',
-      authors: data.authors || [],
-      year: data.year || 0,
-      publisher: data.publisher || '',
-      abstract: data.abstract || undefined,
-      indexes: data.indexes || [],
-      url: data.url || '',
-      content_type: data.content_type || '',
-    } as AcademicSource;
-  });
-}
-
 /** Delete all bookmarks for a user */
 export async function clearAllBookmarks(userId: string): Promise<void> {
   const colRef = collection(db, 'users', userId, 'bookmarks');
