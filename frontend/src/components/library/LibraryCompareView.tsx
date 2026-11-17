@@ -392,7 +392,7 @@ export function LibraryCompareView({
               selectedCompareRefs.size === 0 ? t.placeholderRefsLocked : t.placeholderRefsUnlocked
             }
             aria-label={language === 'en' ? 'Compare references prompt' : 'Pertanyaan perbandingan referensi'}
-            className="w-full min-h-[60px] max-h-[200px] resize-none px-3 py-2 bg-transparent text-xs outline-none text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray overflow-y-auto"
+            className="w-full min-h-15 max-h-50 resize-none px-3 py-2 bg-transparent text-xs outline-none text-ink-black dark:text-cloud-canvas placeholder:text-silver-mist dark:placeholder:text-stone-gray overflow-y-auto"
             value={compareInput}
             onChange={(e) => setCompareInput(e.target.value)}
             onKeyDown={(e) => {
