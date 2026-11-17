@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"fuenzer-research/backend/internal/models"
 	"fuenzer-research/backend/internal/services/garuda"
@@ -313,6 +314,42 @@ func isGibberish(s string) bool {
 	return false
 }
 
+const (
+	maxAskQuestionRunes  = 500
+	minAskQuestionRunes  = 3
+	maxAskReferences     = 30
+	maxAskTitleRunes     = 300
+	maxAskAbstractRunes  = 2500
+)
+
+func truncateRunes(s string, limit int) string {
+	s = strings.TrimSpace(s)
+	if utf8.RuneCountInString(s) <= limit {
+		return s
+	}
+	runes := []rune(s)
+	return string(runes[:limit])
+}
+
+func validateAndBoundAskRequest(req *models.AskRequest) string {
+	req.Question = strings.TrimSpace(req.Question)
+	qLen := utf8.RuneCountInString(req.Question)
+	if qLen < minAskQuestionRunes {
+		return "Pertanyaan minimal 3 karakter."
+	}
+	if qLen > maxAskQuestionRunes {
+		return "Pertanyaan terlalu panjang (maksimal 500 karakter)."
+	}
+	if len(req.References) > maxAskReferences {
+		return "Maksimal 30 referensi dapat dipilih sekaligus."
+	}
+	for i := range req.References {
+		req.References[i].Title = truncateRunes(req.References[i].Title, maxAskTitleRunes)
+		req.References[i].Abstract = truncateRunes(req.References[i].Abstract, maxAskAbstractRunes)
+	}
+	return ""
+}
+
 // HandleAsk handles asking a question about selected academic references.
 func (h *ResearchHandler) HandleAsk(c *fiber.Ctx) error {
 	start := time.Now()
@@ -324,7 +361,11 @@ func (h *ResearchHandler) HandleAsk(c *fiber.Ctx) error {
 		})
 	}
 
-	req.Question = strings.TrimSpace(req.Question)
+	if errMsg := validateAndBoundAskRequest(&req); errMsg != "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": errMsg,
+		})
+	}
 
 	// User comments: Return static template for gibberish/short inputs without calling Gemini
 	if isGibberish(req.Question) {

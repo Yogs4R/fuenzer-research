@@ -7,8 +7,11 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
+	"fuenzer-research/backend/internal/models"
 	"fuenzer-research/backend/internal/services/openalex"
 
 	"github.com/gofiber/fiber/v2"
@@ -132,6 +135,65 @@ func TestResearchHandlerValidation(t *testing.T) {
 		}
 		if resp.StatusCode != http.StatusBadRequest {
 			t.Fatalf("got status %d, want 400", resp.StatusCode)
+		}
+	})
+
+	t.Run("ask rejects question shorter than 3 chars or longer than 500 chars", func(t *testing.T) {
+		for _, q := range []string{"hi", strings.Repeat("a", 501)} {
+			body, _ := json.Marshal(map[string]any{
+				"question":   q,
+				"references": []any{map[string]any{"title": "Study"}},
+			})
+			req := httptest.NewRequest(http.MethodPost, "/ask", bytes.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			resp, err := app.Test(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if resp.StatusCode != http.StatusBadRequest {
+				t.Fatalf("question len %d: got status %d, want 400", len(q), resp.StatusCode)
+			}
+		}
+	})
+
+	t.Run("ask rejects more than 30 references", func(t *testing.T) {
+		refs := make([]map[string]any, 31)
+		for i := range refs {
+			refs[i] = map[string]any{"title": "Paper"}
+		}
+		body, _ := json.Marshal(map[string]any{
+			"question":   "Summarize the methodology across these papers",
+			"references": refs,
+		})
+		req := httptest.NewRequest(http.MethodPost, "/ask", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Fatalf("got status %d, want 400", resp.StatusCode)
+		}
+	})
+
+	t.Run("ask truncates oversized reference title and abstract", func(t *testing.T) {
+		req := models.AskRequest{
+			Question: "Summarize findings",
+			References: []models.AcademicSource{
+				{
+					Title:    strings.Repeat("é", 350),
+					Abstract: strings.Repeat("á", 3000),
+				},
+			},
+		}
+		if errMsg := validateAndBoundAskRequest(&req); errMsg != "" {
+			t.Fatalf("unexpected validation error: %s", errMsg)
+		}
+		if got := utf8.RuneCountInString(req.References[0].Title); got != maxAskTitleRunes {
+			t.Fatalf("title rune count = %d, want %d", got, maxAskTitleRunes)
+		}
+		if got := utf8.RuneCountInString(req.References[0].Abstract); got != maxAskAbstractRunes {
+			t.Fatalf("abstract rune count = %d, want %d", got, maxAskAbstractRunes)
 		}
 	})
 }
