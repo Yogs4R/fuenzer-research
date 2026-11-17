@@ -63,6 +63,10 @@ func main() {
 	app := fiber.New(fiber.Config{
 		AppName:      "Fuenzer Research API v1",
 		ServerHeader: "Fuenzer",
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+		BodyLimit:    256 * 1024, // 256 KB max request body
 	})
 
 	// Middleware: Logger
