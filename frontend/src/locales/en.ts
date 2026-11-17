@@ -239,6 +239,11 @@ export const en = {
     title: 'Update Logs',
     logs: [
       {
+        date: '17 November 2026',
+        title: 'v0.0.4 — Garuda Database Restored, Security & UX Polish',
+        desc: 'Re-enabled Garuda national literature search with upgraded server memory for smoother queries, improved OpenAlex error feedback, refined SINTA multi-word matching, replaced the AI Assistant toggle icon for clearer navigation, enhanced mobile and accessibility layouts, and strengthened account verification, link safety, BibTeX export, and workspace/library sharing protections.'
+      },
+      {
         date: '06 July 2026',
         title: 'UI Refinements, Sizing, & Delete Confirmations',
         desc: 'Added pop-up confirmation dialogs before deletions, bulk bookmark selection and deletion in library, improved contrast of borders in light mode, aligned Chatbox to Google Stitch design, updated user copy button in Assistant & Compare views, introduced Citation Quality Indicators (Citations & High Impact badges), raised search limits to 10 per type, added filter summary text in playground sidebar, and implemented persistent quick-action suggestion pills in Library Compare.'

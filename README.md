@@ -1,23 +1,38 @@
-# Fuenzer Research 🔬
-
-![JuaraVibeCoding Hackathon](https://img.shields.io/badge/Hackathon-JuaraVibeCoding_S1-4285F4?style=for-the-badge&logo=google)
-![Golang](https://img.shields.io/badge/Backend-Golang_1.25-00ADD8?style=for-the-badge&logo=go)
-![React](https://img.shields.io/badge/Frontend-React_19-61DAFB?style=for-the-badge&logo=react)
-![Gemini AI](https://img.shields.io/badge/AI-Google_Gemini_Flash-8E75B2?style=for-the-badge&logo=googlegemini)
-![Vite](https://img.shields.io/badge/Bundler-Vite_8-646CFF?style=for-the-badge&logo=vite)
-![Cloud Run](https://img.shields.io/badge/Deploy-Cloud_Run-4285F4?style=for-the-badge&logo=googlecloud)
-
-![Fuenzer Research Banner](frontend/public/og-image.png)
-
 <p align="center">
-  <a href="README.md">🇮🇩 Indonesia</a> | <a href="README.en.md">🌐 English</a>
+  <img src="frontend/public/og-image.png" alt="Fuenzer Research Banner" width="70%" />
 </p>
 
-> **Riset Akademis, Disintesis AI** — Asisten riset ilmiah bertenaga kecerdasan buatan untuk membantu akademisi Indonesia mencari, memetakan indeks SINTA/Garuda, dan menyintesis literatur ilmiah skala nasional & global secara instan.
+<h1 align="center">Fuenzer Research</h1>
 
-**Live Demo:** [https://research.fuenzer.web.id](https://research.fuenzer.web.id)
+<p align="center">
+  <b>Riset Akademis, Disintesis AI — Asisten Penemuan Ilmiah untuk Akademisi Indonesia</b><br>
+  Pencarian Terfederasi (OpenAlex, SINTA, Garuda &amp; Google Books) · Ditenagai Go Fiber, React 19, dan Gemini AI
+</p>
 
-Built for **JuaraVibeCoding Season 1** Hackathon by Google.
+<p align="center">
+  <a href="https://github.com/Yogs4R/fuenzer-research/releases"><img src="https://img.shields.io/github/v/release/Yogs4R/fuenzer-research?style=flat-square&color=blue" alt="Release" /></a>
+  <a href="https://research.fuenzer.web.id"><img src="https://img.shields.io/badge/Live_Demo-research.fuenzer.web.id-0d9488?style=flat-square" alt="Live Demo" /></a>
+  <img src="https://img.shields.io/badge/Backend-Go_1.26-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Go 1.26" />
+  <img src="https://img.shields.io/badge/Frontend-React_19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/AI-Gemini_Flash-8E75B2?style=flat-square&logo=googlegemini&logoColor=white" alt="Gemini AI" />
+  <img src="https://img.shields.io/badge/Bundler-Vite_8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
+  <img src="https://img.shields.io/badge/Deploy-Cloud_Run-4285F4?style=flat-square&logo=googlecloud&logoColor=white" alt="Cloud Run" />
+  <img src="https://img.shields.io/badge/License-Apache_2.0-yellow?style=flat-square" alt="License" />
+</p>
+
+<p align="center">
+  <a href="https://research.fuenzer.web.id">Live Demo</a> •
+  <a href="#-the-problem-we-solve">About</a> •
+  <a href="#-features">Features</a> •
+  <a href="#%EF%B8%8F-full-architecture">Architecture</a> •
+  <a href="#-getting-started">Installation</a> •
+  <a href="#-security">Security</a> •
+  <a href="docs/architecture.md">Docs</a>
+</p>
+
+<h4 align="center">
+  <a href="README.md">Bahasa Indonesia</a> | <a href="README.en.md">English</a>
+</h4>
 
 ---
 

@@ -239,6 +239,11 @@ export const id = {
     title: 'Catatan Pembaruan',
     logs: [
       {
+        date: '17 November 2026',
+        title: 'v0.0.4 — Pemulihan Database Garuda, Keamanan & Penyempurnaan UX',
+        desc: 'Mengaktifkan kembali pencarian literatur nasional Garuda dengan peningkatan kapasitas memori server agar lebih lancar, memperbaiki pesan kendala OpenAlex agar lebih jelas, menyempurnakan akurasi pencarian multi-kata SINTA, memperbarui ikon panel Asisten AI, merapikan tampilan mobile serta aksesibilitas, dan memperkuat keamanan verifikasi akun, tautan referensi, ekspor BibTeX, serta perlindungan pustaka dan workspace yang dibagikan.'
+      },
+      {
         date: '06 Juli 2026',
         title: 'Penyempurnaan UI, Skala, & Konfirmasi Hapus',
         desc: 'Menambahkan pop-up dialog konfirmasi sebelum penghapusan data, fitur pemilihan dan penghapusan massal bookmark di perpustakaan, meningkatkan kontras garis di mode terang, menyelaraskan Chatbox ke desain Google Stitch, menambahkan tombol salin pesan pengguna di asisten & banding, menerapkan Indikator Kualitas Sitasi (badge Sitasi & High Impact), meningkatkan batas pencarian menjadi 10 per tipe, memunculkan ringkasan filter di sidebar asisten, serta menghadirkan tombol shortcut saran analisis persisten di Library Compare.'
