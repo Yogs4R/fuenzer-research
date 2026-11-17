@@ -1,6 +1,7 @@
 import type { AcademicSource } from '../../types/research';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { getFormattedCitation, type CitationStyle } from '../../utils/citationFormatter';
+import { toSafeHttpUrl } from '../../utils/validation';
 import { useUiStore } from '../../store/uiStore';
 
 interface JournalCardProps {
@@ -28,6 +29,7 @@ export function JournalCard({
   const isSinta = !!sintaIndex;
   const isGaruda = !!garudaIndex;
   const isIndonesia = isSinta || isGaruda || source.indexes?.some((idx) => idx.tier.toLowerCase() === 'indonesia' || idx.provider.toLowerCase() === 'location');
+  const safeUrl = toSafeHttpUrl(source.url);
 
   return (
     <div className={`group flex bg-paper-white dark:bg-ink-black rounded-xl shadow-sm hover:shadow-xl dark:hover:shadow-2xl border transition-all ${isSelected ? 'border-fuenzer-teal ring-1 ring-fuenzer-teal' : 'border-cloud-canvas dark:border-stone-gray'}`}>
@@ -106,14 +108,14 @@ export function JournalCard({
         )}
 
         <div className="mt-auto flex justify-between items-end font-sans">
-          {source.url ? (
+          {safeUrl ? (
             <a
-              href={source.url}
+              href={safeUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs font-medium text-fuenzer-teal dark:text-fuenzer-teal hover:text-fuenzer-teal-dark dark:hover:text-code-blue hover:underline truncate max-w-[250px]"
             >
-              DOI: {source.url.replace(/^https?:\/\/(dx\.)?doi\.org\//, '')}
+              DOI: {safeUrl.replace(/^https?:\/\/(dx\.)?doi\.org\//, '')}
             </a>
           ) : (
             <div />
